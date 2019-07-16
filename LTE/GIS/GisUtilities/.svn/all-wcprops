@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/ZSMCC-WirNetInt/!svn/ver/203/trunk/DEV/Client/Wellcomm.BLL/GIS/GisUtilities
+END
+GraphicsUtilities.cs
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/ZSMCC-WirNetInt/!svn/ver/88/trunk/DEV/Client/Wellcomm.BLL/GIS/GisUtilities/GraphicsUtilities.cs
+END
+GraphicsLayer3DUtilities.cs
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svn/ZSMCC-WirNetInt/!svn/ver/108/trunk/DEV/Client/Wellcomm.BLL/GIS/GisUtilities/GraphicsLayer3DUtilities.cs
+END
+FeatureLayerUtilities.cs
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/ZSMCC-WirNetInt/!svn/ver/108/trunk/DEV/Client/Wellcomm.BLL/GIS/GisUtilities/FeatureLayerUtilities.cs
+END
+ElementUtilities.cs
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/ZSMCC-WirNetInt/!svn/ver/118/trunk/DEV/Client/Wellcomm.BLL/GIS/GisUtilities/ElementUtilities.cs
+END
+DefineLayer.cs
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/ZSMCC-WirNetInt/!svn/ver/88/trunk/DEV/Client/Wellcomm.BLL/GIS/GisUtilities/DefineLayer.cs
+END
+FeatureUtilities.cs
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/ZSMCC-WirNetInt/!svn/ver/115/trunk/DEV/Client/Wellcomm.BLL/GIS/GisUtilities/FeatureUtilities.cs
+END
+GeometryUtilities.cs
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/ZSMCC-WirNetInt/!svn/ver/186/trunk/DEV/Client/Wellcomm.BLL/GIS/GisUtilities/GeometryUtilities.cs
+END
+DrawUtilities.cs
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/ZSMCC-WirNetInt/!svn/ver/203/trunk/DEV/Client/Wellcomm.BLL/GIS/GisUtilities/DrawUtilities.cs
+END
+ColorUtilities.cs
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/ZSMCC-WirNetInt/!svn/ver/88/trunk/DEV/Client/Wellcomm.BLL/GIS/GisUtilities/ColorUtilities.cs
+END

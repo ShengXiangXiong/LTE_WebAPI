@@ -1,0 +1,96 @@
+﻿@{
+    Layout = null;
+}
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>射线记录</title>
+</head>
+<body>
+    <div>
+        <h2>射线记录</h2>
+        <h3>小区参数</h3>
+        小区名称：<input type="text" id="cellName" value="DQVZRT2" /> <br />
+        覆盖半径：<input type="text" id="distance" value=1000 /> m<br />
+        覆盖角度：<input type="text" id="incrementAngle" value=65 /> 度<br />
+        说明：1.假设天线方位角θ=300°，覆盖角度δ=70°，则计算的覆盖范围为230°至10°（正北方向为0°）。
+        2.对于扇区，建议δ≤70°。 <br />
+        <h3>多线程参数</h3>
+        线程个数：<input type="text" id="threadNum" value=3 /><br />
+        <h3>射线跟踪控制参数</h3>
+        反射次数：<input type="text" id="reflectionNum" value=3 /> <br />
+        绕射次数：<input type="text" id="diffractionNum" value=2 /><br />
+        建筑物棱边绕射点间隔：<input type="text" id="diffPointsMargin" value=3 /> m<br />
+        计算立体覆盖：<input type="checkbox" id="computeIndoor" checked="checked" /><br />
+        计算绕射：<input type="checkbox" id="computeDiffrac" checked="checked" /><br />
+        <h3>校正系数</h3>
+        直射校正系数：<input type="text" id="directCoeff" value=0.3 /> <br />
+        反射校正系数：<input type="text" id="reflectCoeff" value=1.0 /><br />
+        绕射校正系数：<input type="text" id="diffractCoeff" value=1.0 /> m<br />
+        菲涅尔绕射校正系数：<input type="text" id="diffractCoeff2" value=1.0 /><br />
+        <h3>手动指定发射源（可选）<input type="checkbox" id="manSource" /></h3>
+        id：<input type="text" id="sourceID" value=1 /> <br /> 
+        x：<input type="text" id="sourceX" value=668019 />  <br />
+        y：<input type="text" id="sourceY" value=3546234 /> <br /> 
+        z：<input type="text" id="sourceZ" value=1 /> <br /> 
+        <h3>手动指定方位角（可选）<input type="checkbox" id="manDir" /></h3>
+        方位角中心线末端 x：<input type="text" id="dirX" value=668019 />  <br />
+        方位角中心线末端 y：<input type="text" id="dirY" value=3546234 /> <br /> <br />
+        <input type="button" id="rayRecordLoc" value="确定" /><br />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#rayRecordLoc").click(function () {
+        var rt = {};
+        rt.cellName = $("#cellName").val();
+        rt.distance = parseFloat($("#distance").val()).toFixed(2);
+        rt.incrementAngle = parseFloat($("#incrementAngle").val()).toFixed(2);
+        rt.threadNum = $("#threadNum").val();
+        rt.reflectionNum = $("#reflectionNum").val();
+        rt.diffractionNum = $("#diffractionNum").val();
+        rt.diffPointsMargin = $("#diffPointsMargin").val();
+        rt.computeIndoor = $("#computeIndoor").attr('checked') ? true : false;
+        rt.computeDiffrac = $("#computeDiffrac").attr('checked') ? true : false;
+        rt.directCoeff = parseFloat($("#directCoeff").val()).toFixed(2);
+        rt.reflectCoeff = parseFloat($("#reflectCoeff").val()).toFixed(2);
+        rt.diffractCoeff = parseFloat($("#diffractCoeff").val()).toFixed(2);
+        rt.diffractCoeff2 = parseFloat($("#diffractCoeff2").val()).toFixed(2);
+        rt.manSource = $("#manSource").attr('checked') ? true : false;
+        rt.sourceID = rt.manSource ? $("#sourceID").val() : 1;
+        rt.sourceX = rt.manSource ? parseFloat($("#sourceX").val()).toFixed(2) : 0.0;
+        rt.sourceY = rt.manSource ? parseFloat($("#sourceY").val()).toFixed(2) : 0.0;
+        rt.sourceZ = rt.manSource ? parseFloat($("#sourceZ").val()).toFixed(2) : 0.0;
+        rt.manDir = $("#manDir").attr('checked') ? true : false;
+        rt.dirX = rt.manDir ? parseFloat($("#dirX").val()).toFixed(2) : 0.0;
+        rt.dirY = rt.manDir ? parseFloat($("#dirY").val()).toFixed(2) : 0.0;
+
+        $.ajax
+        ({
+            url: "/api/RayRecord/PostRayRecordLoc",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(rt),
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("射线记录结束！");
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("射线记录失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("射线记录失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+
+</script>

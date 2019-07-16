@@ -1,0 +1,48 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>网外干扰图层刷新</title>
+</head>
+<body>
+    <div>
+        <h2>网外干扰图层刷新</h2>
+        <input type="button" id="inf" value="确定" />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#inf").click(function () {
+
+        $.ajax
+        ({
+            url: "/api/RefreshLayer/PostRefreshInterferenceLayer",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("网外干扰图层刷新结束！");
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("网外干扰图层刷新失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("网外干扰图层刷新失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+</script>
+

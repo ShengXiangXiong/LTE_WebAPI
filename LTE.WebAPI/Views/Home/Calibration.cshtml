@@ -1,0 +1,63 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>系数校正</title>
+</head>
+<body>
+    <div>
+        <h2>系数校正</h2>
+        <h3>路测</h3>
+        开始时间：<input type="text" id="startTime" value="2019-03-27 00:00:00" /><br />
+        结束时间：<input type="text" id="endTime" value="2019-03-29 00:00:00" /> <br />
+        场景个数：<input type="text" id="sceneNum" value=3 /><br />
+        <h3>遗传算法</h3>
+        种群大小：<input type="text" id="popSize" value=50 /><br />
+        遗传代数：<input type="text" id="gen" value=500 /><br /><br />
+        <input type="button" id="cali" value="确定" /><br /><br />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#cali").click(function () {
+        var cof = {};
+        cof.startTime = $("#startTime").val();
+        cof.endTime = $("#endTime").val();
+        cof.sceneNum = $("#sceneNum").val();
+        cof.popSize = $("#popSize").val();
+        cof.gen = $("#gen").val();
+
+        $.ajax
+        ({
+            url: "/api/Calibration/PostCalibrate",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(cof),
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("系数校正结束！");
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("系数校正失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("系数校正失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+
+</script>
+

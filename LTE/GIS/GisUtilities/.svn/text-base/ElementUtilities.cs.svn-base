@@ -1,0 +1,79 @@
+using ESRI.ArcGIS.Geometry;
+using ESRI.ArcGIS.Display;
+using ESRI.ArcGIS.Analyst3D;
+using ESRI.ArcGIS.Carto;
+using ESRI.ArcGIS.esriSystem;
+
+namespace Wellcomm.BLL.GIS
+{
+    public static class ElementUtilities
+    {
+        private const double HighResolution = 1;
+        private const esriUnits Units = esriUnits.esriUnknownUnits;
+
+        public static IElement ConstructPointElement(IGeometry geometry, IColor color, esriSimple3DMarkerStyle style, double size)
+        {
+            ISimpleMarker3DSymbol simpleMarker3DSymbol = new SimpleMarker3DSymbolClass();
+            simpleMarker3DSymbol.Style = style;
+            simpleMarker3DSymbol.ResolutionQuality = HighResolution;
+
+            IMarkerSymbol markerSymbol = simpleMarker3DSymbol as IMarkerSymbol;
+            markerSymbol.Color = color;
+            markerSymbol.Size = size;
+
+            IMarker3DPlacement marker3DPlacement = markerSymbol as IMarker3DPlacement;
+            marker3DPlacement.Units = Units;
+
+            IMarkerElement markerElement = new MarkerElementClass();
+            markerElement.Symbol = markerSymbol;
+
+            IElement element = markerElement as IElement;
+            element.Geometry = geometry;
+
+            return element;
+        }
+
+        public static IElement ConstructPolylineElement(IGeometry geometry, IColor color, esriSimple3DLineStyle style, double width)
+        {
+            ISimpleLine3DSymbol simpleLine3DSymbol = new SimpleLine3DSymbolClass();
+            simpleLine3DSymbol.Style = style;
+            simpleLine3DSymbol.ResolutionQuality = HighResolution;
+
+            ILineSymbol lineSymbol = simpleLine3DSymbol as ILineSymbol;
+            lineSymbol.Color = color;
+            lineSymbol.Width = width;
+
+            ILine3DPlacement line3DPlacement = lineSymbol as ILine3DPlacement;
+            line3DPlacement.Units = Units;
+
+            ILineElement lineElement = new LineElementClass();
+            lineElement.Symbol = lineSymbol;
+
+            IElement element = lineElement as IElement;
+            element.Geometry = geometry;
+
+            return element;
+        }
+
+        public static IElement ConstructMultiPatchElement(IGeometry geometry, IColor color)
+        {
+            ISimpleFillSymbol simpleFillSymbol = new SimpleFillSymbolClass();
+            simpleFillSymbol.Color = color;
+
+            IElement element = new MultiPatchElementClass();
+            element.Geometry = geometry;
+
+            IFillShapeElement fillShapeElement = element as IFillShapeElement;
+            fillShapeElement.Symbol = simpleFillSymbol;
+
+            return element;
+        }
+
+
+
+
+
+
+
+    }
+}
