@@ -1,0 +1,82 @@
+﻿@{
+    Layout = null;
+}
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>网外干扰定位</title>
+</head>
+<body>
+    <div>
+        <h2>网外干扰定位</h2>
+        <h3>干扰范围</h3>
+        最小经度：<input type="text" id="minLongitude" value=118.767240 /><br />
+        最小纬度：<input type="text" id="minLatitude" value=32.010461 /> <br />
+        最大经度：<input type="text" id="maxLongitude" value=118.801740 /><br />
+        最大纬度：<input type="text" id="maxLatitude" value=32.062886 /><br /><br />
+        <h3>干扰源推断</h3>
+        <input type="button" id="rules" value="启发式规则压缩干扰源区域" /><br /><br />
+        <input type="button" id="candidate" value="评估干扰源候选位置" /><br /><br />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#rules").click(function () {
+        var rule = {};
+        rule.minLongitude = $("#minLongitude").val();
+        rule.minLatitude = $("#minLatitude").val();
+        rule.maxLongitude = $("#maxLongitude").val();
+        rule.maxLatitude = $("#maxLatitude").val();
+
+        $.ajax
+        ({
+            url: "/api/InterferenceLocate/PostRules",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(rule),
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("启发式规则推导结束！\n" + data.msg);
+                }
+                else
+                    alert("启发式规则推导失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("启发式规则推导失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+    $("#candidate").click(function () {
+       
+        $.ajax
+        ({
+            url: "/api/InterferenceLocate/PostCandidate",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("候选位置评估结束！\n" + data.msg);
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("候选位置评估失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("候选位置评估失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+
+</script>
