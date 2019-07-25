@@ -24,6 +24,8 @@ namespace LTE.WebAPI
             // 若要在应用程序中禁用跟踪，请注释掉或删除以下代码行
             // 有关详细信息，请参阅: http://www.asp.net/web-api
             //config.EnableSystemDiagnosticsTracing();
+
+            config.Filters.Add(new WebAPI.Attributes.ApiAuthorizeAttribute());
         }
     }
 }

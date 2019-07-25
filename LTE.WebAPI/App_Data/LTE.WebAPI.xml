@@ -753,6 +753,11 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="M:LTE.WebAPI.Models.AuthInfo.#ctor">
+            <summary>
+            jwt需要传递给payload的负载信息
+            </summary>
+        </member>
         <member name="P:LTE.WebAPI.Models.CalibrationModel.startDateTime">
             <summary>
             路测开始时间
@@ -1114,6 +1119,16 @@
             密码 
             </summary> 
         </member>
+        <member name="P:LTE.WebAPI.Models.LoginModel.userRoles">
+            <summary>
+            角色
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.LoginModel.userFace">
+            <summary>
+            用户头像
+            </summary>
+        </member>
         <member name="M:LTE.WebAPI.Models.LoginModel.CheckUser(System.String,System.String)">
             <summary>
             检查用户是否合法
@@ -1177,6 +1192,21 @@
             结果信息
             </summary>
         </member>
+        <member name="P:LTE.WebAPI.Models.Result.obj">
+            <summary>
+            返回的对象信息
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Result.code">
+            <summary>
+            返回具体业务的状态码
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Result.token">
+            <summary>
+            token验证字符串
+            </summary>
+        </member>
         <member name="P:LTE.WebAPI.Models.SingleRayTracingModel1.longitude">
             <summary>
             终点经度
@@ -1198,5 +1228,19 @@
             </summary>
         </member>
         <!-- 对于成员“F:LTE.WebAPI.Models.SmoothBuildingVertexModel.relativeMutationRate”忽略有格式错误的 XML 注释 -->
+        <member name="M:LTE.WebAPI.Utils.JwtHelper.SetJwtEncode(LTE.WebAPI.Models.AuthInfo)">
+            <summary>
+            生成JwtToken
+            </summary>
+            <param name="payload">不敏感的用户数据</param>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Utils.JwtHelper.GetJwtDecode(System.String)">
+            <summary>
+            根据jwtToken  获取实体
+            </summary>
+            <param name="token">jwtToken</param>
+            <returns></returns>
+        </member>
     </members>
 </doc>

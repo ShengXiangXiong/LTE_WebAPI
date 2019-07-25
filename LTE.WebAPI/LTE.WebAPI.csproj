@@ -8,7 +8,7 @@
     </ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{C4986066-514C-40D7-8FDB-C6AE3828340E}</ProjectGuid>
-    <ProjectTypeGuids>{E3E379DF-F4C6-4180-9B81-6769533ABE47};{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LTE.WebAPI</RootNamespace>
@@ -49,10 +49,18 @@
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="ESRI.ArcGIS.Version, Version=10.2.0.0, Culture=neutral, PublicKeyToken=8fc3cc631e44ad86, processorArchitecture=MSIL" />
+    <Reference Include="IBatisNet.Common.Logging.Log4Net">
+      <HintPath>..\..\ibatis\Ibatis.DataMapper.1.6.2.bin\IBatisNet.Common.Logging.Log4Net.dll</HintPath>
+    </Reference>
+    <Reference Include="JWT, Version=3.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\JWT.3.0.0\lib\net35\JWT.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net">
+      <HintPath>..\..\ibatis\Ibatis.DataMapper.1.6.2.bin\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -187,6 +195,7 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\SampleDirection.cs" />
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
+    <Compile Include="Attributes\ApiAuthorizeAttribute.cs" />
     <Compile Include="Controllers\AreaCoverDefectController.cs" />
     <Compile Include="Controllers\CalibrationController.cs" />
     <Compile Include="Controllers\CellRadiusController.cs" />
@@ -207,6 +216,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AreaCoverDefectModel.cs" />
+    <Compile Include="Models\AuthInfo.cs" />
     <Compile Include="Models\CalibrationModel.cs" />
     <Compile Include="Models\CellRadiusModel.cs" />
     <Compile Include="Models\DebugModel.cs" />
@@ -223,6 +233,7 @@
     <Compile Include="Models\SingleRayTracingModel.cs" />
     <Compile Include="Models\SmoothBuildingVertexModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\JwtHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Data\LTE.WebAPI.xml" />
@@ -311,7 +322,14 @@
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\TestClientReferences.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\TestClientDialogs.cshtml" />
+    <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Include="Scripts\jquery-1.8.2.intellisense.js" />
+    <Content Include="Logs\iBatisMapper_20190724.txt" />
+    <Content Include="Logs\iBatisMapper_20190725.txt" />
+    <Content Include="Logs\iBatis_20190724.txt" />
+    <Content Include="Logs\iBatis_20190725.txt" />
+    <Content Include="Logs\Log_20190724.txt" />
+    <Content Include="Logs\Log_20190725.txt" />
     <Content Include="Scripts\jquery-1.8.2.js" />
     <Content Include="Scripts\jquery-1.8.2.min.js" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
@@ -327,7 +345,9 @@
     <Content Include="Scripts\knockout-3.2.0.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
     <Content Include="Scripts\WebApiTestClient.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>

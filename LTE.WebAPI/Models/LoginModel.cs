@@ -6,6 +6,9 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
 using System.Collections;
 using System.Data;
+using LTE.WebAPI.Utils;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace LTE.WebAPI.Models
 {
@@ -21,6 +24,36 @@ namespace LTE.WebAPI.Models
         /// </summary> 
         public string userPwd { get; set; }
 
+        /// <summary>
+        /// 角色
+        /// </summary>
+        public string[] userRoles { get; set; }
+
+        /// <summary>
+        /// 用户头像
+        /// </summary>
+        public string userFace { get; set; }
+
+        //public LoginModel(string username)
+        //{
+        //    this.userName = userName;
+        //}
+        //public LoginModel(string username, string pwd)
+        //{
+        //    this.userName = username;
+        //    this.userPwd = pwd;
+        //}
+        public LoginModel(){}
+
+        public LoginModel(string username, string pwd)
+        {
+            this.userName = username;
+            this.userPwd = pwd;
+        }
+        public override string ToString()
+        {
+            return string.Format("role:{2} userName:{0} passWord:{1}", this.userName, this.userPwd, this.userRoles);
+        }
         /// <summary>
         /// 检查用户是否合法
         /// </summary>
@@ -43,7 +76,14 @@ namespace LTE.WebAPI.Models
                 }
                 else
                 {
-                    return new Result(true);
+                    DataRow userInfoDt = dt.Rows[0];
+                    //Regex rgx = new Regex(@"[,./?:'\]");
+                    //System.Diagnostics.Debug.Write(userInfo["Role"]);
+                    LoginModel userInfo = new LoginModel{userName=(string)userInfoDt["userName"],
+                        userRoles=((string)userInfoDt["Role"]).Trim().Split(new char[] { ',', ' ', '/', ';','\\' })};
+                    AuthInfo auth = new AuthInfo {userInfo=userInfo};
+                    string token = JwtHelper.SetJwtEncode(auth);
+                    return new Result { ok = true, code = "1", obj = userInfo, msg = "登陆成功", token = token };
                 }
             }
             catch (System.Data.SqlClient.SqlException err)

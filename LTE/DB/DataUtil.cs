@@ -17,7 +17,7 @@ namespace LTE.DB
         /// 链接数据库字符串
         /// 数据库用户名、密码：SqlMap.config
         /// </summary>
-        public static string ConnectionString = "Data Source=localhost;Initial Catalog=NJCover3D;Integrated Security=True";
+        public static string ConnectionString = "Data Source=localhost;Initial Catalog=NJCover3D;user id=sa;password=123456";
 
         ///<summary>
         /// 获取连接

@@ -9,6 +9,7 @@ using LTE.WebAPI.Models;
 
 namespace LTE.WebAPI.Controllers
 {
+    [AllowAnonymous]
     public class LoginController : ApiController
     {
         /// <summary>
@@ -19,7 +20,8 @@ namespace LTE.WebAPI.Controllers
         [HttpPost]
         public Result PostLogin([FromBody]LoginModel user)
         {
-            return LoginModel.CheckUser(user.userName, user.userPwd);
+            Result res = LoginModel.CheckUser(user.userName, user.userPwd);
+            return res;
         }
     }
 }

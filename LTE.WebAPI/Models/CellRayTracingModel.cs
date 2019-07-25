@@ -174,7 +174,7 @@ namespace LTE.WebAPI.Models
                 return new Result(false, "该小区正在计算");
             }
 
-            return new Result(true);
+            return new Result { ok=true, msg="小区覆盖计算结束", code="1"};
         }
     }
 

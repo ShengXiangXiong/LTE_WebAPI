@@ -9,7 +9,7 @@ using System.Data;
 using LTE.DB;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using LTE.InternalInterference.Debug;
+using LTE.InternalInterference.ProcessControl;
 
 namespace LTE.WebAPI.Models
 {
