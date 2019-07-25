@@ -75,6 +75,7 @@ namespace LTE.InternalInterference.Grid
             ht["minGYID"] = minGYID;
             ht["maxGYID"] = maxGYID;
 
+            // 建筑物
             DataTable dt = IbatisHelper.ExecuteQueryForDataTable("GetAccelerateStruct", ht);
 
             List<int> bid;//哈希表中每一个key值（栅格）对应的建筑物id列表
@@ -173,6 +174,37 @@ namespace LTE.InternalInterference.Grid
             return null;
         }
 
+        public static void constructGridTin()
+        {
+            //清除前一部分区域的数据，防止内存溢出 2019.7.22 xsx
+            gridTIN.Clear();
+
+            // 2019.5.28 地形
+            Hashtable ht = new Hashtable();
+            ht["minGXID"] = minGXID;
+            ht["maxGXID"] = maxGXID;
+            ht["minGYID"] = minGYID;
+            ht["maxGYID"] = maxGYID;
+
+            DataTable dt2 = IbatisHelper.ExecuteQueryForDataTable("GetAccelerateStructTIN", ht);
+
+            List<int> TINid;//哈希表中每一个key值（栅格）对应的TIN id 列表
+            for (int i = 0; i < dt2.Rows.Count; i++)//按行遍历DataTable
+            {
+                string key = dt2.Rows[i]["GXID"].ToString() + "," + dt2.Rows[i]["GYID"].ToString() + "," + dt2.Rows[i]["GZID"].ToString();
+
+                if (!gridTIN.ContainsKey(key))
+                {//若key不存在，创建新的键值对
+                    TINid = new List<int>();
+                    TINid.Add(Convert.ToInt32(dt2.Rows[i]["TINID"]));
+                    gridTIN.Add(key, TINid);
+                }
+                else
+                {//若key存在，更新键值对
+                    gridTIN[key].Add(Convert.ToInt32(dt2.Rows[i]["TINID"]));
+                }
+            }
+        }
         // 2019.6.5 为计算建筑物海拔作准备
         public static void constructAccelerateStructAltitude()
         {

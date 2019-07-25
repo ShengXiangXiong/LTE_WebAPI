@@ -29,7 +29,7 @@ namespace LTE.InternalInterference.Grid
         public static Dictionary<int, List<Point>> buildingVertex = new Dictionary<int, List<Point>>();
         private static Dictionary<int, List<Point>> buildingTopVertex = new Dictionary<int, List<Point>>();
         //未平滑顶点
-        private static Dictionary<int, List<Point>> buildingVertexOriginal = new Dictionary<int, List<Point>>();
+        public static Dictionary<int, List<Point>> buildingVertexOriginal = new Dictionary<int, List<Point>>();
 
         //指定范围内的building ID的最大最小值
         private static int minID = Int32.MaxValue, maxID = Int32.MinValue;
@@ -471,7 +471,34 @@ namespace LTE.InternalInterference.Grid
                 buildingCenter.Add(bid, new Point(x, y, z));
             }
         }
+        // 2019.7.20 xsx 建筑物栅格还未划分时，根据范围和中心点得到建筑物中心点
+        public static void constructBuildingCenterByArea(double minGx, double maxGx, double minGy, double maxGy)
+        {
+            //清除前一部分区域的数据，防止内存溢出 2019.7.22 xsx
+            buildingCenter.Clear();
 
+            Hashtable ht = new Hashtable();
+            ht["minGX"] = minGx;
+            ht["maxGX"] = maxGx;
+            ht["minGY"] = minGy;
+            ht["maxGY"] = maxGy;
+
+            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("GetBuildingCenterByArea", ht);
+
+            int bid;
+            double x, y, z;
+            for (int i = 0; i < dt.Rows.Count; i++)//按行遍历DataTable
+            {
+                bid = Convert.ToInt32(dt.Rows[i]["BuildingID"]);
+                if (bid > maxID) maxID = bid;
+                if (bid < minID) minID = bid;
+                x = Convert.ToDouble(dt.Rows[i]["BCenterX"]);
+                y = Convert.ToDouble(dt.Rows[i]["BCenterY"]);
+                z = Convert.ToDouble(dt.Rows[i]["BHeight"]);
+                buildingCenter.Add(bid, new Point(x, y, z));
+            }
+            //return dt;
+        }
         /// <summary>
         /// 平滑处理
         /// </summary>

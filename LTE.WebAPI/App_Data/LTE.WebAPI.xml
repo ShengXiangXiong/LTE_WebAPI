@@ -1089,6 +1089,19 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="M:LTE.WebAPI.Models.GridModel.calcTIN(System.Double,System.Double,System.Double,System.Double,System.Double,System.Int32,System.Int32)">
+            <summary>
+            2019.7.21 xsx 修改源代码逻辑，增添分页操作，按栅格面积分页，解决数据完整性问题
+            </summary>
+            <param name="minX"></param>
+            <param name="minY"></param>
+            <param name="maxX"></param>
+            <param name="maxY"></param>
+            <param name="agridsize"></param>
+            <param name="maxAxid"></param>
+            <param name="maxAyid"></param>
+            <returns></returns>
+        </member>
         <member name="P:LTE.WebAPI.Models.InterferenceLocateModel.minLongitude">
             <summary>
             最小经度

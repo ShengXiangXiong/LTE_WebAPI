@@ -36,21 +36,27 @@ namespace LTE.InternalInterference.Grid
         // 获取区域内的 TIN 
         public static int constructTINVertex()
         {
+            //清除前一部分区域的数据，防止内存溢出 2019.7.22 xsx
+            TINVertex.Clear();
+
             Hashtable ht = new Hashtable();
             ht["minX"] = MinX;
             ht["maxX"] = MaxX;
             ht["minY"] = MinY;
             ht["maxY"] = MaxY;
 
-            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("GetTINVertex", ht);
+            //DataTable dt = IbatisHelper.ExecuteQueryForDataTable("GetTINVertex", ht);
+            //通过矩形覆盖方式取，防止顶点在外面在内的特殊情况
+            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("GetTINVertexByArea", ht);
+
             List<Point> vcollection;
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 int TINid = Convert.ToInt32(dt.Rows[i]["TINID"]);
                 double x = Convert.ToDouble(dt.Rows[i]["VertexX"]);
                 double y = Convert.ToDouble(dt.Rows[i]["VertexY"]);
-	double z = Convert.ToDouble(dt.Rows[i]["VertexHeight"]);
-                Point t = new Point(x, y, 0);
+                double z =  Convert.ToDouble(dt.Rows[i]["VertexHeight"]);
+                Point t = new Point(x, y, z);
 
                 if (TINVertex.ContainsKey(TINid))
                 {

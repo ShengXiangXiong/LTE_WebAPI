@@ -41,6 +41,7 @@
             {
                 if (data.ok == true)
                 {
+                    window.localStorage.setItem("token", data.token);
                     window.location.href = "@Url.Action("Home","Home")";
                 }
                 else

@@ -299,6 +299,7 @@
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.tooltip.min.css" />
+    <Content Include="DataServiceSqlMap.xml" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Areas\HelpPage\Views\Web.config" />
@@ -325,7 +326,6 @@
     <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Include="Scripts\jquery-1.8.2.intellisense.js" />
     <Content Include="Logs\iBatisMapper_20190724.txt" />
-    <Content Include="Logs\iBatisMapper_20190725.txt" />
     <Content Include="Logs\iBatis_20190724.txt" />
     <Content Include="Logs\iBatis_20190725.txt" />
     <Content Include="Logs\Log_20190724.txt" />

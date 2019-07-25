@@ -170,7 +170,7 @@
     <Compile Include="GIS\Property\GetGridProperty.cs" />
     <Compile Include="GIS\OperateCellLayer.cs" />
     <Compile Include="InternalInterference\Gain\AnalysisEntry.cs" />
-    <Compile Include="InternalInterference\Debug\Calc.cs" />
+    <Compile Include="InternalInterference\ProcessControl\Calc.cs" />
     <Compile Include="InternalInterference\Grid\GridCover.cs" />
     <Compile Include="InternalInterference\Math\Mat.cs" />
     <Compile Include="InternalInterference\Math\LM.cs" />

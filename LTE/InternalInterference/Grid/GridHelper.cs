@@ -428,7 +428,7 @@ namespace LTE.InternalInterference.Grid
         }
 
         /// <summary>
-        /// 返回加速网格坐标所在的空间点
+        /// 返回加速网格坐标所在的空间中心点坐标
         /// </summary>
         /// <param name="lng"></param>
         /// <param name="lat"></param>
@@ -446,7 +446,7 @@ namespace LTE.InternalInterference.Grid
         }
 
         /// <summary>
-        /// 返回网格坐标所在的空间点
+        /// 返回网格坐标所在的空间中心点坐标
         /// </summary>
         /// <param name="lng"></param>
         /// <param name="lat"></param>

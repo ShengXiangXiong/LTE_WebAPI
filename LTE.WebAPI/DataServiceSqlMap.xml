@@ -30,11 +30,19 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		<delete id="DeleteBuildingVertex">
 			delete from tbBuildingVertex
 		</delete>
-    <select id="GetBuildingVertexOriginal">
-            select a.BuildingID, a.VertexX, a.VertexY from tbBuildingVertexOriginal as a
-	    order by a.BuildingID, a.VIndex
-		   
+    <select id="GetBuildingVertexOriginal" parameterClass="Hashtable">
+            <!--select a.BuildingID, a.VertexX, a.VertexY from tbBuildingVertexOriginal as a
+	    order by a.BuildingID, a.VIndex-->
+      <![CDATA[
+      select BuildingID, VertexX, VertexY from tbBuildingVertexOriginal
+     where BuildingID > $pageindex$ * $pagesize$ and BuildingID <= ($pageindex$+1)* $pagesize$ order by BuildingID, VIndex
+     ]]>
+      <!--a.BuildingID>($pageindex$ * $pagesize$) and a.BuildingID 
+      ($pageindex$ * $pagesize$)
+      offset ($pageindex$ * $pagesize$) rows
+      fetch next $pagesize$ rows only-->
     </select>
+  
 		<select id="GetOneBuildingVertex" parameterClass="string">
             select a.VertexLong, a.VertexLat from tbBuildingVertex a
 			where a.BuildingID = '$buildingid$' order by a.VIndex
@@ -46,6 +54,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		<delete id="DeleteGroundGrids" timeout="3000">
 			delete from tbGridDem
 		</delete>
+  
 		<select id="getGridRange" parameterClass="Hashtable">
 			select AreaMinLong, AreaMinLat, AreaMaxLong, AreaMaxLat, AreaMinX, AreaMinY, AreaMaxX, AreaMaxY, GGridSize, MaxGGXID, MaxGGYID, GHeight, GBaseHeight, AGridSize, AGridVSize, MaxAGXID, MaxAGYID, MinX, MinY, MinGGXID, MinGGYID, MinAGXID, MinAGYID from tbGridRange
                 where id = $id$
@@ -58,9 +67,30 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 '$AreaMaxX$', '$AreaMaxY$', '$GGridSize$', '$MaxGGXID$', '$MaxGGYID$', '$GHeight$', '$GBaseHeight$', '$AGridSize$', 
 '$AGridVSize$','$MaxAGXID$', '$MaxAGYID$', '$MinX$', '$MinY$', '$MinGGXID$', '$MinGGYID$', '$MinAGXID$', '$MinAGYID$');
 		</insert>
+  
+    <insert id ="gennerateTin" parameterClass="Hashtable">
+      <![CDATA[
+    INSERT INTO [dbo].tbTIN
+           ([TINID]
+           ,vertexX
+           ,vertexY
+           ,vertexHeight
+           ,VIndex)
+		select [TINID]
+           ,vertexX
+           ,vertexY
+           ,vertexHeight-$minHeight$
+           ,VIndex from tbTINOriginal 
+			where TINID in(
+				select distinct  TINID from TinSurroundBox 
+		EXCEPT(select TINID from TinSurroundBox b where b.MaxX<$minX$ or b.MaxY<$minY$ or $maxX$<b.Minx or $maxY$<b.Miny)
+		 )
+     ]]>
+    </insert>
+  
 		<!--获取GSM900小区的信息-->
 		<select id="GetGSM900CellLayerData" resultClass="LTE.Model.CELL">
-      		select distinct ID, eNodeB, CI, CellName, CellNameChs, x, y, AntHeight + altitude as AntHeight, Altitude, Azimuth, Tilt, Longitude, Latitude, EARFCN, EIRP, CoverageRadius from CELL
+      		select distinct ID, eNodeB, CI, CellName, CellNameChs, x, y, AntHeight, Altitude, Azimuth, Tilt, Longitude, Latitude, EARFCN, EIRP, CoverageRadius from CELL
 		</select>
 		<!--获取GSM1800小区的信息-->
 		<select id="GetGSM1800CellLayerData" resultClass="LTE.Model.CELL">
@@ -435,11 +465,13 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 	where PointGID >= 0
     </select>
 
-    <select id="getBuildingVertexSmooth" parameterClass="">
-        select tbBuildingVertex.BuildingID, VertexX, VertexY, BHeight, BAltitude, VIndex
-	from tbBuildingVertex, tbBuilding 
-	where tbBuildingVertex.BuildingID = tbBuilding.BuildingID
-	order by tbBuildingVertex.BuildingID, Vindex
+    <select id="getBuildingVertexSmooth" parameterClass="Hashtable">
+      <![CDATA[
+      select tbBuildingVertex.BuildingID, VertexX, VertexY, BHeight, BAltitude, VIndex
+      from tbBuildingVertex, tbBuilding
+      where tbBuilding.BuildingID > $pageindex$ * $pagesize$ and tbBuilding.BuildingID <= ($pageindex$+1)* $pagesize$ and tbBuildingVertex.BuildingID = tbBuilding.BuildingID
+        order by tbBuildingVertex.BuildingID, Vindex
+        ]]>
     </select>
   
   <select id="getBuildingVertexSmooth1" parameterClass="">
@@ -550,6 +582,13 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 	and b.GYID between '$minGYID$' and '$maxGYID$'
 	</select>
 
+  <select id="GetBuildingCenterByArea" parameterClass="HashTable">
+    select distinct BuildingID, BCenterX, BCenterY, BHeight, BAltitude
+    from tbBuilding
+    where BCenterX between $minGX$ and $maxGX$
+    and BCenterY between $minGY$ and $maxGY$
+  </select>
+  
 	<select id="GetBuildingVertexPre" parameterClass="HashTable">
             	   select a.BuildingID, a.VertexX, a.VertexY from tbBuildingVertex a
 	    where a.BuildingID in 
@@ -701,6 +740,14 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
    <delete id="DeleteAccrelateTIN">
     delete from tbAccelerateGridTIN
    </delete>
+   
+  <delete id="TruncateTIN" timeout="3000">
+    TRUNCATE TABLE tbTIN
+  </delete>
+
+  <delete id="TruncateAccelerateGridTIN" timeout="3000">
+    TRUNCATE TABLE tbAccelerateGridTIN
+  </delete>
 
    <!-- 获取范围内的加速栅格中的 TIN -->
     <select id="GetAccelerateStructTIN" parameterClass="HashTable">
@@ -720,6 +767,24 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 	order by a.TINID, a.VIndex 
     </select>
 
+  <select id="GetTINVertexByArea" parameterClass="HashTable">
+  <![CDATA[
+  select distinct * from tbTIN where Tinid in (
+	select distinct  TINID from TinSurroundBox 
+		EXCEPT(select TINID from TinSurroundBox b where b.MaxX<$minX$ or b.MaxY<$minY$ or $maxX$<b.Minx or $maxY$<b.Miny)
+	) order by TINID, VIndex
+  ]]>
+  </select>
+
+  <select id="GetTINVertexByGrid" parameterClass="HashTable">
+    <![CDATA[
+  select distinct * from tbTIN where Tinid in (
+	select distinct  TINID from TinSurroundBox 
+		EXCEPT(select TINID from TinSurroundBox b where b.MaxX<$minX$+$minXGrid$*30 or b.MaxY<$minY$+$minYGrid$*30 or $minX$+($maxXGrid$+1)*30<b.Minx or $minY$+($maxYGrid$+1)*30<b.Miny)
+	) order by TINID, VIndex
+  ]]>
+  </select>
+  
     <select id="GetTINVertex" parameterClass="HashTable">
 	select a.TINID, a.VertexX, a.VertexY, a.VertexHeight from tbTIN a
 	where a.TINID in 
@@ -747,10 +812,20 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     <select id="getBuilding" parameterClass="">
 	select * from tbBuilding
     </select>
+  
+  <select id="getBuildingByArea" parameterClass="HashTable">
+    select * from tbBuilding where BCenterX between $minGX$ and $maxGX$
+    and BCenterY between $minGY$ and $maxGY$
+  </select>
 
      <delete id="DeleteBuilding">
     	delete from tbBuilding
    </delete>
+
+  <delete id="DeleteBuildingByArea" parameterClass="HashTable">
+    delete from tbBuilding where BCenterX between $minGX$ and $maxGX$
+    and BCenterY between $minGY$ and $maxGY$
+  </delete>
 
   <select id="getBuildingInfo" parameterClass="">
     select tbBuilding.BuildingID, VertexX, VertexY, BHeight, BAltitude

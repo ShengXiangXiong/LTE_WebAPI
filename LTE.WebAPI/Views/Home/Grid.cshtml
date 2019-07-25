@@ -13,10 +13,10 @@
         <h3>名称</h3>
         网格名称：<input type="text" id="name" value="zsgrid30" /> <br /><br />
         <h3>范围</h3>
-        最小经度：<input type="text" id="minLongitude" value=118.724060 /><br />
-        最小纬度：<input type="text" id="minLatitude" value=32.006110 /> <br />
-        最大经度：<input type="text" id="maxLongitude" value=118.806605 /><br />
-        最大纬度：<input type="text" id="maxLatitude" value=32.089630 /><br /><br />
+        最小经度：<input type="text" id="minLongitude" value=118.5641 /><br />
+        最小纬度：<input type="text" id="minLatitude" value=31.8630 /> <br />
+        最大经度：<input type="text" id="maxLongitude" value=118.9796 /><br />
+        最大纬度：<input type="text" id="maxLatitude" value=32.3731 /><br /><br />
         <h3>大小</h3>
         网格边长：<input type="text" id="sideLength" value=5 /><br /><br />
         <input type="button" id="grid" value="确定" /><br /><br />
@@ -42,6 +42,7 @@
             type: "POST",
             contentType: "application/json; charset=utf-8",
             data: JSON.stringify(grid),
+            headers: { "auth": window.localStorage.getItem("token") },
             success: function (data, status)
             {
                 if (data.ok == true)
