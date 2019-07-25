@@ -1,0 +1,9 @@
+[Header]
+25/07/2019-10:36:52 Adding file [SqlMap.config] to list of watched files.
+25/07/2019-10:36:52 Adding file [DataServiceSqlMap.xml] to list of watched files.
+[Header]
+25/07/2019-10:40:12 Adding file [SqlMap.config] to list of watched files.
+25/07/2019-10:40:12 Adding file [DataServiceSqlMap.xml] to list of watched files.
+[Header]
+25/07/2019-10:44:44 Adding file [SqlMap.config] to list of watched files.
+25/07/2019-10:44:44 Adding file [DataServiceSqlMap.xml] to list of watched files.
