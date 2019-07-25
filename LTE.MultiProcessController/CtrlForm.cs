@@ -490,7 +490,7 @@ namespace LTE.MultiProcessController
                 Console.WriteLine("write done");
 
                 this.GridStrengths.Clear();
-                Console.ReadKey(); // 2019.04.12
+                //Console.ReadKey(); // 2019.04.12
                 this.cs.free();
                 this.Close();  // 2019.04.12
                 //this.procDoneNum = 0;

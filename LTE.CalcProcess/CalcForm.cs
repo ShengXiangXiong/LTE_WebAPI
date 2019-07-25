@@ -559,7 +559,7 @@ namespace LTE.CalcProcess
             // 一条射线约占350字节
             Console.WriteLine("射线占约内存数：{0} M", this.interAnalysis.rayCount * 350 / 1048576);
 
-            Console.ReadKey();
+            //Console.ReadKey();
             this.cs.free();
             this.Close();
         }
