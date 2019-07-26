@@ -61,11 +61,12 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		</select>
                 <!--网格范围-->
 		<insert id="insertGridRange" parameterClass="Hashtable">
-		delete from tbGridRange where id = $id$
-		insert into tbGridRange
-		values('$id$', '$AreaMinLong$', '$AreaMinLat$', '$AreaMaxLong$','$AreaMaxLat$', '$AreaMinX$', '$AreaMinY$', 
-'$AreaMaxX$', '$AreaMaxY$', '$GGridSize$', '$MaxGGXID$', '$MaxGGYID$', '$GHeight$', '$GBaseHeight$', '$AGridSize$', 
-'$AGridVSize$','$MaxAGXID$', '$MaxAGYID$', '$MinX$', '$MinY$', '$MinGGXID$', '$MinGGYID$', '$MinAGXID$', '$MinAGYID$');
+			delete from tbGridRange where id = $id$
+			insert into tbGridRange
+			values('$id$', '$AreaMinLong$', '$AreaMinLat$', '$AreaMaxLong$','$AreaMaxLat$', '$AreaMinX$', '$AreaMinY$',
+			'$AreaMaxX$', '$AreaMaxY$', '$GGridSize$', '$MaxGGXID$', '$MaxGGYID$', '$GHeight$', '$GBaseHeight$', '$AGridSize$',
+			'$AGridVSize$','$MaxAGXID$', '$MaxAGYID$', '$MinX$', '$MinY$', '$MinGGXID$', '$MinGGYID$', '$MinAGXID$', '$MinAGYID$',
+			'$MaxTinHeight$','$MinTinHeight$');
 		</insert>
   
     <insert id ="gennerateTin" parameterClass="Hashtable">
@@ -837,6 +838,16 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   <select id="getAdjCoeff1" parameterClass="">
     select max(Scene) from tbAccelerateGridScene
   </select>
+	
+	<!--获得tin高度值最大值最小值, by JinHj-->
+	<select id="getMaxTinHeight" parameterClass="">
+		select max(vertexHeight) as MaxTinHeight
+		from tbTINOriginal
+	</select>
+	<select id="getMinTinHeight" parameterClass="">
+		select min(vertexHeight) as MinTinHeight
+		from tbTINOriginal
+	</select>
 
   </statements>
 </sqlMap>
