@@ -124,7 +124,6 @@ namespace LTE.WebAPI.Models
             rt = calcGroundGrid(pMin.X, pMin.Y, maxgxid, maxgyid, this.sideLength);
             if (!rt.ok)
                 return rt;
-            
             return rt;
         }
 
@@ -679,11 +678,11 @@ namespace LTE.WebAPI.Models
                     double y1 = Convert.ToDouble(tb.Rows[i]["maxY"].ToString());
 
                     // 建筑物底面跨越的均匀栅格
-                    int minGxid = Convert.ToInt32(Math.Ceiling((x - minX) / agridsize)) - 1;
-                    int minGyid = Convert.ToInt32(Math.Ceiling((y - minY) / agridsize)) - 1;
-                    int maxGxid = Convert.ToInt32(Math.Ceiling((x1 - minX) / agridsize)) - 1;
-                    int maxGyid = Convert.ToInt32(Math.Ceiling((y1 - minY) / agridsize)) - 1;
-                    int maxGzid = Convert.ToInt32(Math.Ceiling((height + altitude) / agridsize)) - 1;
+                    int minGxid = (int) Math.Floor((x - minX) / agridsize);
+                    int minGyid = (int)Math.Floor((y - minY) / agridsize);
+                    int maxGxid=(int)Math.Floor((x1 - minX) / agridsize);
+                    int maxGyid = (int)Math.Floor((y1 - minY) / agridsize);
+                    int maxGzid=(int)Math.Floor((height + altitude) / agridsize);
 
                     bool ok = (x >= minX || x1 <= maxX || y >= minY || y1 <= maxY);
 
