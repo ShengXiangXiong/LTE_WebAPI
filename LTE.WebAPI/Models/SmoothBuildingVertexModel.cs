@@ -6,6 +6,8 @@ using LTE.InternalInterference.Grid;
 using System.Data;
 using LTE.DB;
 using LTE.GIS;
+using System.Data;
+using System.Collections;
 
 namespace LTE.WebAPI.Models
 {
@@ -26,9 +28,7 @@ namespace LTE.WebAPI.Models
 
         public Result smoothBuildingPoints()
         {
-            BuildingGrid3D.constructBuildingVertexOriginal();
-            int minBid, maxBid;
-            BuildingGrid3D.getAllBuildingIDRange(out minBid, out maxBid);
+            IbatisHelper.ExecuteDelete("DeleteBuildingVertex", null);
 
             DataTable dt = new DataTable();
             dt.Columns.Add("BuildingID", System.Type.GetType("System.Int32"));
@@ -38,47 +38,51 @@ namespace LTE.WebAPI.Models
             dt.Columns.Add("VertexY", System.Type.GetType("System.Double"));
             dt.Columns.Add("VIndex", System.Type.GetType("System.Int16"));
 
-            try
+            Hashtable ht = new Hashtable();
+            int pageindex = 0;
+            int pagesize = 10000;
+            ht["pageindex"] = pageindex;
+            ht["pagesize"] = pagesize;
+            BuildingGrid3D.constructBuildingVertexOriginal(pageParam: ht);
+            while (BuildingGrid3D.buildingVertexOriginal.Count > 0)
             {
-                IbatisHelper.ExecuteDelete("DeleteBuildingVertex", null);
-            }
-            catch(Exception e)
-            {
-                return new Result(false, e.ToString());
-            }
+                int minBid, maxBid;
+                BuildingGrid3D.getAllBuildingIDRange(out minBid, out maxBid);
 
-            for (int i = minBid; i <= maxBid; i++)
-            {
-                List<LTE.Geometric.Point> bpoints = BuildingGrid3D.getBuildingVertexOriginal(i);
-
-                List<LTE.Geometric.Point> ps = Process(ref bpoints);  // 2018-05-08
-                if (ps.Count < 20)
-                    ps = bpoints;
-
-                for (int j = 0; j < ps.Count; j++)
+                for (int i = minBid; i <= maxBid; i++)
                 {
-                    ESRI.ArcGIS.Geometry.IPoint p = GeometryUtilities.ConstructPoint2D(ps[j].X, ps[j].Y);
-                    PointConvert.Instance.GetGeoPoint(p);
-                    DataRow dr = dt.NewRow();
-                    dr["BuildingID"] = i;
-                    dr["VertexLong"] = p.X;
-                    dr["VertexLat"] = p.Y;
-                    dr["VertexX"] = ps[j].X;
-                    dr["VertexY"] = ps[j].Y;
-                    dr["VIndex"] = j;
-                    dt.Rows.Add(dr);
-                }
-                if (dt.Rows.Count >= 5000)
-                {
-                    DataUtil.BCPDataTableImport(dt, "tbBuildingVertex");
-                    dt.Clear();
-                }
-            }
-            DataUtil.BCPDataTableImport(dt, "tbBuildingVertex");
-            dt.Clear();
-            BuildingGrid3D.clearBuildingVertexOriginal();
+                    List<LTE.Geometric.Point> bpoints = BuildingGrid3D.getBuildingVertexOriginal(i);
 
-            return new Result(true);
+                    List<LTE.Geometric.Point> ps = Process(ref bpoints);  // 2018-05-08
+                    if (ps.Count < 20)
+                        ps = bpoints;
+
+                    for (int j = 0; j < ps.Count; j++)
+                    {
+                        ESRI.ArcGIS.Geometry.IPoint p = GeometryUtilities.ConstructPoint2D(ps[j].X, ps[j].Y);
+                        PointConvert.Instance.GetGeoPoint(p);
+                        DataRow dr = dt.NewRow();
+                        dr["BuildingID"] = i;
+                        dr["VertexLong"] = p.X;
+                        dr["VertexLat"] = p.Y;
+                        dr["VertexX"] = ps[j].X;
+                        dr["VertexY"] = ps[j].Y;
+                        dr["VIndex"] = j;
+                        dt.Rows.Add(dr);
+                    }
+                    if (dt.Rows.Count >= 5000)
+                    {
+                        DataUtil.BCPDataTableImport(dt, "tbBuildingVertex");
+                        dt.Clear();
+                    }
+                }
+                DataUtil.BCPDataTableImport(dt, "tbBuildingVertex");
+                dt.Clear();
+                BuildingGrid3D.clearBuildingVertexOriginal();
+                ht["pageindex"] = ++pageindex;
+                BuildingGrid3D.constructBuildingVertexOriginal(pageParam: ht);
+            }
+            return new Result(true,"建筑物顶点平滑完成");
         }
 
         public double cross(LTE.Geometric.Point p1,

@@ -502,12 +502,12 @@ namespace LTE.InternalInterference.Grid
         /// <summary>
         /// 平滑处理
         /// </summary>
-        public static void constructBuildingVertexOriginal()
+        public static void constructBuildingVertexOriginal(Hashtable pageParam = null)
         {
             maxBID = int.MinValue;
             minBID = int.MaxValue;
 
-            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("GetBuildingVertexOriginal", null);
+            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("GetBuildingVertexOriginal", pageParam);
             List<Point> vcollection;
             Point t;
 
