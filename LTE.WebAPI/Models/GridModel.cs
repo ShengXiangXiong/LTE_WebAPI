@@ -819,6 +819,8 @@ namespace LTE.WebAPI.Models
         // 地面网格
         Result calcGroundGrid(double minX, double minY, int maxgxid, int maxgyid, double gridlength)
         {
+            System.Diagnostics.Debug.WriteLine("地面栅格划分开始时间："+DateTime.Now.ToString());
+
             IbatisHelper.ExecuteDelete("DeleteGroundGrids", null);
 
             System.Data.DataTable dtable = new System.Data.DataTable();
@@ -842,12 +844,20 @@ namespace LTE.WebAPI.Models
             gminX = minX;
             gminY = minY;
 
-            ESRI.ArcGIS.Geometry.IPoint p1 = new ESRI.ArcGIS.Geometry.PointClass();
-            ESRI.ArcGIS.Geometry.IPoint p2 = new ESRI.ArcGIS.Geometry.PointClass();
-            ESRI.ArcGIS.Geometry.IPoint p3 = new ESRI.ArcGIS.Geometry.PointClass();
+            //为后面使用proj.net库转换坐标做准备,点类型更改为LTE.Geometric.Point类型,by JinHaijia
+            LTE.Geometric.Point p1 = new LTE.Geometric.Point();
+            LTE.Geometric.Point p2 = new LTE.Geometric.Point();
+            LTE.Geometric.Point p3 = new LTE.Geometric.Point();
+
+            //旧版使用arcgis接口转换坐标
+            //ESRI.ArcGIS.Geometry.IPoint p1 = new ESRI.ArcGIS.Geometry.PointClass();
+            //ESRI.ArcGIS.Geometry.IPoint p2 = new ESRI.ArcGIS.Geometry.PointClass();
+            //ESRI.ArcGIS.Geometry.IPoint p3 = new ESRI.ArcGIS.Geometry.PointClass();
+
             p1.Z = 0;
             p2.Z = 0;
             p3.Z = 0;
+
             //  地面栅格
             for (int x = 0; x < maxgxid; x++)
             {
@@ -869,9 +879,13 @@ namespace LTE.WebAPI.Models
                     p1.Y = gminY;
                     p2.Y = gmaxY;
                     p3.Y = gcY;
-                    PointConvert.Instance.GetGeoPoint(p1);
-                    PointConvert.Instance.GetGeoPoint(p2);
-                    PointConvert.Instance.GetGeoPoint(p3);
+                    //PointConvert.Instance.GetGeoPoint(p1);
+                    //PointConvert.Instance.GetGeoPoint(p2);
+                    //PointConvert.Instance.GetGeoPoint(p3);
+                    p1 = PointConvertByProj.Instance.GetGeoPoint(p1);
+                    p2 = PointConvertByProj.Instance.GetGeoPoint(p2);
+                    p3 = PointConvertByProj.Instance.GetGeoPoint(p3);
+
 
                     System.Data.DataRow thisrow = dtable.NewRow();
                     thisrow["GXID"] = x;
@@ -918,6 +932,8 @@ namespace LTE.WebAPI.Models
                 bcp.Close();
             }
             dtable.Clear();
+
+            System.Diagnostics.Debug.WriteLine("地面栅格划分结束时间:"+DateTime.Now.ToString());
 
             return new Result(true);
         }

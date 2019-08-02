@@ -59,12 +59,22 @@ namespace LTE.WebAPI.Models
 
                     for (int j = 0; j < ps.Count; j++)
                     {
-                        ESRI.ArcGIS.Geometry.IPoint p = GeometryUtilities.ConstructPoint2D(ps[j].X, ps[j].Y);
-                        PointConvert.Instance.GetGeoPoint(p);
+                        //使用proj.net库转换坐标,by JinHaijia
+                        LTE.Geometric.Point pCopy=new LTE.Geometric.Point(ps[j]);
+                        pCopy = PointConvertByProj.Instance.GetGeoPoint(pCopy);
+                        
+                        //旧版使用arcgis接口转换坐标
+                        //ESRI.ArcGIS.Geometry.IPoint p = GeometryUtilities.ConstructPoint2D(ps[j].X, ps[j].Y);
+                        //PointConvert.Instance.GetGeoPoint(p);
+
+                        //System.Diagnostics.Debug.WriteLine("transfNew long:" + pCopy.X + " latitude:" + pCopy.Y);
+                        //System.Diagnostics.Debug.WriteLine("transfOld long:" + p.X + " latitude:" + p.Y);
+                        //System.Diagnostics.Debug.WriteLine("_________");
+
                         DataRow dr = dt.NewRow();
                         dr["BuildingID"] = i;
-                        dr["VertexLong"] = p.X;
-                        dr["VertexLat"] = p.Y;
+                        dr["VertexLong"] = pCopy.X;
+                        dr["VertexLat"] = pCopy.Y;
                         dr["VertexX"] = ps[j].X;
                         dr["VertexY"] = ps[j].Y;
                         dr["VIndex"] = j;
