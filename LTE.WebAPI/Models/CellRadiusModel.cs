@@ -7,6 +7,7 @@ using LTE.Geometric;
 using System.Data;
 using System.IO;
 using System.Data.SqlClient;
+using System.Collections;
 
 namespace LTE.WebAPI.Models
 {
@@ -16,51 +17,50 @@ namespace LTE.WebAPI.Models
         public Result calcRadius()
         {
             #region 读数据
-            DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getAllCells", null);
-            if(tb.Rows.Count < 1)
-                return new Result(false, "无小区数据");
+            //DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getAllCells", null);
+            //if(tb.Rows.Count < 1)
+            //    return new Result(false, "无小区数据");
+            //List<Cell> cells = new List<Cell>();
+            //Dictionary<string, int> cellCnt = new Dictionary<string, int>();
 
-            List<Cell> cells = new List<Cell>();
-            Dictionary<string, int> cellCnt = new Dictionary<string, int>();
+            //foreach (DataRow dataRow in tb.Rows)
+            //{
+            //    Cell cell = new Cell();
+            //    cell.BtsName = dataRow["BtsName"].ToString();
 
-            foreach (DataRow dataRow in tb.Rows)
-            {
-                Cell cell = new Cell();
-                cell.BtsName = dataRow["BtsName"].ToString();
+            //    if (cellCnt.ContainsKey(cell.BtsName))
+            //    {
+            //        cellCnt[cell.BtsName]++;
+            //    }
+            //    else
+            //        cellCnt[cell.BtsName] = 1;
 
-                if (cellCnt.ContainsKey(cell.BtsName))
-                {
-                    cellCnt[cell.BtsName]++;
-                }
-                else
-                    cellCnt[cell.BtsName] = 1;
+            //    cell.id = int.Parse(dataRow["id"].ToString());
+            //    cell.CellName = dataRow["CellName"].ToString();
+            //    cell.Longitude = double.Parse(dataRow["Longitude"].ToString());
+            //    cell.Latitude = double.Parse(dataRow["Latitude"].ToString());
+            //    cell.Altitude = float.Parse(dataRow["Altitude"].ToString());
+            //    cell.x = float.Parse(dataRow["x"].ToString());
+            //    cell.y = float.Parse(dataRow["y"].ToString());
+            //    cell.AntHeight = float.Parse(dataRow["AntHeight"].ToString());
+            //    cell.Azimuth = float.Parse(dataRow["Azimuth"].ToString());
+            //    cell.MechTilt = float.Parse(dataRow["MechTilt"].ToString());
+            //    cell.ElecTilt = float.Parse(dataRow["ElecTilt"].ToString());
+            //    cell.Tilt = float.Parse(dataRow["Tilt"].ToString());
+            //    cell.FeederLength = float.Parse(dataRow["FeederLength"].ToString());
+            //    cell.EIRP = float.Parse(dataRow["EIRP"].ToString());
+            //    cell.PathlossMode = dataRow["PathlossMode"].ToString();
+            //    cell.CoverageType = dataRow["CoverageType"].ToString();
+            //    cell.NetType = dataRow["NetType"].ToString();
+            //    cell.Comments = dataRow["Comments"].ToString();
+            //    cell.eNodeB = int.Parse(dataRow["eNodeB"].ToString());
+            //    cell.CI = int.Parse(dataRow["CI"].ToString());
+            //    cell.CellNameChs = dataRow["CellNameChs"].ToString();
+            //    cell.EARFCN = int.Parse(dataRow["EARFCN"].ToString());
+            //    cell.PCI = int.Parse(dataRow["PCI"].ToString());
 
-                cell.id = int.Parse(dataRow["id"].ToString());
-                cell.CellName = dataRow["CellName"].ToString();
-                cell.Longitude = double.Parse(dataRow["Longitude"].ToString());
-                cell.Latitude = double.Parse(dataRow["Latitude"].ToString());
-                cell.Altitude = float.Parse(dataRow["Altitude"].ToString());
-                cell.x = float.Parse(dataRow["x"].ToString());
-                cell.y = float.Parse(dataRow["y"].ToString());
-                cell.AntHeight = float.Parse(dataRow["AntHeight"].ToString());
-                cell.Azimuth = float.Parse(dataRow["Azimuth"].ToString());
-                cell.MechTilt = float.Parse(dataRow["MechTilt"].ToString());
-                cell.ElecTilt = float.Parse(dataRow["ElecTilt"].ToString());
-                cell.Tilt = float.Parse(dataRow["Tilt"].ToString());
-                cell.FeederLength = float.Parse(dataRow["FeederLength"].ToString());
-                cell.EIRP = float.Parse(dataRow["EIRP"].ToString());
-                cell.PathlossMode = dataRow["PathlossMode"].ToString();
-                cell.CoverageType = dataRow["CoverageType"].ToString();
-                cell.NetType = dataRow["NetType"].ToString();
-                cell.Comments = dataRow["Comments"].ToString();
-                cell.eNodeB = int.Parse(dataRow["eNodeB"].ToString());
-                cell.CI = int.Parse(dataRow["CI"].ToString());
-                cell.CellNameChs = dataRow["CellNameChs"].ToString();
-                cell.EARFCN = int.Parse(dataRow["EARFCN"].ToString());
-                cell.PCI = int.Parse(dataRow["PCI"].ToString());
-
-                cells.Add(cell);
-            }
+            //    cells.Add(cell);
+            //}
             #endregion
 
             # region 计算理论覆盖半径
@@ -68,7 +68,21 @@ namespace LTE.WebAPI.Models
             //StreamWriter sw = File.CreateText("cellRadius.txt");
             //StreamWriter sw1 = File.CreateText("nearCellRadius.txt");
 
-            Dictionary<string, float> radius = new Dictionary<string, float>();
+            IList<CELL> cells = IbatisHelper.ExecuteQueryForList<CELL>("CELL_SelectAll", null);
+            Dictionary<string, int> cellCnt = new Dictionary<string, int>();
+            Dictionary<string, double> radius = new Dictionary<string, double>();
+            foreach(CELL a in cells)
+            {
+                //if(cellCnt[a.BtsName])
+                if (cellCnt.ContainsKey(a.BtsName))
+                {
+                    cellCnt[a.BtsName]++;
+                }
+                else
+                {
+                    cellCnt[a.BtsName] = 1;
+                }
+            }
 
             for (int i = 0; i < cells.Count; i++)
             {
@@ -95,7 +109,7 @@ namespace LTE.WebAPI.Models
                     double antVAngle = getVAngle("", cells[i].Tilt); //记录垂直功率角
 
                     double upper = 0, main = 0, lower = 0; //记录算出来的覆盖半径外，覆盖半径中，覆盖半径内的值
-                    cmptCovR(cells[i].AntHeight + cells[i].Altitude, cells[i].Tilt, antVAngle, ref upper, ref main, ref lower); //返回计算出来的值
+                    cmptCovR(Convert.ToDouble(cells[i].AntHeight + cells[i].Altitude), cells[i].Tilt, antVAngle, ref upper, ref main, ref lower); //返回计算出来的值
 
                     double outCellCover, inCellCover;
                     if (upper == Double.MaxValue)
@@ -154,80 +168,81 @@ namespace LTE.WebAPI.Models
             #endregion
 
             #region 写数据
-            ///*
-            System.Data.DataTable dtable = new System.Data.DataTable();
-            dtable.Columns.Add("id");
-            dtable.Columns.Add("CellName");
-            dtable.Columns.Add("BtsName");
-            dtable.Columns.Add("Longitude");
-            dtable.Columns.Add("Latitude");
-            dtable.Columns.Add("x");
-            dtable.Columns.Add("y");
-            dtable.Columns.Add("Altitude");
-            dtable.Columns.Add("AntHeight");
-            dtable.Columns.Add("Azimuth");
-            dtable.Columns.Add("MechTilt");
-            dtable.Columns.Add("ElecTilt");
-            dtable.Columns.Add("Tilt");
-            dtable.Columns.Add("CoverageRadius");
-            dtable.Columns.Add("FeederLength");
-            dtable.Columns.Add("EIRP");
-            dtable.Columns.Add("PathlossMode");
-            dtable.Columns.Add("CoverageType");
-            dtable.Columns.Add("NetType");
-            dtable.Columns.Add("Comments");
-            dtable.Columns.Add("eNodeB");
-            dtable.Columns.Add("CI");
-            dtable.Columns.Add("CellNameChs");
-            dtable.Columns.Add("EARFCN");
-            dtable.Columns.Add("PCI");
+            /////*
+            //System.Data.DataTable dtable = new System.Data.DataTable();
+            //dtable.Columns.Add("id");
+            //dtable.Columns.Add("CellName");
+            //dtable.Columns.Add("BtsName");
+            //dtable.Columns.Add("Longitude");
+            //dtable.Columns.Add("Latitude");
+            //dtable.Columns.Add("x");
+            //dtable.Columns.Add("y");
+            //dtable.Columns.Add("Altitude");
+            //dtable.Columns.Add("AntHeight");
+            //dtable.Columns.Add("Azimuth");
+            //dtable.Columns.Add("MechTilt");
+            //dtable.Columns.Add("ElecTilt");
+            //dtable.Columns.Add("Tilt");
+            //dtable.Columns.Add("CoverageRadius");
+            //dtable.Columns.Add("FeederLength");
+            //dtable.Columns.Add("EIRP");
+            //dtable.Columns.Add("PathlossMode");
+            //dtable.Columns.Add("CoverageType");
+            //dtable.Columns.Add("NetType");
+            //dtable.Columns.Add("Comments");
+            //dtable.Columns.Add("eNodeB");
+            //dtable.Columns.Add("CI");
+            //dtable.Columns.Add("CellNameChs");
+            //dtable.Columns.Add("EARFCN");
+            //dtable.Columns.Add("PCI");
 
-            for (int i = 0; i < cells.Count; i++)
-            {
-                System.Data.DataRow thisrow = dtable.NewRow();
+            //for (int i = 0; i < cells.Count; i++)
+            //{
+            //    System.Data.DataRow thisrow = dtable.NewRow();
 
-                thisrow["id"] = cells[i].id;
-                thisrow["CellName"] = cells[i].CellName;
-                thisrow["BtsName"] = cells[i].BtsName;
-                thisrow["Longitude"] = cells[i].Longitude;
-                thisrow["Latitude"] = cells[i].Latitude;
-                thisrow["x"] = cells[i].x;
-                thisrow["y"] = cells[i].y;
-                thisrow["Altitude"] = cells[i].Altitude;
-                thisrow["AntHeight"] = cells[i].AntHeight;
-                thisrow["Azimuth"] = cells[i].Azimuth;
-                thisrow["MechTilt"] = cells[i].MechTilt;
-                thisrow["ElecTilt"] = cells[i].ElecTilt;
-                thisrow["Tilt"] = cells[i].Tilt;
-                thisrow["CoverageRadius"] = cells[i].CoverageRadius;
-                thisrow["FeederLength"] = cells[i].FeederLength;
-                thisrow["EIRP"] = cells[i].EIRP;
-                thisrow["PathlossMode"] = cells[i].PathlossMode;
-                thisrow["CoverageType"] = cells[i].CoverageType;
-                thisrow["NetType"] = cells[i].NetType;
-                thisrow["Comments"] = cells[i].Comments;
-                thisrow["eNodeB"] = cells[i].eNodeB;
-                thisrow["CI"] = cells[i].CI;
-                thisrow["CellNameChs"] = cells[i].CellNameChs;
-                thisrow["EARFCN"] = cells[i].EARFCN;
-                thisrow["PCI"] = cells[i].PCI;
-                dtable.Rows.Add(thisrow);
-            }
+            //    thisrow["id"] = cells[i].ID;
+            //    thisrow["CellName"] = cells[i].CellName;
+            //    thisrow["BtsName"] = cells[i].BtsName;
+            //    thisrow["Longitude"] = cells[i].Longitude;
+            //    thisrow["Latitude"] = cells[i].Latitude;
+            //    thisrow["x"] = cells[i].x;
+            //    thisrow["y"] = cells[i].y;
+            //    thisrow["Altitude"] = cells[i].Altitude;
+            //    thisrow["AntHeight"] = cells[i].AntHeight;
+            //    thisrow["Azimuth"] = cells[i].Azimuth;
+            //    thisrow["MechTilt"] = cells[i].MechTilt;
+            //    thisrow["ElecTilt"] = cells[i].ElecTilt;
+            //    thisrow["Tilt"] = cells[i].Tilt;
+            //    thisrow["CoverageRadius"] = cells[i].CoverageRadius;
+            //    thisrow["FeederLength"] = cells[i].FeederLength;
+            //    thisrow["EIRP"] = cells[i].EIRP;
+            //    thisrow["PathlossMode"] = cells[i].PathlossMode;
+            //    thisrow["CoverageType"] = cells[i].CoverageType;
+            //    thisrow["NetType"] = cells[i].NetType;
+            //    thisrow["Comments"] = cells[i].Comments;
+            //    thisrow["eNodeB"] = cells[i].eNodeB;
+            //    thisrow["CI"] = cells[i].CI;
+            //    thisrow["CellNameChs"] = cells[i].CellNameChs;
+            //    thisrow["EARFCN"] = cells[i].EARFCN;
+            //    thisrow["PCI"] = cells[i].PCI;
+            //    dtable.Rows.Add(thisrow);
+            //}
 
-            // 删除旧的建筑物网格
-            IbatisHelper.ExecuteDelete("deleteAllCells", null);
+            //// 删除旧的建筑物网格
+            //IbatisHelper.ExecuteDelete("deleteAllCells", null);
 
-            using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
-            {
-                bcp.BatchSize = dtable.Rows.Count;
-                bcp.BulkCopyTimeout = 1000;
-                bcp.DestinationTableName = "CELL";
-                bcp.WriteToServer(dtable);
-                bcp.Close();
-            }
-            dtable.Clear();
+            //using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+            //{
+            //    bcp.BatchSize = dtable.Rows.Count;
+            //    bcp.BulkCopyTimeout = 1000;
+            //    bcp.DestinationTableName = "CELL";
+            //    bcp.WriteToServer(dtable);
+            //    bcp.Close();
+            //}
+            //dtable.Clear();
             // */
             #endregion
+            IbatisHelper.ExecuteUpdate("CELLBatchUpdateCoverageRadius", cells);
             return new Result(true);
         }
 
@@ -238,7 +253,7 @@ namespace LTE.WebAPI.Models
         }
 
         // 第k个小区覆盖方向的180度范围内，最近n个小区的距离、平均距离 
-        private double inCoverCells(ref List<Cell> cells, int k, int n, StreamWriter sw)
+        private double inCoverCells(ref List<Cell2> cells, int k, int n, StreamWriter sw)
         {
             double fromAngle = cells[k].Azimuth - 90;
             double toAngle = cells[k].Azimuth + 90;
@@ -294,7 +309,7 @@ namespace LTE.WebAPI.Models
         // 位于maxDis范围内的n个最近邻区的平均距离
         // k：小区下标
         // m：倍数
-        double nearCellCovR(double maxDis, ref List<Cell> cells, int k, int n, int m, ref double minDis)//, StreamWriter sw)
+        double nearCellCovR(double maxDis, ref IList<CELL> cells, int k, int n, int m, ref double minDis)//, StreamWriter sw)
         {
             double fromAngle = cells[k].Azimuth - 90;
             double toAngle = cells[k].Azimuth + 90;
@@ -315,13 +330,13 @@ namespace LTE.WebAPI.Models
                 hs.Add(cells[i].BtsName);
 
                 // 不在180度的覆盖范围内
-                LTE.Geometric.Point source = new LTE.Geometric.Point(cells[k].x, cells[k].y, 0);
-                LTE.Geometric.Point p = new LTE.Geometric.Point(cells[i].x, cells[i].y, 0);
+                LTE.Geometric.Point source = new LTE.Geometric.Point(Convert.ToDouble(cells[k].x), Convert.ToDouble(cells[k].y), 0);
+                LTE.Geometric.Point p = new LTE.Geometric.Point(Convert.ToDouble(cells[i].x), Convert.ToDouble(cells[i].y), 0);
                 Polar pr = GeometricUtilities.getPolarCoord(source, p);
                 if (!isInRange(pr.theta, from, to))
                     continue;
 
-                double dis1 = dis(cells[i].x, cells[i].y, cells[k].x, cells[k].y);
+                double dis1 = dis(Convert.ToDouble(cells[i].x), Convert.ToDouble(cells[i].y), Convert.ToDouble(cells[k].x), Convert.ToDouble(cells[k].y));
                 if (dis1 > maxDis)
                     continue;
 
@@ -434,7 +449,7 @@ namespace LTE.WebAPI.Models
         ///<param name="NeighborCellDis">最近邻区距离</para>
         ///<param name="NeighborCellAvgDis">最近邻区平均距离</para>
         ///</summary>
-        double cmptRadius(float Tilt, float Height, double OutCellCover, double InCellCover, double NeighborCellDis, double NeighborCellAvgDis)
+        double cmptRadius(double Tilt, Decimal Height, double OutCellCover, double InCellCover, double NeighborCellDis, double NeighborCellAvgDis)
         {
             double radius = 0; //小区的覆盖半径
             if (Tilt <= 6 && Height <= 12)
@@ -581,7 +596,7 @@ namespace LTE.WebAPI.Models
     
     }
 
-    class Cell
+    class Cell2
     {
         public int id;
         public string CellName;

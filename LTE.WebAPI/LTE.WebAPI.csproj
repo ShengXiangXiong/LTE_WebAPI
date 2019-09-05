@@ -218,6 +218,7 @@
     <Compile Include="Models\AreaCoverDefectModel.cs" />
     <Compile Include="Models\AuthInfo.cs" />
     <Compile Include="Models\CalibrationModel.cs" />
+    <Compile Include="Models\CELL.cs" />
     <Compile Include="Models\CellRadiusModel.cs" />
     <Compile Include="Models\DebugModel.cs" />
     <Compile Include="Models\Grid3DStrengthQueryModel.cs" />
@@ -232,13 +233,16 @@
     <Compile Include="Models\ScenePartModel.cs" />
     <Compile Include="Models\SingleRayTracingModel.cs" />
     <Compile Include="Models\SmoothBuildingVertexModel.cs" />
+    <Compile Include="Models\tbAccelerateGridTIN.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\CgAlgorithm.cs" />
     <Compile Include="Utils\JwtHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Data\LTE.WebAPI.xml" />
     <Content Include="Areas\HelpPage\HelpPage.css" />
     <Content Include="Areas\HelpPage\TestClient.css" />
+    <Content Include="CELL.xml" />
     <Content Include="Content\themes\base\images\ui-bg_flat_0_aaaaaa_40x100.png" />
     <Content Include="Content\themes\base\images\ui-bg_flat_75_ffffff_40x100.png" />
     <Content Include="Content\themes\base\images\ui-bg_glass_55_fbf9ee_1x400.png" />
@@ -345,6 +349,9 @@
     <Content Include="Scripts\knockout-3.2.0.js" />
     <Content Include="Scripts\modernizr-2.6.2.js" />
     <Content Include="Scripts\WebApiTestClient.js" />
+    <Content Include="tbAccelerateGridTIN.xml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>

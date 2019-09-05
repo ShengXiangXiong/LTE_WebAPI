@@ -9,6 +9,7 @@ using System.Data.SqlClient;
 using System.Collections;
 using System.Data;
 using LTE.InternalInterference.Grid;
+using System.Diagnostics;
 
 namespace LTE.WebAPI.Models
 {
@@ -89,28 +90,33 @@ namespace LTE.WebAPI.Models
 
             Result rt = new Result(true);
 
-            // 2019.6.11 地图范围
+            //// 2019.6.11 地图范围
             rt = calcRange(minLongitude, minLatitude, maxLongitude, maxLatitude, pMin.X, pMin.Y, pMax.X, pMax.Y, maxAgxid, maxAgyid, maxgxid, maxgyid, this.sideLength);
             if (!rt.ok)
                 return rt;
 
-            // 2019.5.28 地形和地形所在的加速栅格
+            //// 2019.5.28 地形和地形所在的加速栅格
             rt = calcTIN(pMin.X, pMin.Y, pMax.X, pMax.Y, 30, maxAgxid, maxAgyid);
             if (!rt.ok)
                 return rt;
 
-            // 2019.6.5 得到建筑物海拔，基于地形
+            //// 2019.6.5 得到建筑物海拔，基于地形
             rt = calcBuildingAltitude(pMin.X, pMin.Y, pMax.X, pMax.Y, 0, 0, maxAgxid, maxAgyid, 0, 0, maxgxid, maxgyid);
             if (!rt.ok)
                 return rt;
 
-            // 2019.6.11 建筑物所在的加速栅格，基于地形
+            //// 2019.6.11 建筑物所在的加速栅格，基于地形
             rt = calcAcclerateBuilding(pMin.X, pMin.Y, pMax.X, pMax.Y, 30, maxAgxid, maxAgyid);
             if (!rt.ok)
                 return rt;
 
-            // 2019.6.11 建筑物表面栅格，基于地形
+            //// 2019.6.11 建筑物表面栅格，基于地形
             rt = calcBuildingGrids(pMin.X, pMin.Y, pMax.X, pMax.Y, this.sideLength, maxgxid, maxgyid);
+            if (!rt.ok)
+                return rt;
+
+            //根据tin数据更新cell的altitude信息
+            rt = addAltitude(maxAgxid, maxAgyid, 30,batchSize:100);
             if (!rt.ok)
                 return rt;
 
@@ -547,10 +553,6 @@ namespace LTE.WebAPI.Models
                         for (int j = i; j < i + 3; j++)
                         {
                             id = Convert.ToInt32(tb.Rows[j]["TINID"].ToString());
-                            if(id== 77490)
-                            {
-                                Console.WriteLine("1111111111");
-                            }
                             double x = Convert.ToDouble(tb.Rows[j]["VertexX"].ToString());
                             double y = Convert.ToDouble(tb.Rows[j]["VertexY"].ToString());
                             double z = Convert.ToDouble(tb.Rows[j]["VertexHeight"].ToString());
@@ -767,6 +769,175 @@ namespace LTE.WebAPI.Models
             }
         }
 
+        /// <summary>
+        /// 根据划分好的加速栅格，按栅格筛选出所有在此栅格的tin数据
+        /// </summary>
+        /// <param name="maxAxid"></param>
+        /// <param name="maxAyid"></param>
+        /// <param name="agridsize"></param>
+        /// <param name="batchSize"></param>
+        /// <returns></returns>
+        Result addAltitude(int maxAxid, int maxAyid, int agridsize=30, int batchSize=300)
+        {
+            Hashtable ht = new Hashtable();
+            DataTable cells = IbatisHelper.ExecuteQueryForDataTable("getAllCellProjPos", null);
+            List<CELL> res = new List<CELL>();
+            List<tbAccelerateGridTIN> cellGrids = new List<tbAccelerateGridTIN>();
+            Dictionary<string, List<CELL>> grid2cell = new Dictionary<string, List<CELL>>();
+
+            foreach (DataRow cell in cells.Rows)
+            {
+                int gxid = 0;
+                int gyid = 0;
+                int gzid = 0;
+                if (GridHelper.getInstance().XYZToAccGrid(Convert.ToDouble(cell["x"]),Convert.ToDouble(cell["y"]),0,ref gxid,ref gyid,ref gzid))
+                {
+                    string key = string.Format("{0},{1}", gxid,gyid);
+                    CELL cELL = new CELL { ID=Convert.ToInt32(cell["ID"]),x = Convert.ToDecimal(cell["x"]), y = Convert.ToDecimal(cell["y"]) };
+                    if (grid2cell.ContainsKey(key))
+                    {
+                        grid2cell[key].Add(cELL);
+                    }
+                    else
+                    {
+                        List<CELL> ls = new List<CELL>();
+                        ls.Add(cELL);
+                        grid2cell[key] = ls;
+                        tbAccelerateGridTIN gd = new tbAccelerateGridTIN { GXID = gxid, GYID = gyid };
+                        cellGrids.Add(gd);
+                    }
+                }
+            }
+
+            DataTable grid2Tin = IbatisHelper.ExecuteQueryForDataTable("getTinByGrids", cellGrids);
+            Dictionary<string, List<Geometric.Point[]>> grid2vertx = new Dictionary<string, List<Geometric.Point[]>>();
+            for (int i = 0; i < grid2Tin.Rows.Count; i += 3)
+            {
+                Geometric.Point[] ps = new Geometric.Point[3];
+                int cnt = 0;
+                string key = string.Format("{0},{1}", grid2Tin.Rows[i]["gxid"], grid2Tin.Rows[i]["gyid"]);
+                object tinid = grid2Tin.Rows[i]["tinid"];
+                for (int j = i; j < i + 3; j++)
+                {
+                    if (!tinid.Equals(grid2Tin.Rows[j]["tinid"]))
+                    {
+                        return new Result(false, tinid.ToString()+" tin数据不完整");
+                    }
+                    double x = Convert.ToDouble(grid2Tin.Rows[j]["vertexX"]);
+                    double y = Convert.ToDouble(grid2Tin.Rows[j]["vertexY"]);
+                    double z = Convert.ToDouble(grid2Tin.Rows[j]["vertexHeight"]);
+                    ps[cnt] = new Geometric.Point(x, y, z);
+                    cnt++;
+                }
+                if (grid2vertx.ContainsKey(key))
+                {
+                    grid2vertx[key].Add(ps);
+                }
+                else
+                {
+                    List<Geometric.Point[]> points = new List<Geometric.Point[]>();
+                    points.Add(ps);
+                    grid2vertx[key] = points;
+                }
+            }
+
+            foreach (string key in grid2vertx.Keys)
+            {
+                List<Geometric.Point[]> points = grid2vertx[key];
+                List<CELL> cELLs = grid2cell[key];
+                foreach (CELL cell in cELLs)
+                {
+                    double x = Convert.ToDouble(cell.x);
+                    double y = Convert.ToDouble(cell.y);
+                    foreach (Geometric.Point[] point in points)
+                    {
+                        bool inTIN = Geometric.PointHeight.isInside(point[0], point[1], point[2], x, y);
+                        if (inTIN)
+                        {
+                            double alt = Geometric.PointHeight.getPointHeight(point[0], point[1], point[2], x, y);
+                            cell.Altitude = Convert.ToDecimal(alt);
+                            res.Add(cell);
+                        }
+                    }
+                }
+            }
+            int rows = IbatisHelper.ExecuteUpdate("CELLBatchUpdateAltitude", res);
+            #region batch operate
+            //int minAgxid = minGxid;
+            //int maxAgxid = Math.Min(maxGxid, minGxid + batchSize);
+            //while (minAgxid <= maxGxid)
+            //{
+            //    int minAgyid = minGyid;
+            //    int maxAgyid = Math.Min(maxGyid, minAgyid + batchSize);
+            //    while (minAgyid <= maxGyid)
+            //    {
+            //        ht["minXGrid"] = minAgxid;
+            //        ht["maxXGrid"] = maxAgxid;
+            //        ht["minYGrid"] = minAgyid;
+            //        ht["maxYGrid"] = maxAgyid;
+            //        DataTable grid2Tin = IbatisHelper.ExecuteQueryForDataTable("getGridTinvertex", ht);
+            //        Dictionary<string, List<Geometric.Point[]>> grid2vertx = new Dictionary<string, List<Geometric.Point[]>>();
+
+            //        //保证从数据库中得到的grid2Tin中的数据是有序的
+            //        for (int i = 0;i< grid2Tin.Rows.Count; i += 3)
+            //        {
+            //            Geometric.Point[] ps = new Geometric.Point[3];
+            //            int cnt = 0;
+            //            string key = string.Format("{0},{1}", grid2Tin.Rows[i]["gxid"], grid2Tin.Rows[i]["gyid"]);
+            //            for (int j = i; j < i + 3; j++)
+            //            {
+            //                double x = Convert.ToDouble(grid2Tin.Rows[i]["vertexX"]);
+            //                double y = Convert.ToDouble(grid2Tin.Rows[i]["vertexY"]);
+            //                ps[cnt] = new Geometric.Point(x,y);
+            //                cnt++;
+            //            }
+            //            if (cnt < 3)
+            //            {
+            //                continue;
+            //            }
+            //            if (!grid2vertx.ContainsKey(key))
+            //            {
+            //                grid2vertx[key].Add(ps);
+            //            }
+            //            else
+            //            {
+            //                List<Geometric.Point[]> points = new List<Geometric.Point[]>();
+            //                points.Add(ps);
+            //                grid2vertx[key] = points;
+            //            }
+            //        }
+
+            //        foreach(string key in grid2vertx.Keys)
+            //        {
+            //            List<Geometric.Point[]> points = grid2vertx[key];
+            //            List<CELL> cELLs = grid2cell[key];
+            //            foreach(CELL cell in cELLs)
+            //            {
+            //                double x = Convert.ToDouble(cell.x);
+            //                double y = Convert.ToDouble(cell.y);
+            //                foreach (Geometric.Point[] point in points)
+            //                {
+            //                    bool inTIN = Geometric.PointHeight.isInside(point[0], point[1], point[2], x, y);
+            //                    if (inTIN)
+            //                    {
+            //                        double alt = Geometric.PointHeight.getPointHeight(point[0], point[1], point[2], x, y);
+            //                        cell.Altitude = Convert.ToDecimal(alt);
+            //                        res.Add(cell);
+            //                    }
+            //                }
+            //            }
+            //        }
+
+            //        minAgyid = maxAgyid + 1;
+            //        maxAgyid = Math.Min(maxAgyid + batchSize, maxGyid);
+            //    }
+            //    minAgxid = maxAgxid + 1;
+            //    maxAgxid = Math.Min(maxAgxid + batchSize, maxGxid);
+            //}
+            #endregion
+
+            return new Result(true);
+        }
         // 地图范围
         Result calcRange(double minlng, double minlat, double maxlng, double maxlat,
                         double minX, double minY, double maxX, double maxY,
@@ -809,7 +980,8 @@ namespace LTE.WebAPI.Models
         // 地面网格
         Result calcGroundGrid(double minX, double minY, int maxgxid, int maxgyid, double gridlength)
         {
-            IbatisHelper.ExecuteDelete("DeleteGroundGrids", null);
+            //IbatisHelper.ExecuteDelete("DeleteGroundGrids", null);
+            IbatisHelper.ExecuteDelete("TruncateGroundGrids");
 
             System.Data.DataTable dtable = new System.Data.DataTable();
             dtable.Columns.Add("GXID");
@@ -883,9 +1055,8 @@ namespace LTE.WebAPI.Models
                     gminY = gmaxY;
                 }
                 gminX = gmaxX;
-
                 // 将地面栅格分批写入数据库
-                if (dtable.Rows.Count > 50000)
+                if (dtable.Rows.Count > 5000)
                 {
                     using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
                     {

@@ -43,7 +43,7 @@ namespace LTE.WebAPI.Models
             int pagesize = 10000;
             ht["pageindex"] = pageindex;
             ht["pagesize"] = pagesize;
-            BuildingGrid3D.constructBuildingVertexOriginal(pageParam: ht);
+            BuildingGrid3D.constructBuildingVertexOriginalByBatch(pageParam: ht);
             while (BuildingGrid3D.buildingVertexOriginal.Count > 0)
             {
                 int minBid, maxBid;
@@ -80,7 +80,7 @@ namespace LTE.WebAPI.Models
                 dt.Clear();
                 BuildingGrid3D.clearBuildingVertexOriginal();
                 ht["pageindex"] = ++pageindex;
-                BuildingGrid3D.constructBuildingVertexOriginal(pageParam: ht);
+                BuildingGrid3D.constructBuildingVertexOriginalByBatch(pageParam: ht);
             }
             return new Result(true,"建筑物顶点平滑完成");
         }

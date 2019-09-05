@@ -121,7 +121,7 @@ namespace LTE.DB
         /// 执行修改
         /// </summary>
         /// <param name="statementName">操作名</param>
-        /// <param name="parameterObject">参数</param>
+        /// <param name="parameterObject">参数，里面存放的是一个具体对象的list集合（key:对象名，value:对象list）</param>
         /// <returns>返回影响行数</returns>
         public static int ExecuteUpdate(string statementName, object parameterObject)
         {
@@ -155,7 +155,7 @@ namespace LTE.DB
         /// <param name="statementName">操作名</param>
         /// <param name="parameterObject">参数</param>
         /// <returns>返回影响行数</returns>
-        public static int ExecuteDelete(string statementName, object parameterObject)
+        public static int ExecuteDelete(string statementName, object parameterObject = null)
         {
             ISqlMapper sqlMap = Mapper();
             int number = 0;

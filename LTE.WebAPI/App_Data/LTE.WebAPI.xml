@@ -796,7 +796,7 @@
             <returns></returns>
         </member>
         <!-- 对于成员“M:LTE.WebAPI.Models.CellRadiusModel.cmptCovR(System.Double,System.Double,System.Double,System.Double@,System.Double@,System.Double@)”忽略有格式错误的 XML 注释 -->
-        <!-- 对于成员“M:LTE.WebAPI.Models.CellRadiusModel.cmptRadius(System.Single,System.Single,System.Double,System.Double,System.Double,System.Double)”忽略有格式错误的 XML 注释 -->
+        <!-- 对于成员“M:LTE.WebAPI.Models.CellRadiusModel.cmptRadius(System.Double,System.Decimal,System.Double,System.Double,System.Double,System.Double)”忽略有格式错误的 XML 注释 -->
         <member name="P:LTE.WebAPI.Models.DebugCellRayTracing.cellName">
             <summary>
             小区名称
@@ -1102,6 +1102,16 @@
             <param name="maxAyid"></param>
             <returns></returns>
         </member>
+        <member name="M:LTE.WebAPI.Models.GridModel.addAltitude(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            根据划分好的加速栅格，按栅格筛选出所有在此栅格的tin数据
+            </summary>
+            <param name="maxAxid"></param>
+            <param name="maxAyid"></param>
+            <param name="agridsize"></param>
+            <param name="batchSize"></param>
+            <returns></returns>
+        </member>
         <member name="P:LTE.WebAPI.Models.InterferenceLocateModel.minLongitude">
             <summary>
             最小经度
@@ -1241,6 +1251,17 @@
             </summary>
         </member>
         <!-- 对于成员“F:LTE.WebAPI.Models.SmoothBuildingVertexModel.relativeMutationRate”忽略有格式错误的 XML 注释 -->
+        <member name="M:LTE.WebAPI.Utils.CgAlgorithm.PositionPnpoly(System.Int32,System.Collections.Generic.List{System.Double},System.Collections.Generic.List{System.Double},System.Double,System.Double)">
+            <summary>
+            判断当前位置是否在不规则形状里面
+            </summary>
+            <param name="nvert">不规则形状的定点数</param>
+            <param name="vertx">不规则形状x坐标集合</param>
+            <param name="verty">不规则形状y坐标集合</param>
+            <param name="testx">当前x坐标</param>
+            <param name="testy">当前y坐标</param>
+            <returns></returns>
+        </member>
         <member name="M:LTE.WebAPI.Utils.JwtHelper.SetJwtEncode(LTE.WebAPI.Models.AuthInfo)">
             <summary>
             生成JwtToken

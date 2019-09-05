@@ -1,0 +1,241 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<sqlMap namespace="CELL"
+		xmlns="http://ibatis.apache.org/mapping"
+    	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <alias>
+    <!-- 类所在项目的具体位置，__为项目名称 -->
+        <typeAlias alias="CELL" type="LTE.WebAPI.Models.CELL, LTE.WebAPI" />
+    </alias>
+	<resultMaps>
+		<resultMap class="CELL" id="CELL_Result">
+			<result column="ID" property="ID" />
+			<result column="CellName" property="CellName" />
+			<result column="BtsName" property="BtsName" />
+			<result column="Longitude" property="Longitude" />
+			<result column="Latitude" property="Latitude" />
+			<result column="x" property="x" />
+			<result column="y" property="y" />
+			<result column="Altitude" property="Altitude" />
+			<result column="AntHeight" property="AntHeight" />
+			<result column="Azimuth" property="Azimuth" />
+			<result column="MechTilt" property="MechTilt" />
+			<result column="ElecTilt" property="ElecTilt" />
+			<result column="Tilt" property="Tilt" />
+			<result column="CoverageRadius" property="CoverageRadius" />
+			<result column="FeederLength" property="FeederLength" />
+			<result column="EIRP" property="EIRP" />
+			<result column="PathlossMode" property="PathlossMode" />
+			<result column="CoverageType" property="CoverageType" />
+			<result column="NetType" property="NetType" />
+			<result column="Comments" property="Comments" />
+			<result column="eNodeB" property="eNodeB" />
+			<result column="CI" property="CI" />
+			<result column="CellNameChs" property="CellNameChs" />
+			<result column="EARFCN" property="EARFCN" />
+			<result column="PCI" property="PCI" />
+		</resultMap>
+	</resultMaps>
+	<statements>
+		<insert id="CELL_Insert" parameterClass="CELL">
+			INSERT INTO [dbo].[CELL] ([ID],[CellName],[BtsName],[Longitude],[Latitude],[x],[y],[Altitude],[AntHeight],[Azimuth],[MechTilt],[ElecTilt],[Tilt],[CoverageRadius],[FeederLength],[EIRP],[PathlossMode],[CoverageType],[NetType],[Comments],[eNodeB],[CI],[CellNameChs],[EARFCN],[PCI]) 
+				VALUES (#ID#,#CellName#,#BtsName#,#Longitude#,#Latitude#,#x#,#y#,#Altitude#,#AntHeight#,#Azimuth#,#MechTilt#,#ElecTilt#,#Tilt#,#CoverageRadius#,#FeederLength#,#EIRP#,#PathlossMode#,#CoverageType#,#NetType#,#Comments#,#eNodeB#,#CI#,#CellNameChs#,#EARFCN#,#PCI#)
+		</insert>
+
+        <statement id="CELL_BatchInsert"  parameterClass="ArrayList">
+            INSERT INTO [dbo].[CELL] ([ID],[CellName],[BtsName],[Longitude],[Latitude],[x],[y],[Altitude],[AntHeight],[Azimuth],[MechTilt],[ElecTilt],[Tilt],[CoverageRadius],[FeederLength],[EIRP],[PathlossMode],[CoverageType],[NetType],[Comments],[eNodeB],[CI],[CellNameChs],[EARFCN],[PCI])
+            VALUES
+            <iterate conjunction=",">
+            <![CDATA[
+                (#[].ID#,#[].CellName#,#[].BtsName#,#[].Longitude#,#[].Latitude#,#[].x#,#[].y#,#[].Altitude#,#[].AntHeight#,#[].Azimuth#,#[].MechTilt#,#[].ElecTilt#,#[].Tilt#,#[].CoverageRadius#,#[].FeederLength#,#[].EIRP#,#[].PathlossMode#,#[].CoverageType#,#[].NetType#,#[].Comments#,#[].eNodeB#,#[].CI#,#[].CellNameChs#,#[].EARFCN#,#[].PCI#)
+            ]]>
+            </iterate>
+        </statement>
+
+		<update id="CELL_Update" parameterClass="CELL">
+			UPDATE [dbo].[CELL] SET [ID] = #ID#,[CellName] = #CellName#,[BtsName] = #BtsName#,[Longitude] = #Longitude#,[Latitude] = #Latitude#,[x] = #x#,[y] = #y#,[Altitude] = #Altitude#,[AntHeight] = #AntHeight#,[Azimuth] = #Azimuth#,[MechTilt] = #MechTilt#,[ElecTilt] = #ElecTilt#,[Tilt] = #Tilt#,[CoverageRadius] = #CoverageRadius#,[FeederLength] = #FeederLength#,[EIRP] = #EIRP#,[PathlossMode] = #PathlossMode#,[CoverageType] = #CoverageType#,[NetType] = #NetType#,[Comments] = #Comments#,[eNodeB] = #eNodeB#,[CI] = #CI#,[CellNameChs] = #CellNameChs#,[EARFCN] = #EARFCN#,[PCI] = #PCI#
+				<dynamic prepend="WHERE">
+                        <isNotNull prepend= "AND" property="ID"> [ID] = #ID# </isNotNull>
+                        <isNotNull prepend= "AND" property="CellName"> [CellName] = #CellName# </isNotNull>
+                        <isNotNull prepend= "AND" property="BtsName"> [BtsName] = #BtsName# </isNotNull>
+                        <isNotNull prepend= "AND" property="Longitude"> [Longitude] = #Longitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="Latitude"> [Latitude] = #Latitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="x"> [x] = #x# </isNotNull>
+                        <isNotNull prepend= "AND" property="y"> [y] = #y# </isNotNull>
+                        <isNotNull prepend= "AND" property="Altitude"> [Altitude] = #Altitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="AntHeight"> [AntHeight] = #AntHeight# </isNotNull>
+                        <isNotNull prepend= "AND" property="Azimuth"> [Azimuth] = #Azimuth# </isNotNull>
+                        <isNotNull prepend= "AND" property="MechTilt"> [MechTilt] = #MechTilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="ElecTilt"> [ElecTilt] = #ElecTilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="Tilt"> [Tilt] = #Tilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="CoverageRadius"> [CoverageRadius] = #CoverageRadius# </isNotNull>
+                        <isNotNull prepend= "AND" property="FeederLength"> [FeederLength] = #FeederLength# </isNotNull>
+                        <isNotNull prepend= "AND" property="EIRP"> [EIRP] = #EIRP# </isNotNull>
+                        <isNotNull prepend= "AND" property="PathlossMode"> [PathlossMode] = #PathlossMode# </isNotNull>
+                        <isNotNull prepend= "AND" property="CoverageType"> [CoverageType] = #CoverageType# </isNotNull>
+                        <isNotNull prepend= "AND" property="NetType"> [NetType] = #NetType# </isNotNull>
+                        <isNotNull prepend= "AND" property="Comments"> [Comments] = #Comments# </isNotNull>
+                        <isNotNull prepend= "AND" property="eNodeB"> [eNodeB] = #eNodeB# </isNotNull>
+                        <isNotNull prepend= "AND" property="CI"> [CI] = #CI# </isNotNull>
+                        <isNotNull prepend= "AND" property="CellNameChs"> [CellNameChs] = #CellNameChs# </isNotNull>
+                        <isNotNull prepend= "AND" property="EARFCN"> [EARFCN] = #EARFCN# </isNotNull>
+                        <isNotNull prepend= "AND" property="PCI"> [PCI] = #PCI# </isNotNull>
+                </dynamic>
+		</update>
+    
+    
+    <update id="CELLBatchUpdateCoverageRadius" parameterClass="ArrayList">
+        <iterate conjunction=";" open="" close="">
+          update cell set
+            CoverageRadius = #[].CoverageRadius#
+          where id = #[].ID#
+        </iterate>
+     </update>
+
+    <update id="CELLBatchUpdateAltitude" parameterClass="ArrayList">
+      <iterate conjunction=";" open="" close="">
+        update cell set
+        Altitude = #[].Altitude#
+        where id = #[].ID#
+      </iterate>
+    </update>
+
+
+		<insert id="CELL_InsertUpdate" parameterClass="CELL">
+			IF EXISTS(SELECT [ID],[CellName],[BtsName],[Longitude],[Latitude],[x],[y],[Altitude],[AntHeight],[Azimuth],[MechTilt],[ElecTilt],[Tilt],[CoverageRadius],[FeederLength],[EIRP],[PathlossMode],[CoverageType],[NetType],[Comments],[eNodeB],[CI],[CellNameChs],[EARFCN],[PCI] FROM [dbo].[CELL]
+                    <dynamic prepend="WHERE">
+                                                <isNotNull prepend= "AND" property="ID"> [ID] = #ID# </isNotNull>
+                        <isNotNull prepend= "AND" property="CellName"> [CellName] = #CellName# </isNotNull>
+                        <isNotNull prepend= "AND" property="BtsName"> [BtsName] = #BtsName# </isNotNull>
+                        <isNotNull prepend= "AND" property="Longitude"> [Longitude] = #Longitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="Latitude"> [Latitude] = #Latitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="x"> [x] = #x# </isNotNull>
+                        <isNotNull prepend= "AND" property="y"> [y] = #y# </isNotNull>
+                        <isNotNull prepend= "AND" property="Altitude"> [Altitude] = #Altitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="AntHeight"> [AntHeight] = #AntHeight# </isNotNull>
+                        <isNotNull prepend= "AND" property="Azimuth"> [Azimuth] = #Azimuth# </isNotNull>
+                        <isNotNull prepend= "AND" property="MechTilt"> [MechTilt] = #MechTilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="ElecTilt"> [ElecTilt] = #ElecTilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="Tilt"> [Tilt] = #Tilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="CoverageRadius"> [CoverageRadius] = #CoverageRadius# </isNotNull>
+                        <isNotNull prepend= "AND" property="FeederLength"> [FeederLength] = #FeederLength# </isNotNull>
+                        <isNotNull prepend= "AND" property="EIRP"> [EIRP] = #EIRP# </isNotNull>
+                        <isNotNull prepend= "AND" property="PathlossMode"> [PathlossMode] = #PathlossMode# </isNotNull>
+                        <isNotNull prepend= "AND" property="CoverageType"> [CoverageType] = #CoverageType# </isNotNull>
+                        <isNotNull prepend= "AND" property="NetType"> [NetType] = #NetType# </isNotNull>
+                        <isNotNull prepend= "AND" property="Comments"> [Comments] = #Comments# </isNotNull>
+                        <isNotNull prepend= "AND" property="eNodeB"> [eNodeB] = #eNodeB# </isNotNull>
+                        <isNotNull prepend= "AND" property="CI"> [CI] = #CI# </isNotNull>
+                        <isNotNull prepend= "AND" property="CellNameChs"> [CellNameChs] = #CellNameChs# </isNotNull>
+                        <isNotNull prepend= "AND" property="EARFCN"> [EARFCN] = #EARFCN# </isNotNull>
+                        <isNotNull prepend= "AND" property="PCI"> [PCI] = #PCI# </isNotNull>)
+                    </dynamic>
+			BEGIN
+				UPDATE [dbo].[CELL] SET [ID] = #ID#,[CellName] = #CellName#,[BtsName] = #BtsName#,[Longitude] = #Longitude#,[Latitude] = #Latitude#,[x] = #x#,[y] = #y#,[Altitude] = #Altitude#,[AntHeight] = #AntHeight#,[Azimuth] = #Azimuth#,[MechTilt] = #MechTilt#,[ElecTilt] = #ElecTilt#,[Tilt] = #Tilt#,[CoverageRadius] = #CoverageRadius#,[FeederLength] = #FeederLength#,[EIRP] = #EIRP#,[PathlossMode] = #PathlossMode#,[CoverageType] = #CoverageType#,[NetType] = #NetType#,[Comments] = #Comments#,[eNodeB] = #eNodeB#,[CI] = #CI#,[CellNameChs] = #CellNameChs#,[EARFCN] = #EARFCN#,[PCI] = #PCI#
+					<dynamic prepend="WHERE">
+                        <isNotNull prepend= "AND" property="ID"> [ID] = #ID# </isNotNull>
+                        <isNotNull prepend= "AND" property="CellName"> [CellName] = #CellName# </isNotNull>
+                        <isNotNull prepend= "AND" property="BtsName"> [BtsName] = #BtsName# </isNotNull>
+                        <isNotNull prepend= "AND" property="Longitude"> [Longitude] = #Longitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="Latitude"> [Latitude] = #Latitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="x"> [x] = #x# </isNotNull>
+                        <isNotNull prepend= "AND" property="y"> [y] = #y# </isNotNull>
+                        <isNotNull prepend= "AND" property="Altitude"> [Altitude] = #Altitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="AntHeight"> [AntHeight] = #AntHeight# </isNotNull>
+                        <isNotNull prepend= "AND" property="Azimuth"> [Azimuth] = #Azimuth# </isNotNull>
+                        <isNotNull prepend= "AND" property="MechTilt"> [MechTilt] = #MechTilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="ElecTilt"> [ElecTilt] = #ElecTilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="Tilt"> [Tilt] = #Tilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="CoverageRadius"> [CoverageRadius] = #CoverageRadius# </isNotNull>
+                        <isNotNull prepend= "AND" property="FeederLength"> [FeederLength] = #FeederLength# </isNotNull>
+                        <isNotNull prepend= "AND" property="EIRP"> [EIRP] = #EIRP# </isNotNull>
+                        <isNotNull prepend= "AND" property="PathlossMode"> [PathlossMode] = #PathlossMode# </isNotNull>
+                        <isNotNull prepend= "AND" property="CoverageType"> [CoverageType] = #CoverageType# </isNotNull>
+                        <isNotNull prepend= "AND" property="NetType"> [NetType] = #NetType# </isNotNull>
+                        <isNotNull prepend= "AND" property="Comments"> [Comments] = #Comments# </isNotNull>
+                        <isNotNull prepend= "AND" property="eNodeB"> [eNodeB] = #eNodeB# </isNotNull>
+                        <isNotNull prepend= "AND" property="CI"> [CI] = #CI# </isNotNull>
+                        <isNotNull prepend= "AND" property="CellNameChs"> [CellNameChs] = #CellNameChs# </isNotNull>
+                        <isNotNull prepend= "AND" property="EARFCN"> [EARFCN] = #EARFCN# </isNotNull>
+                        <isNotNull prepend= "AND" property="PCI"> [PCI] = #PCI# </isNotNull>
+                    </dynamic>
+			END
+			ELSE
+			BEGIN
+				INSERT INTO [dbo].[CELL] ([ID],[CellName],[BtsName],[Longitude],[Latitude],[x],[y],[Altitude],[AntHeight],[Azimuth],[MechTilt],[ElecTilt],[Tilt],[CoverageRadius],[FeederLength],[EIRP],[PathlossMode],[CoverageType],[NetType],[Comments],[eNodeB],[CI],[CellNameChs],[EARFCN],[PCI]) 
+					VALUES (#ID#,#CellName#,#BtsName#,#Longitude#,#Latitude#,#x#,#y#,#Altitude#,#AntHeight#,#Azimuth#,#MechTilt#,#ElecTilt#,#Tilt#,#CoverageRadius#,#FeederLength#,#EIRP#,#PathlossMode#,#CoverageType#,#NetType#,#Comments#,#eNodeB#,#CI#,#CellNameChs#,#EARFCN#,#PCI#)
+			END
+		</insert>
+
+		<delete id="CELL_Delete" parameterClass="CELL">
+			DELETE FROM [dbo].[CELL]
+			    <dynamic prepend="WHERE">
+                        <isNotNull prepend= "AND" property="ID"> [ID] = #ID# </isNotNull>
+                        <isNotNull prepend= "AND" property="CellName"> [CellName] = #CellName# </isNotNull>
+                        <isNotNull prepend= "AND" property="BtsName"> [BtsName] = #BtsName# </isNotNull>
+                        <isNotNull prepend= "AND" property="Longitude"> [Longitude] = #Longitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="Latitude"> [Latitude] = #Latitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="x"> [x] = #x# </isNotNull>
+                        <isNotNull prepend= "AND" property="y"> [y] = #y# </isNotNull>
+                        <isNotNull prepend= "AND" property="Altitude"> [Altitude] = #Altitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="AntHeight"> [AntHeight] = #AntHeight# </isNotNull>
+                        <isNotNull prepend= "AND" property="Azimuth"> [Azimuth] = #Azimuth# </isNotNull>
+                        <isNotNull prepend= "AND" property="MechTilt"> [MechTilt] = #MechTilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="ElecTilt"> [ElecTilt] = #ElecTilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="Tilt"> [Tilt] = #Tilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="CoverageRadius"> [CoverageRadius] = #CoverageRadius# </isNotNull>
+                        <isNotNull prepend= "AND" property="FeederLength"> [FeederLength] = #FeederLength# </isNotNull>
+                        <isNotNull prepend= "AND" property="EIRP"> [EIRP] = #EIRP# </isNotNull>
+                        <isNotNull prepend= "AND" property="PathlossMode"> [PathlossMode] = #PathlossMode# </isNotNull>
+                        <isNotNull prepend= "AND" property="CoverageType"> [CoverageType] = #CoverageType# </isNotNull>
+                        <isNotNull prepend= "AND" property="NetType"> [NetType] = #NetType# </isNotNull>
+                        <isNotNull prepend= "AND" property="Comments"> [Comments] = #Comments# </isNotNull>
+                        <isNotNull prepend= "AND" property="eNodeB"> [eNodeB] = #eNodeB# </isNotNull>
+                        <isNotNull prepend= "AND" property="CI"> [CI] = #CI# </isNotNull>
+                        <isNotNull prepend= "AND" property="CellNameChs"> [CellNameChs] = #CellNameChs# </isNotNull>
+                        <isNotNull prepend= "AND" property="EARFCN"> [EARFCN] = #EARFCN# </isNotNull>
+                        <isNotNull prepend= "AND" property="PCI"> [PCI] = #PCI# </isNotNull>
+                </dynamic>
+		</delete>
+
+		<select id="CELL_Select" parameterClass="CELL" resultMap="CELL_Result" >
+			SELECT [ID],[CellName],[BtsName],[Longitude],[Latitude],[x],[y],[Altitude],[AntHeight],[Azimuth],[MechTilt],[ElecTilt],[Tilt],[CoverageRadius],[FeederLength],[EIRP],[PathlossMode],[CoverageType],[NetType],[Comments],[eNodeB],[CI],[CellNameChs],[EARFCN],[PCI] FROM [dbo].[CELL]
+				<dynamic prepend="WHERE">
+                        <isNotNull prepend= "AND" property="ID"> [ID] = #ID# </isNotNull>
+                        <isNotNull prepend= "AND" property="CellName"> [CellName] = #CellName# </isNotNull>
+                        <isNotNull prepend= "AND" property="BtsName"> [BtsName] = #BtsName# </isNotNull>
+                        <isNotNull prepend= "AND" property="Longitude"> [Longitude] = #Longitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="Latitude"> [Latitude] = #Latitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="x"> [x] = #x# </isNotNull>
+                        <isNotNull prepend= "AND" property="y"> [y] = #y# </isNotNull>
+                        <isNotNull prepend= "AND" property="Altitude"> [Altitude] = #Altitude# </isNotNull>
+                        <isNotNull prepend= "AND" property="AntHeight"> [AntHeight] = #AntHeight# </isNotNull>
+                        <isNotNull prepend= "AND" property="Azimuth"> [Azimuth] = #Azimuth# </isNotNull>
+                        <isNotNull prepend= "AND" property="MechTilt"> [MechTilt] = #MechTilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="ElecTilt"> [ElecTilt] = #ElecTilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="Tilt"> [Tilt] = #Tilt# </isNotNull>
+                        <isNotNull prepend= "AND" property="CoverageRadius"> [CoverageRadius] = #CoverageRadius# </isNotNull>
+                        <isNotNull prepend= "AND" property="FeederLength"> [FeederLength] = #FeederLength# </isNotNull>
+                        <isNotNull prepend= "AND" property="EIRP"> [EIRP] = #EIRP# </isNotNull>
+                        <isNotNull prepend= "AND" property="PathlossMode"> [PathlossMode] = #PathlossMode# </isNotNull>
+                        <isNotNull prepend= "AND" property="CoverageType"> [CoverageType] = #CoverageType# </isNotNull>
+                        <isNotNull prepend= "AND" property="NetType"> [NetType] = #NetType# </isNotNull>
+                        <isNotNull prepend= "AND" property="Comments"> [Comments] = #Comments# </isNotNull>
+                        <isNotNull prepend= "AND" property="eNodeB"> [eNodeB] = #eNodeB# </isNotNull>
+                        <isNotNull prepend= "AND" property="CI"> [CI] = #CI# </isNotNull>
+                        <isNotNull prepend= "AND" property="CellNameChs"> [CellNameChs] = #CellNameChs# </isNotNull>
+                        <isNotNull prepend= "AND" property="EARFCN"> [EARFCN] = #EARFCN# </isNotNull>
+                        <isNotNull prepend= "AND" property="PCI"> [PCI] = #PCI# </isNotNull>
+                </dynamic>
+		</select>
+
+		<select id="CELL_SelectAll" resultMap="CELL_Result" >
+			SELECT [ID],[CellName],[BtsName],[Longitude],[Latitude],[x],[y],[Altitude],[AntHeight],[Azimuth],[MechTilt],[ElecTilt],[Tilt],[CoverageRadius],[FeederLength],[EIRP],[PathlossMode],[CoverageType],[NetType],[Comments],[eNodeB],[CI],[CellNameChs],[EARFCN],[PCI]
+				FROM [dbo].[CELL]
+		</select>
+    
+    <select id="getAllCellProjPos" parameterClass="HashTable" >
+      SELECT [ID],[x],[y],[Altitude] FROM [dbo].[CELL]
+    </select>
+    
+	</statements>
+</sqlMap>

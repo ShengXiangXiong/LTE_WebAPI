@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<sqlMap namespace="tbAccelerateGridTIN"
+		xmlns="http://ibatis.apache.org/mapping"
+    	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <alias>
+    <!-- 类所在项目的具体位置，__为项目名称 -->
+        <typeAlias alias="tbAccelerateGridTIN" type="LTE.WebAPI.Models.tbAccelerateGridTIN, LTE.WebAPI" />
+    </alias>
+	<resultMaps>
+		<resultMap class="tbAccelerateGridTIN" id="tbAccelerateGridTIN_Result">
+			<result column="GXID" property="GXID" />
+			<result column="GYID" property="GYID" />
+			<result column="GZID" property="GZID" />
+			<result column="TINID" property="TINID" />
+		</resultMap>
+	</resultMaps>
+	<statements>
+		<insert id="tbAccelerateGridTIN_Insert" parameterClass="tbAccelerateGridTIN">
+			INSERT INTO [dbo].[tbAccelerateGridTIN] ([GXID],[GYID],[GZID],[TINID]) 
+				VALUES (#GXID#,#GYID#,#GZID#,#TINID#)
+		</insert>
+
+        <statement id="tbAccelerateGridTIN_BatchInsert"  parameterClass="ArrayList">
+            INSERT INTO [dbo].[tbAccelerateGridTIN] ([GXID],[GYID],[GZID],[TINID])
+            VALUES
+            <iterate conjunction=",">
+            <![CDATA[
+                (#[].GXID#,#[].GYID#,#[].GZID#,#[].TINID#)
+            ]]>
+            </iterate>
+        </statement>
+
+		<update id="tbAccelerateGridTIN_Update" parameterClass="tbAccelerateGridTIN">
+			UPDATE [dbo].[tbAccelerateGridTIN] SET [GXID] = #GXID#,[GYID] = #GYID#,[GZID] = #GZID#,[TINID] = #TINID#
+				<dynamic prepend="WHERE">
+                        <isNotNull prepend= "AND" property="GXID"> [GXID] = #GXID# </isNotNull>
+                        <isNotNull prepend= "AND" property="GYID"> [GYID] = #GYID# </isNotNull>
+                        <isNotNull prepend= "AND" property="GZID"> [GZID] = #GZID# </isNotNull>
+                        <isNotNull prepend= "AND" property="TINID"> [TINID] = #TINID# </isNotNull>
+                </dynamic>
+		</update>
+
+		<insert id="tbAccelerateGridTIN_InsertUpdate" parameterClass="tbAccelerateGridTIN">
+			IF EXISTS(SELECT [GXID],[GYID],[GZID],[TINID] FROM [dbo].[tbAccelerateGridTIN]
+                    <dynamic prepend="WHERE">
+                                                <isNotNull prepend= "AND" property="GXID"> [GXID] = #GXID# </isNotNull>
+                        <isNotNull prepend= "AND" property="GYID"> [GYID] = #GYID# </isNotNull>
+                        <isNotNull prepend= "AND" property="GZID"> [GZID] = #GZID# </isNotNull>
+                        <isNotNull prepend= "AND" property="TINID"> [TINID] = #TINID# </isNotNull>)
+                    </dynamic>
+			BEGIN
+				UPDATE [dbo].[tbAccelerateGridTIN] SET [GXID] = #GXID#,[GYID] = #GYID#,[GZID] = #GZID#,[TINID] = #TINID#
+					<dynamic prepend="WHERE">
+                        <isNotNull prepend= "AND" property="GXID"> [GXID] = #GXID# </isNotNull>
+                        <isNotNull prepend= "AND" property="GYID"> [GYID] = #GYID# </isNotNull>
+                        <isNotNull prepend= "AND" property="GZID"> [GZID] = #GZID# </isNotNull>
+                        <isNotNull prepend= "AND" property="TINID"> [TINID] = #TINID# </isNotNull>
+                    </dynamic>
+			END
+			ELSE
+			BEGIN
+				INSERT INTO [dbo].[tbAccelerateGridTIN] ([GXID],[GYID],[GZID],[TINID]) 
+					VALUES (#GXID#,#GYID#,#GZID#,#TINID#)
+			END
+		</insert>
+
+		<delete id="tbAccelerateGridTIN_Delete" parameterClass="tbAccelerateGridTIN">
+			DELETE FROM [dbo].[tbAccelerateGridTIN]
+			    <dynamic prepend="WHERE">
+                        <isNotNull prepend= "AND" property="GXID"> [GXID] = #GXID# </isNotNull>
+                        <isNotNull prepend= "AND" property="GYID"> [GYID] = #GYID# </isNotNull>
+                        <isNotNull prepend= "AND" property="GZID"> [GZID] = #GZID# </isNotNull>
+                        <isNotNull prepend= "AND" property="TINID"> [TINID] = #TINID# </isNotNull>
+                </dynamic>
+		</delete>
+
+		<select id="tbAccelerateGridTIN_Select" parameterClass="tbAccelerateGridTIN" resultMap="tbAccelerateGridTIN_Result" >
+			SELECT [GXID],[GYID],[GZID],[TINID] FROM [dbo].[tbAccelerateGridTIN]
+				<dynamic prepend="WHERE">
+                        <isNotNull prepend= "AND" property="GXID"> [GXID] = #GXID# </isNotNull>
+                        <isNotNull prepend= "AND" property="GYID"> [GYID] = #GYID# </isNotNull>
+                        <isNotNull prepend= "AND" property="GZID"> [GZID] = #GZID# </isNotNull>
+                        <isNotNull prepend= "AND" property="TINID"> [TINID] = #TINID# </isNotNull>
+                </dynamic>
+		</select>
+
+		<select id="tbAccelerateGridTIN_SelectAll" parameterClass="tbAccelerateGridTIN" resultMap="tbAccelerateGridTIN_Result" >
+			SELECT [GXID],[GYID],[GZID],[TINID]
+				FROM [dbo].[tbAccelerateGridTIN]
+		</select>
+
+    <select id="getGridTinvertex" parameterClass="Hashtable">
+      SELECT gxid,gyid,a.tinid,vertexX,vertexY
+      FROM tbtin a right join (select distinct tinid,gxid,gyid from [tbAccelerateGridTIN] where gxid between $minXGrid$ and $maxXGrid$ and gyid between $minYGrid$ and $maxYGrid$) as b
+      on a.TINID = b.TINID;
+    </select>
+
+    <select id="getTinByGrids" parameterClass="ArrayList">
+      SELECT gxid,gyid,vertexX,vertexY,vertexHeight,a.tinid from
+      (select distinct gxid,gyid,tinid from tbAccelerateGridTIN where
+      <iterate conjunction="or" open="" close="">
+        GXID=$[].GXID$ and Gyid = $[].GYID$
+      </iterate>
+      ) as b,tbtin as a
+      where a.TINID = b.TINID
+      order by gxid,gyid,tinid
+    </select>
+    
+	</statements>
+</sqlMap>

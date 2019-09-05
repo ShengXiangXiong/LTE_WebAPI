@@ -499,15 +499,51 @@ namespace LTE.InternalInterference.Grid
             }
             //return dt;
         }
-        /// <summary>
-        /// 平滑处理
-        /// </summary>
-        public static void constructBuildingVertexOriginal(Hashtable pageParam = null)
+
+        public static void constructBuildingVertexOriginalByBatch(Hashtable pageParam)
         {
             maxBID = int.MinValue;
             minBID = int.MaxValue;
 
-            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("GetBuildingVertexOriginal", pageParam);
+            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("GetBuildingVertexOriginalByBatch", pageParam);
+            List<Point> vcollection;
+            Point t;
+
+            int bid;
+            double x, y;
+
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                bid = Convert.ToInt32(dt.Rows[i]["BuildingID"]);
+                if (bid > maxBID) maxBID = bid;
+                if (bid < minBID) minBID = bid;
+
+                x = Convert.ToDouble(dt.Rows[i]["VertexX"]);
+                y = Convert.ToDouble(dt.Rows[i]["VertexY"]);
+                t = new Point(x, y, 0);
+
+                if (buildingVertexOriginal.ContainsKey(bid))
+                {
+                    buildingVertexOriginal[bid].Add(t);
+                }
+                else
+                {
+                    vcollection = new List<Point>();
+                    vcollection.Add(t);
+                    buildingVertexOriginal.Add(bid, vcollection);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 平滑处理
+        /// </summary>
+        public static void constructBuildingVertexOriginal()
+        {
+            maxBID = int.MinValue;
+            minBID = int.MaxValue;
+
+            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("GetBuildingVertexOriginal", null);
             List<Point> vcollection;
             Point t;
 

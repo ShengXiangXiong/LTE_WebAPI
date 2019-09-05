@@ -31,17 +31,20 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 			delete from tbBuildingVertex
 		</delete>
     <select id="GetBuildingVertexOriginal" parameterClass="Hashtable">
-            <!--select a.BuildingID, a.VertexX, a.VertexY from tbBuildingVertexOriginal as a
-	    order by a.BuildingID, a.VIndex-->
-      <![CDATA[
+      select a.BuildingID, a.VertexX, a.VertexY from tbBuildingVertexOriginal as a
+      order by a.BuildingID, a.VIndex
+    </select>
+
+    <select id="GetBuildingVertexOriginalByBatch" parameterClass="Hashtable">
+    <![CDATA[
       select BuildingID, VertexX, VertexY from tbBuildingVertexOriginal
      where BuildingID > $pageindex$ * $pagesize$ and BuildingID <= ($pageindex$+1)* $pagesize$ order by BuildingID, VIndex
      ]]>
-      <!--a.BuildingID>($pageindex$ * $pagesize$) and a.BuildingID 
+    <!--a.BuildingID>($pageindex$ * $pagesize$) and a.BuildingID 
       ($pageindex$ * $pagesize$)
       offset ($pageindex$ * $pagesize$) rows
       fetch next $pagesize$ rows only-->
-    </select>
+  </select>
   
 		<select id="GetOneBuildingVertex" parameterClass="string">
             select a.VertexLong, a.VertexLat from tbBuildingVertex a
@@ -54,6 +57,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		<delete id="DeleteGroundGrids" timeout="3000">
 			delete from tbGridDem
 		</delete>
+
+    <delete id="TruncateGroundGrids">
+      TRUNCATE TABLE tbGridDem
+    </delete>
   
 		<select id="getGridRange" parameterClass="Hashtable">
 			select AreaMinLong, AreaMinLat, AreaMaxLong, AreaMaxLat, AreaMinX, AreaMinY, AreaMaxX, AreaMaxY, GGridSize, MaxGGXID, MaxGGYID, GHeight, GBaseHeight, AGridSize, AGridVSize, MaxAGXID, MaxAGYID, MinX, MinY, MinGGXID, MinGGYID, MinAGXID, MinAGYID from tbGridRange
@@ -335,7 +342,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 	select gxid, gyid, 1 gzid, buildingid from tmp_accelerateGridBuilding where gzid=2
     </insert>
 
-    <!-- 更新路测数据   -->
+  <!-- 更新路测数据   -->
     <update id="UpdateDT">
 	update tbDT
 	set RecePowerDbm = tbGridPathloss.ReceivedPowerdbm
