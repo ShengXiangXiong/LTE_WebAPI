@@ -13,6 +13,7 @@ using IBatisNet.Common.Pagination;
 using IBatisNet.DataMapper.MappedStatements;
 using IBatisNet.Common;
 using IBatisNet.DataMapper.Scope;
+using System.Windows;
 
 namespace LTE.DB
 {
@@ -30,7 +31,6 @@ namespace LTE.DB
         public static ISqlMapper Mapper()
         {
             ISqlMapper sqlMap = IBatisNet.DataMapper.Mapper.Instance();
-
             if (!sqlMap.IsSessionStarted)
             {
                 sqlMap.OpenConnection();

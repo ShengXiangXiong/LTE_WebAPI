@@ -16,7 +16,7 @@ using LTE.GIS;
 using LTE.InternalInterference;
 using LTE.InternalInterference.Grid;
 using LTE.Geometric;
-using LTE.DB;
+using LTE.WebAPI.DB;
 using LTE.Beam;
 
 namespace LTE.CalcProcess

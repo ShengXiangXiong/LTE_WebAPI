@@ -727,6 +727,158 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="F:LTE.WebAPI.DB.DataUtil.ConnectionString">
+            <summary>
+            链接数据库字符串
+            数据库用户名、密码：SqlMap.config
+            </summary>
+        </member>
+        <member name="M:LTE.WebAPI.DB.DataUtil.GetConnection">
+            <summary>
+             获取连接
+             </summary>
+             <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.DataUtil.BCPDataTableImport(System.Data.DataTable,System.String)">
+            <summary>
+            BCP导入数据库
+            </summary>
+            <param name="dataTable">DataTable</param>
+            <param name="tableName">数据库中对应的表名</param>
+        </member>
+        <member name="T:LTE.WebAPI.DB.IbatisHelper">
+            <summary>
+            Ibatis数据访问
+            </summary>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.Mapper">
+            <summary>
+            获得IBatis的sqlmapper对象
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteInsert(System.String,System.Object)">
+            <summary>
+            执行添加
+            </summary>
+            <param name="statementName">操作名</param>
+            <param name="parameterObject">参数</param>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteUpdate(System.String,System.Object)">
+            <summary>
+            执行修改
+            </summary>
+            <param name="statementName">操作名</param>
+            <param name="parameterObject">参数，里面存放的是一个具体对象的list集合（key:对象名，value:对象list）</param>
+            <returns>返回影响行数</returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteDelete(System.String,System.Object)">
+            <summary>
+            执行删除
+            </summary>
+            <param name="statementName">操作名</param>
+            <param name="parameterObject">参数</param>
+            <returns>返回影响行数</returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteNonQuery(System.String)">
+            <summary>
+            无条件执行SQL语句
+            </summary>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteNonQuery(System.String,System.Object)">
+            <summary>
+            无条件执行SQL语句,注:不支持#变量替换
+            </summary>
+            <param name="statementName">iBatis命令名称</param>
+            <param name="parameterObject">指定的参数</param>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteScalar(System.String,System.Object)">
+            <summary>
+            执行SQL语句并将结果返回第一行第一列,注:不支持#变量替换
+            </summary>
+            <param name="statementName">iBatis命令名称</param>
+            <param name="parameterObject">指定的参数</param>
+            <returns>返回第一行第一列的值</returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteQueryForList``1(System.String,System.Object)">
+            <summary>
+            得到列表
+            </summary>
+            <typeparam name="T">实体类型</typeparam>
+            <param name="statementName">操作名称，对应xml中的Statement的id</param>
+            <param name="parameterObject">参数</param>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteQueryForList``1(System.String,System.Object,System.Int32,System.Int32)">
+            <summary>
+            得到指定数量的记录数
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="statementName"></param>
+            <param name="parameterObject">参数</param>
+            <param name="skipResults">跳过的记录数</param>
+            <param name="maxResults">最大返回的记录数</param>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteQueryForObject``1(System.String,System.Object)">
+            <summary>
+            查询得到对象的一个实例
+            </summary>
+            <typeparam name="T">对象type</typeparam>
+            <param name="statementName">操作名</param>
+            <param name="parameterObject">参数</param>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteQueryForObject(System.String,System.Object)">
+            <summary>
+            查询得到对象的一个实例,注:不支持#变量替换
+            </summary>
+            <typeparam name="T">对象type</typeparam>
+            <param name="statementName">操作名</param>
+            <param name="parameterObject">参数</param>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteQueryForDataTable(System.String,System.Object)">
+            <summary>
+            通用的以DataTable的方式得到Select的结果(xml文件中参数要使用$标记的占位参数. 注:不支持#变量替换)
+            </summary>
+            <param name="statementName">语句ID</param>
+            <param name="paramObject">语句所需要的参数</param>
+            <returns>得到的DataTable</returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteQueryForDataSet(System.String,System.Object)">
+            <summary>
+            用的以DataSet的方式得到Select的结果(xml文件中参数要使用$标记的占位参数. 注:不支持#变量替换)
+            </summary>
+            <param name="statementName"></param>
+            <param name="paramObject"></param>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.ExecuteQueryForDataTable(System.String,System.Object,System.Collections.Hashtable@)">
+            <summary>
+            通用的以DataTable的方式得到Select的结果(xml文件中参数要使用$标记的占位参数,注:不支持#变量替换)
+            </summary>
+            <param name="statementName">语句ID</param>
+            <param name="paramObject">语句所需要的参数</param>
+            <param name="htOutPutParameter">Output参数值哈希表</param>
+            <returns>得到的DataTable</returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.GetCommand(System.String,System.Object)">
+            <summary>
+            根据iBatis命令名称和指定的参数获得一个数据库命令对象
+            </summary>
+            <param name="statementName">操作名</param>
+            <param name="parameterObject">参数</param>
+            <returns>数据库命令对象</returns>
+        </member>
+        <member name="M:LTE.WebAPI.DB.IbatisHelper.GetSql(System.String,System.Object)">
+            <summary>
+            获取SQL查询语句(不支持#变量替换)
+            </summary>
+            <param name="statementName">iBatis命令名称</param>
+            <param name="parameterObject">指定的参数</param>
+            <returns>返回SQL的查询语句</returns>
+        </member>
         <member name="P:LTE.WebAPI.Models.AreaCoverDefectModel.minLongitude">
             <summary>
             最小经度

@@ -23,7 +23,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		select distinct GXID, GYID, CX, CY, MinX, MinY, MaxX, MaxY, Dem from tbGridDem
 		</select>
 		<!-- 获取范围内的加速栅格 -->
-		<select id="GetAccelerateStruct" parameterClass="HashTable">
+		<select id="GetAccelerateStruct" parameterClass="Hashtable">
       select GXID,GYID,GZID,BuildingID from tbAccelerateGridBuilding where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$' order by GXID, GYID, GZID
     </select>
 		

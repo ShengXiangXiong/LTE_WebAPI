@@ -121,6 +121,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\LTE.WebAPI\LTE.WebAPI.csproj">
+      <Project>{c4986066-514c-40d7-8fdb-c6ae3828340e}</Project>
+      <Name>LTE.WebAPI</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LTE\LTE.csproj">
       <Project>{6FCF49CC-532A-4508-B2B4-BED927AB7165}</Project>
       <Name>LTE</Name>
