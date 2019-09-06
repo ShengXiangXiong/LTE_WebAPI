@@ -1,4 +1,4 @@
-﻿namespace LTE.WebAPI.Models
+﻿namespace LTE.Model
 {
 	#region tbAccelerateGridTIN
 	/// <summary>
@@ -12,9 +12,7 @@
 	/// 版    本: 1.0.0
 	using System;
     using System.Collections.Generic;
-    using System.ComponentModel.DataAnnotations;
-    using System.ComponentModel.DataAnnotations.Schema;
-    [Table("tbAccelerateGridTIN")]
+
 	public partial class tbAccelerateGridTIN
 	{
 		// Instantiate empty tbAccelerateGridTIN for inserting

@@ -4,7 +4,7 @@
     	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <alias>
     <!-- 类所在项目的具体位置，__为项目名称 -->
-        <typeAlias alias="tbAccelerateGridTIN" type="LTE.WebAPI.Models.tbAccelerateGridTIN, LTE.WebAPI" />
+        <typeAlias alias="tbAccelerateGridTIN" type="LTE.Model.tbAccelerateGridTIN, LTE" />
     </alias>
 	<resultMaps>
 		<resultMap class="tbAccelerateGridTIN" id="tbAccelerateGridTIN_Result">

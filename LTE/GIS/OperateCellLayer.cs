@@ -148,8 +148,8 @@ namespace LTE.GIS
                 {
                     continue;
                 }
-                int lac = gsm900Cell.eNodeB;
-                int ci = gsm900Cell.CI;
+                int lac = gsm900Cell.eNodeB.Value;
+                int ci = gsm900Cell.CI.Value;
                 string cellName = gsm900Cell.CellName;
                 string cellNameChs = gsm900Cell.CellNameChs;
                 double longitude = Convert.ToDouble(gsm900Cell.Longitude.Value);
@@ -241,8 +241,8 @@ namespace LTE.GIS
                     continue;
                 }
 
-                int lac = gsm1800Cell.eNodeB;
-                int ci = gsm1800Cell.CI;
+                int lac = gsm1800Cell.eNodeB.Value;
+                int ci = gsm1800Cell.CI.Value;
                 string cellName = gsm1800Cell.CellName;
                 string cellNameChs = gsm1800Cell.CellNameChs;
                 double longitude = Convert.ToDouble(gsm1800Cell.Longitude.Value);

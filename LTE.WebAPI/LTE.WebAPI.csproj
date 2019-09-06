@@ -227,15 +227,12 @@
     <Compile Include="Controllers\ScenePartController.cs" />
     <Compile Include="Controllers\SingleRayTracingController.cs" />
     <Compile Include="Controllers\SmoothBuildingVertexController.cs" />
-    <Compile Include="DB\DataUtil.cs" />
-    <Compile Include="DB\IbatisHelper.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AreaCoverDefectModel.cs" />
     <Compile Include="Models\AuthInfo.cs" />
     <Compile Include="Models\CalibrationModel.cs" />
-    <Compile Include="Models\CELL.cs" />
     <Compile Include="Models\CellRadiusModel.cs" />
     <Compile Include="Models\DebugModel.cs" />
     <Compile Include="Models\Grid3DStrengthQueryModel.cs" />
@@ -250,7 +247,6 @@
     <Compile Include="Models\ScenePartModel.cs" />
     <Compile Include="Models\SingleRayTracingModel.cs" />
     <Compile Include="Models\SmoothBuildingVertexModel.cs" />
-    <Compile Include="Models\tbAccelerateGridTIN.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\CgAlgorithm.cs" />
     <Compile Include="Utils\JwtHelper.cs" />
@@ -322,7 +318,9 @@
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.tooltip.min.css" />
-    <Content Include="DataServiceSqlMap.xml" />
+    <Content Include="DataServiceSqlMap.xml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Areas\HelpPage\Views\Web.config" />

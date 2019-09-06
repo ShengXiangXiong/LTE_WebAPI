@@ -10,6 +10,7 @@ using System.Collections;
 using System.Data;
 using LTE.InternalInterference.Grid;
 using System.Diagnostics;
+using LTE.Model;
 
 namespace LTE.WebAPI.Models
 {

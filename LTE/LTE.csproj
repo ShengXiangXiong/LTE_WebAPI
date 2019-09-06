@@ -238,6 +238,7 @@
     <Compile Include="InternalInterference\RayTracing.cs" />
     <Compile Include="InternalInterference\NodeInfo.cs" />
     <Compile Include="InternalInterference\SourceInfo.cs" />
+    <Compile Include="Model\tbAccelerateGridTIN.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AsyncUI\AsyncService.cs" />

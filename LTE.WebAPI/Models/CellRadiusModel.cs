@@ -8,6 +8,7 @@ using System.Data;
 using System.IO;
 using System.Data.SqlClient;
 using System.Collections;
+using LTE.Model;
 
 namespace LTE.WebAPI.Models
 {
@@ -106,10 +107,10 @@ namespace LTE.WebAPI.Models
 
                     double avgDis = nearCellCovR(10000, ref cells, i, 4, 1, ref minDis);//, sw1);
 
-                    double antVAngle = getVAngle("", cells[i].Tilt); //记录垂直功率角
+                    double antVAngle = getVAngle("", cells[i].Tilt.Value); //记录垂直功率角
 
                     double upper = 0, main = 0, lower = 0; //记录算出来的覆盖半径外，覆盖半径中，覆盖半径内的值
-                    cmptCovR(Convert.ToDouble(cells[i].AntHeight + cells[i].Altitude), cells[i].Tilt, antVAngle, ref upper, ref main, ref lower); //返回计算出来的值
+                    cmptCovR(Convert.ToDouble(cells[i].AntHeight + cells[i].Altitude), cells[i].Tilt.Value, antVAngle, ref upper, ref main, ref lower); //返回计算出来的值
 
                     double outCellCover, inCellCover;
                     if (upper == Double.MaxValue)
@@ -129,8 +130,8 @@ namespace LTE.WebAPI.Models
                         inCellCover = main;
                     }
 
-                    cells[i].CoverageRadius = (float)cmptRadius(cells[i].Tilt, cells[i].AntHeight + cells[i].Altitude, outCellCover, inCellCover, minDis, avgDis);
-                    radius[cells[i].BtsName] = cells[i].CoverageRadius;
+                    cells[i].CoverageRadius = (float)cmptRadius(cells[i].Tilt.Value, cells[i].AntHeight.Value + cells[i].Altitude.Value, outCellCover, inCellCover, minDis, avgDis);
+                    radius[cells[i].BtsName] = cells[i].CoverageRadius.Value;
 
                     //sw.WriteLine("{0} {1} {2}", cells[i].id, cells[i].BtsName, cells[i].CoverageRadius);
                     //sw.WriteLine("{0}", (int)cells[i].CoverageRadius);
@@ -311,8 +312,8 @@ namespace LTE.WebAPI.Models
         // m：倍数
         double nearCellCovR(double maxDis, ref IList<CELL> cells, int k, int n, int m, ref double minDis)//, StreamWriter sw)
         {
-            double fromAngle = cells[k].Azimuth - 90;
-            double toAngle = cells[k].Azimuth + 90;
+            double fromAngle = cells[k].Azimuth.Value - 90;
+            double toAngle = cells[k].Azimuth.Value + 90;
             double from = GeometricUtilities.ConvertGeometricArithmeticAngle(toAngle + 1);
             double to = GeometricUtilities.ConvertGeometricArithmeticAngle(fromAngle - 1);
             from = GeometricUtilities.GetRadians(from);

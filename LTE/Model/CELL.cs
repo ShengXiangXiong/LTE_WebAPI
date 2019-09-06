@@ -9,368 +9,184 @@ namespace LTE.Model
     {
         public CELL()
         { }
-        #region Model
-        private int _id;
-        private string _cellname;
-        private string _cellnamechs;
-        private int _lac;
-        private int _ci;
+        #region
+        private int? _id;
 
-        private string _btsname;
-        private string _bsc;
-        private string _msc;
-        private string _vendor;
-        private int? _EARFCN;
-        private string _tchno;
-        private int? _bsic;
-        private int? _trxnumber;
-
-        private decimal? _btslongitude;
-        private decimal? _btslatitude;
-        private decimal? _longitude;
-        private decimal? _latitude;
-        private decimal? _x;
-        private decimal? _y;
-        private int? _antfloor;
-        private string _btssite;
-        private decimal? _btsaltitude;
-        private string _admiRegion;
-        private decimal? _antheight;
-        private double? _azimuth;
-        private double? _mechtilt;
-        private double? _electilt;
-        private double? _tilt;
-        private double? _bspwrb;
-        private double? _bspwrt;
-        private double? _feederlength;
-        private double? _eirp;
-        private double? _radius;
-        private string _antname;
-        private string _pathlossmodel;
-        private string _coveragetype;
-        private string _nettype;
-        private string _geoscenario;
-        private string _comments;
-        private string _rsite;
-        /// <summary>
-        /// 
-        /// </summary>
-        public int ID
+        public int? ID
         {
-            set { _id = value; }
             get { return _id; }
+            set { _id = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
+        private string _cellName;
+
         public string CellName
         {
-            set { _cellname = value; }
-            get { return _cellname; }
+            get { return _cellName; }
+            set { _cellName = value; }
         }
+        private string _btsName;
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public string CellNameChs
-        {
-            set { _cellnamechs = value; }
-            get { return _cellnamechs; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int eNodeB
-        {
-            set { _lac = value; }
-            get { return _lac; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int CI
-        {
-            set { _ci = value; }
-            get { return _ci; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
         public string BtsName
         {
-            set { _btsname = value; }
-            get { return _btsname; }
+            get { return _btsName; }
+            set { _btsName = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Bsc
-        {
-            set { _bsc = value; }
-            get { return _bsc; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Msc
-        {
-            set { _msc = value; }
-            get { return _msc; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Vendor
-        {
-            set { _vendor = value; }
-            get { return _vendor; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int? EARFCN
-        {
-            set { _EARFCN = value; }
-            get { return _EARFCN; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string TCHNO
-        {
-            set { _tchno = value; }
-            get { return _tchno; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int? BSIC
-        {
-            set { _bsic = value; }
-            get { return _bsic; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int? TrxNumber
-        {
-            set { _trxnumber = value; }
-            get { return _trxnumber; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public decimal? BTSLongitude
-        {
-            set { _btslongitude = value; }
-            get { return _btslongitude; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public decimal? BTSLatitude
-        {
-            set { _btslatitude = value; }
-            get { return _btslatitude; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
+        private decimal? _longitude;
+
         public decimal? Longitude
         {
-            set { _longitude = value; }
             get { return _longitude; }
+            set { _longitude = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
+        private decimal? _latitude;
+
         public decimal? Latitude
         {
-            set { _latitude = value; }
             get { return _latitude; }
+            set { _latitude = value; }
         }
+        private decimal? _x;
 
         public decimal? x
         {
-            set { _x = value; }
             get { return _x; }
+            set { _x = value; }
         }
+        private decimal? _y;
 
         public decimal? y
         {
-            set { _y = value; }
             get { return _y; }
+            set { _y = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        public int? AntFloor
+        private decimal? _altitude;
+
+        public decimal? Altitude
         {
-            set { _antfloor = value; }
-            get { return _antfloor; }
+            get { return _altitude; }
+            set { _altitude = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string BTSSite
-        {
-            set { _btssite = value; }
-            get { return _btssite; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public decimal? BTSAltitude
-        {
-            set { _btsaltitude = value; }
-            get { return _btsaltitude; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string AdmiRegion
-        {
-            set { _admiRegion = value; }
-            get { return _admiRegion; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
+        private decimal? _antHeight;
+
         public decimal? AntHeight
         {
-            set { _antheight = value; }
-            get { return _antheight; }
+            get { return _antHeight; }
+            set { _antHeight = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
+        private double? _azimuth;
+
         public double? Azimuth
         {
-            set { _azimuth = value; }
             get { return _azimuth; }
+            set { _azimuth = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
+        private double? _mechTilt;
+
         public double? MechTilt
         {
-            set { _mechtilt = value; }
-            get { return _mechtilt; }
+            get { return _mechTilt; }
+            set { _mechTilt = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
+        private double? _elecTilt;
+
         public double? ElecTilt
         {
-            set { _electilt = value; }
-            get { return _electilt; }
+            get { return _elecTilt; }
+            set { _elecTilt = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
+        private double? _tilt;
+
         public double? Tilt
         {
-            set { _tilt = value; }
             get { return _tilt; }
+            set { _tilt = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        public double? KDWRB
-        {
-            set { _bspwrb = value; }
-            get { return _bspwrb; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public double? KDWRT
-        {
-            set { _bspwrt = value; }
-            get { return _bspwrt; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public double? FeederLength
-        {
-            set { _feederlength = value; }
-            get { return _feederlength; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public double? EIRP
-        {
-            set { _eirp = value; }
-            get { return _eirp; }
-        }
+        private double? _coverageRadius;
 
-        /// <summary>
-        /// 
-        /// </summary>
         public double? CoverageRadius
         {
-            set { _radius = value; }
-            get { return _radius; }
+            get { return _coverageRadius; }
+            set { _coverageRadius = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string AntName
+        private double? _feederLength;
+
+        public double? FeederLength
         {
-            set { _antname = value; }
-            get { return _antname; }
+            get { return _feederLength; }
+            set { _feederLength = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string PathlossModel
+        private double? _eirp;
+
+        public double? EIRP
         {
-            set { _pathlossmodel = value; }
-            get { return _pathlossmodel; }
+            get { return _eirp; }
+            set { _eirp = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
+        private string _pathlossMode;
+
+        public string PathlossMode
+        {
+            get { return _pathlossMode; }
+            set { _pathlossMode = value; }
+        }
+        private string _coverageType;
+
         public string CoverageType
         {
-            set { _coveragetype = value; }
-            get { return _coveragetype; }
+            get { return _coverageType; }
+            set { _coverageType = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
+        private string _netType;
+
         public string NetType
         {
-            set { _nettype = value; }
-            get { return _nettype; }
+            get { return _netType; }
+            set { _netType = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string GeoScenario
-        {
-            set { _geoscenario = value; }
-            get { return _geoscenario; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
+        private string _comments;
+
         public string Comments
         {
-            set { _comments = value; }
             get { return _comments; }
+            set { _comments = value; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string rsite
+        private int? _eNodeB;
+
+        public int? eNodeB
         {
-            set { _rsite = value; }
-            get { return _rsite; }
+            get { return _eNodeB; }
+            set { _eNodeB = value; }
         }
-        #endregion Model
+        private int? _ci;
+
+        public int? CI
+        {
+            get { return _ci; }
+            set { _ci = value; }
+        }
+        private string _cellNameChs;
+
+        public string CellNameChs
+        {
+            get { return _cellNameChs; }
+            set { _cellNameChs = value; }
+        }
+        private int? _earfcn;
+
+        public int? EARFCN
+        {
+            get { return _earfcn; }
+            set { _earfcn = value; }
+        }
+        private int? _pci;
+
+        public int? PCI
+        {
+            get { return _pci; }
+            set { _pci = value; }
+        }
+
+        #endregion
 
     }
 }

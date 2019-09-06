@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<sqlMap namespace="LTE.WebAPI"
+<sqlMap namespace="LTE"
 		xmlns="http://ibatis.apache.org/mapping"
     	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <alias>
     <!-- 类所在项目的具体位置，__为项目名称 -->
-        <typeAlias alias="CELL" type="LTE.WebAPI.Models.CELL, LTE.WebAPI" />
+        <typeAlias alias="CELL" type="LTE.Model.CELL, LTE" />
     </alias>
 	<resultMaps>
 		<resultMap class="CELL" id="CELL_Result">
