@@ -69,6 +69,15 @@
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="ESRI.ArcGIS.Version, Version=10.2.0.0, Culture=neutral, PublicKeyToken=8fc3cc631e44ad86, processorArchitecture=MSIL" />
+    <Reference Include="GeoAPI, Version=1.6.4448.22541, Culture=neutral, PublicKeyToken=a1a0da7def465678, processorArchitecture=MSIL">
+      <HintPath>..\packages\GeoAPI.1.6.0\lib\net35\GeoAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="IBatisNet.Common">
+      <HintPath>..\LTE.WebAPI\IBatisNet.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="IBatisNet.DataMapper">
+      <HintPath>..\LTE.WebAPI\IBatisNet.DataMapper.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>True</EmbedInteropTypes>
@@ -76,19 +85,14 @@
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="ProjNet, Version=1.2.4636.15762, Culture=neutral, PublicKeyToken=a1f5bdcd9c6f5740, processorArchitecture=MSIL">
+      <HintPath>..\packages\Proj.NET.1.2\lib\net20\ProjNet.dll</HintPath>
+    </Reference>
     <Reference Include="stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="IBatisNet.Common, Version=1.6.2.0, Culture=neutral, PublicKeyToken=ed781d9fc396c6ca, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\IBatisNet.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="IBatisNet.DataMapper, Version=1.6.2.0, Culture=neutral, PublicKeyToken=ed781d9fc396c6ca, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\IBatisNet.DataMapper.dll</HintPath>
-    </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Management" />
     <Reference Include="System.Numerics" />
@@ -129,9 +133,15 @@
     <Compile Include="GIS\OperateInterferenceLocLayer.cs" />
     <Compile Include="GIS\OperateSmoothBuildingLayer.cs" />
     <Compile Include="GIS\OperateTINLayer.cs" />
+    <Compile Include="GIS\PointConvertByProj.cs" />
     <Compile Include="InternalInterference\AdjCoeffHelper.cs" />
+    <Compile Include="InternalInterference\Grid\Math\Divide.cs" />
+    <Compile Include="InternalInterference\Grid\Math\LM.cs" />
+    <Compile Include="InternalInterference\Grid\Math\Mat.cs" />
+    <Compile Include="InternalInterference\Grid\Math\Newton.cs" />
+    <Compile Include="InternalInterference\Grid\Math\Regress.cs" />
+    <Compile Include="InternalInterference\Grid\Math\ThreadSafeRandom.cs" />
     <Compile Include="InternalInterference\Grid\TINInfo.cs" />
-    <Compile Include="InternalInterference\Math\Divide.cs" />
     <Compile Include="GIS\InterferenceFeatureLayerAnalysis.cs" />
     <Compile Include="GIS\Location\GISLocate.cs" />
     <Compile Include="GIS\GISUtil.cs" />
@@ -172,11 +182,6 @@
     <Compile Include="InternalInterference\Gain\AnalysisEntry.cs" />
     <Compile Include="InternalInterference\ProcessControl\Calc.cs" />
     <Compile Include="InternalInterference\Grid\GridCover.cs" />
-    <Compile Include="InternalInterference\Math\Mat.cs" />
-    <Compile Include="InternalInterference\Math\LM.cs" />
-    <Compile Include="InternalInterference\Math\Newton.cs" />
-    <Compile Include="InternalInterference\Math\ThreadSafeRandom.cs" />
-    <Compile Include="InternalInterference\Math\Regress.cs" />
     <Compile Include="InternalInterference\RayInfo.cs" />
     <Compile Include="InternalInterference\RayLocAdj.cs" />
     <Compile Include="InternalInterference\Reflection_vh.cs" />
@@ -241,6 +246,7 @@
     <Compile Include="Win32Lib\MMF.cs" />
     <EmbeddedResource Include="GIS\Property\Display\PropertyGridControl.resx">
       <DependentUpon>PropertyGridControl.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="GIS\Property\Display\RightControl.resx">
       <DependentUpon>RightControl.cs</DependentUpon>
@@ -251,6 +257,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include="app.config" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

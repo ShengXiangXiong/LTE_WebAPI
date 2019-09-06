@@ -19,32 +19,32 @@ namespace LTE.WebAPI.Models
         /// <summary>
         /// 网格名称
         /// </summary>
-        public string name { get; set; }  
+        public string name { get; set; }
 
         /// <summary>
         /// 最小经度
         /// </summary>
-        public double minLongitude { get; set; }   
+        public double minLongitude { get; set; }
 
         /// <summary>
         /// 最小纬度
         /// </summary>
-        public double minLatitude { get; set; }    
+        public double minLatitude { get; set; }
 
         /// <summary>
         /// 最大经度
         /// </summary>
-        public double maxLongitude { get; set; }  
+        public double maxLongitude { get; set; }
 
         /// <summary>
         /// 最大纬度
         /// </summary>
-        public double maxLatitude { get; set; }    
+        public double maxLatitude { get; set; }
 
         /// <summary>
         /// 网格边长
         /// </summary>
-        public double sideLength { get; set; }    
+        public double sideLength { get; set; }
 
         /// <summary>
         /// 网格划分，10*10 公里耗时几个小时
@@ -80,17 +80,18 @@ namespace LTE.WebAPI.Models
 
             //2019.07.20 fix bug 以左下角坐标标志栅格，原代码（如上）却在计算最大栅格id时记录的是右上，这里将最大栅格id也修正为左下
             //因为后续的分页操作是在网格id的基础上进行分页操作，所以最大栅格id的值会对后续的栅格划分有影响
-            int maxgxid = Convert.ToInt32(Math.Ceiling(dx / sideLength))-1;
-            int maxgyid = Convert.ToInt32(Math.Ceiling(dy / sideLength))-1;
-            int maxAgxid = Convert.ToInt16(Math.Ceiling(dx / 30.0))-1;
-            int maxAgyid = Convert.ToInt16(Math.Ceiling(dy / 30.0))-1;
+            int maxgxid = Convert.ToInt32(Math.Ceiling(dx / sideLength)) - 1;
+            int maxgyid = Convert.ToInt32(Math.Ceiling(dy / sideLength)) - 1;
+            int maxAgxid = Convert.ToInt16(Math.Ceiling(dx / 30.0)) - 1;
+            int maxAgyid = Convert.ToInt16(Math.Ceiling(dy / 30.0)) - 1;
 
-            pMax.X = pMin.X + (maxAgxid+1) * 30;
-            pMax.Y = pMin.Y + (maxAgyid+1) * 30;
+            pMax.X = pMin.X + (maxAgxid + 1) * 30;
+            pMax.Y = pMin.Y + (maxAgyid + 1) * 30;
 
             Result rt = new Result(true);
 
-            //// 2019.6.11 地图范围
+
+            // 2019.6.11 地图范围,2019.7.26增加tin数据的最高点和最低点
             rt = calcRange(minLongitude, minLatitude, maxLongitude, maxLatitude, pMin.X, pMin.Y, pMax.X, pMax.Y, maxAgxid, maxAgyid, maxgxid, maxgyid, this.sideLength);
             if (!rt.ok)
                 return rt;
@@ -124,7 +125,6 @@ namespace LTE.WebAPI.Models
             rt = calcGroundGrid(pMin.X, pMin.Y, maxgxid, maxgyid, this.sideLength);
             if (!rt.ok)
                 return rt;
-            
             return rt;
         }
 
@@ -151,9 +151,9 @@ namespace LTE.WebAPI.Models
 
             if (tb.Rows.Count < 1)
             {
-                return new Result(false,"该范围内没有建筑物");
+                return new Result(false, "该范围内没有建筑物");
             }
-            while(tb.Rows.Count>0)
+            while (tb.Rows.Count > 0)
             {
                 //System.Data.DataTable tb1 = new System.Data.DataTable();
                 //tb1.Columns.Add("BuildingID");
@@ -334,8 +334,8 @@ namespace LTE.WebAPI.Models
                     //根据均匀栅格网格id获得平面坐标范围(注意坐标代表的是左下角的id，所以求范围时，min用原始坐标id计算即可，而max就得在原始坐标的基础上+1计算才行)
                     double minGX = minX + minAgxid * 30;
                     double minGY = minY + minAgyid * 30;
-                    double maxGX = minX + (maxAgxid+1) * 30;
-                    double maxGY = minY + (maxAgyid+1) * 30;
+                    double maxGX = minX + (maxAgxid + 1) * 30;
+                    double maxGY = minY + (maxAgyid + 1) * 30;
 
                     // 读取范围内的加速栅格信息
                     AccelerateStruct.setAccGridRange(minAgxid, minAgyid, maxAgxid, maxAgyid);
@@ -343,13 +343,13 @@ namespace LTE.WebAPI.Models
                     AccelerateStruct.constructGridTin();
 
                     // 读取范围内的地形 TIN
-                    TINInfo.setBound(minx: minGX, miny:minGY, maxx:maxGX, maxy:maxGY);
+                    TINInfo.setBound(minx: minGX, miny: minGY, maxx: maxGX, maxy: maxGY);
                     TINInfo.constructTINVertex();
 
                     // 读取范围内的建筑物中心点
                     //BuildingGrid3D.setGGridRange(mingxid, mingyid, maxgxid, maxgyid);
                     //BuildingGrid3D.constructBuildingCenter();
-                    BuildingGrid3D.constructBuildingCenterByArea(minGx:minGX,minGy:minGY,maxGx:maxGX,maxGy:maxGY);
+                    BuildingGrid3D.constructBuildingCenterByArea(minGx: minGX, minGy: minGY, maxGx: maxGX, maxGy: maxGY);
 
                     // 计算建筑物底面中心的海拔
                     Dictionary<int, double> altitude = new Dictionary<int, double>();
@@ -379,12 +379,12 @@ namespace LTE.WebAPI.Models
                                 Console.WriteLine(TINInfo.getTINVertex(TINs[i]));
                             }
 
-                        if (pts.Count < 3)
-                            return new Result(false, "TIN 数据出错");
+                            if (pts.Count < 3)
+                                return new Result(false, "TIN 数据出错");
 
 
-                        bool inTIN = Geometric.PointHeight.isInside(pts[0], pts[1], pts[2],
-                            BuildingGrid3D.buildingCenter[bid].X, BuildingGrid3D.buildingCenter[bid].Y);
+                            bool inTIN = Geometric.PointHeight.isInside(pts[0], pts[1], pts[2],
+                                BuildingGrid3D.buildingCenter[bid].X, BuildingGrid3D.buildingCenter[bid].Y);
 
                             if (inTIN) // 位于当前 TIN 三角形内
                             {
@@ -435,7 +435,7 @@ namespace LTE.WebAPI.Models
                 minAgxid = maxAgxid + 1;
                 maxAgxid = Math.Min(maxAgxid + pageSize, maxAxid);
             }
-          return new Result(true);
+            return new Result(true);
         }
 
         // 2019.5.28 记录每个均匀栅格内有哪些地形 TIN 三角形
@@ -578,11 +578,11 @@ namespace LTE.WebAPI.Models
                         //int maxGzid = Convert.ToInt32(Math.Ceiling(maxTINz / agridsize)) - 1;
 
                         //2019.07.25 xsx 修改为正确的向下取整方式，当x y 恰好在边界上，海拔z为0时，前者会造成负数
-                        int minGxid = (int)Math.Floor((minTINx - minX) / agridsize) ;
-                        int minGyid = (int)Math.Floor((minTINy - minY) / agridsize) ;
-                        int maxGxid = (int)Math.Floor((maxTINx - minX) / agridsize) ;
-                        int maxGyid = (int)Math.Floor((maxTINy - minY) / agridsize) ;
-                        int maxGzid = (int)Math.Floor(maxTINz / agridsize) ;
+                        int minGxid = (int)Math.Floor((minTINx - minX) / agridsize);
+                        int minGyid = (int)Math.Floor((minTINy - minY) / agridsize);
+                        int maxGxid = (int)Math.Floor((maxTINx - minX) / agridsize);
+                        int maxGyid = (int)Math.Floor((maxTINy - minY) / agridsize);
+                        int maxGzid = (int)Math.Floor(maxTINz / agridsize);
 
                         // TIN 三角形跨越的均匀栅格
 
@@ -679,11 +679,11 @@ namespace LTE.WebAPI.Models
                     double y1 = Convert.ToDouble(tb.Rows[i]["maxY"].ToString());
 
                     // 建筑物底面跨越的均匀栅格
-                    int minGxid = Convert.ToInt32(Math.Ceiling((x - minX) / agridsize)) - 1;
-                    int minGyid = Convert.ToInt32(Math.Ceiling((y - minY) / agridsize)) - 1;
-                    int maxGxid = Convert.ToInt32(Math.Ceiling((x1 - minX) / agridsize)) - 1;
-                    int maxGyid = Convert.ToInt32(Math.Ceiling((y1 - minY) / agridsize)) - 1;
-                    int maxGzid = Convert.ToInt32(Math.Ceiling((height + altitude) / agridsize)) - 1;
+                    int minGxid = (int)Math.Floor((x - minX) / agridsize);
+                    int minGyid = (int)Math.Floor((y - minY) / agridsize);
+                    int maxGxid = (int)Math.Floor((x1 - minX) / agridsize);
+                    int maxGyid = (int)Math.Floor((y1 - minY) / agridsize);
+                    int maxGzid = (int)Math.Floor((height + altitude) / agridsize);
 
                     bool ok = (x >= minX || x1 <= maxX || y >= minY || y1 <= maxY);
 
@@ -972,6 +972,17 @@ namespace LTE.WebAPI.Models
             ht["MinGGYID"] = 0;
             ht["MinAGXID"] = 0;
             ht["MinAGYID"] = 0;
+
+            //增加tin数据的最高点和最低点高度值(m)，by JinHJ
+            DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getMaxTinHeight", null);
+            double maxTinHeight = Convert.ToDouble(tb.Rows[0][0].ToString());
+
+            tb = IbatisHelper.ExecuteQueryForDataTable("getMinTinHeight", null);
+            double minTinHeight = Convert.ToDouble(tb.Rows[0][0].ToString());
+
+            ht["MaxTinHeight"] = maxTinHeight;
+            ht["MinTinHeight"] = minTinHeight;
+
             IbatisHelper.ExecuteInsert("insertGridRange", ht);
 
             return new Result(true);
@@ -1004,12 +1015,20 @@ namespace LTE.WebAPI.Models
             gminX = minX;
             gminY = minY;
 
-            ESRI.ArcGIS.Geometry.IPoint p1 = new ESRI.ArcGIS.Geometry.PointClass();
-            ESRI.ArcGIS.Geometry.IPoint p2 = new ESRI.ArcGIS.Geometry.PointClass();
-            ESRI.ArcGIS.Geometry.IPoint p3 = new ESRI.ArcGIS.Geometry.PointClass();
+            //为后面使用proj.net库转换坐标做准备,点类型更改为LTE.Geometric.Point类型,by JinHaijia
+            LTE.Geometric.Point p1 = new LTE.Geometric.Point();
+            LTE.Geometric.Point p2 = new LTE.Geometric.Point();
+            LTE.Geometric.Point p3 = new LTE.Geometric.Point();
+
+            //旧版使用arcgis接口转换坐标
+            //ESRI.ArcGIS.Geometry.IPoint p1 = new ESRI.ArcGIS.Geometry.PointClass();
+            //ESRI.ArcGIS.Geometry.IPoint p2 = new ESRI.ArcGIS.Geometry.PointClass();
+            //ESRI.ArcGIS.Geometry.IPoint p3 = new ESRI.ArcGIS.Geometry.PointClass();
+
             p1.Z = 0;
             p2.Z = 0;
             p3.Z = 0;
+
             //  地面栅格
             for (int x = 0; x < maxgxid; x++)
             {
@@ -1031,9 +1050,13 @@ namespace LTE.WebAPI.Models
                     p1.Y = gminY;
                     p2.Y = gmaxY;
                     p3.Y = gcY;
-                    PointConvert.Instance.GetGeoPoint(p1);
-                    PointConvert.Instance.GetGeoPoint(p2);
-                    PointConvert.Instance.GetGeoPoint(p3);
+                    //PointConvert.Instance.GetGeoPoint(p1);
+                    //PointConvert.Instance.GetGeoPoint(p2);
+                    //PointConvert.Instance.GetGeoPoint(p3);
+                    p1 = PointConvertByProj.Instance.GetGeoPoint(p1);
+                    p2 = PointConvertByProj.Instance.GetGeoPoint(p2);
+                    p3 = PointConvertByProj.Instance.GetGeoPoint(p3);
+
 
                     System.Data.DataRow thisrow = dtable.NewRow();
                     thisrow["GXID"] = x;
@@ -1079,6 +1102,8 @@ namespace LTE.WebAPI.Models
                 bcp.Close();
             }
             dtable.Clear();
+
+            System.Diagnostics.Debug.WriteLine("地面栅格划分结束时间:"+DateTime.Now.ToString());
 
             return new Result(true);
         }
