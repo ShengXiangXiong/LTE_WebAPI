@@ -135,8 +135,13 @@
     <Compile Include="GIS\OperateTINLayer.cs" />
     <Compile Include="GIS\PointConvertByProj.cs" />
     <Compile Include="InternalInterference\AdjCoeffHelper.cs" />
-    <Compile Include="InternalInterference\Grid\TINInfo.cs" />
     <Compile Include="InternalInterference\Grid\Math\Divide.cs" />
+    <Compile Include="InternalInterference\Grid\Math\LM.cs" />
+    <Compile Include="InternalInterference\Grid\Math\Mat.cs" />
+    <Compile Include="InternalInterference\Grid\Math\Newton.cs" />
+    <Compile Include="InternalInterference\Grid\Math\Regress.cs" />
+    <Compile Include="InternalInterference\Grid\Math\ThreadSafeRandom.cs" />
+    <Compile Include="InternalInterference\Grid\TINInfo.cs" />
     <Compile Include="GIS\InterferenceFeatureLayerAnalysis.cs" />
     <Compile Include="GIS\Location\GISLocate.cs" />
     <Compile Include="GIS\GISUtil.cs" />
@@ -177,11 +182,6 @@
     <Compile Include="InternalInterference\Gain\AnalysisEntry.cs" />
     <Compile Include="InternalInterference\ProcessControl\Calc.cs" />
     <Compile Include="InternalInterference\Grid\GridCover.cs" />
-    <Compile Include="InternalInterference\Grid\Math\Mat.cs" />
-    <Compile Include="InternalInterference\Grid\Math\LM.cs" />
-    <Compile Include="InternalInterference\Grid\Math\Newton.cs" />
-    <Compile Include="InternalInterference\Grid\Math\ThreadSafeRandom.cs" />
-    <Compile Include="InternalInterference\Grid\Math\Regress.cs" />
     <Compile Include="InternalInterference\RayInfo.cs" />
     <Compile Include="InternalInterference\RayLocAdj.cs" />
     <Compile Include="InternalInterference\Reflection_vh.cs" />
