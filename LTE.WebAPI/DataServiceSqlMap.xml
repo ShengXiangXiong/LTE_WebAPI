@@ -282,24 +282,24 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		</select>
 
      <!-- 建筑物所在网格临时表 -->
-    <delete id="DeleteBuildingGrid" timeout="300">
-	delete from tbBuildingGrid3D
+    <delete id="DeleteBuildingGrid" timeout="3000">
+	    Truncate table tbBuildingGrid3D
     </delete>
 
     <!-- 建筑物所在网格临时表 -->
     <delete id="tmpDeleteBuildingGrid">
-	delete from tmp_BuildingGrid3D
+      Truncate table tmp_BuildingGrid3D
     </delete>
     
 
     <!-- 建筑物所在加速网格正式表 -->
     <delete id="DeleteBuildingAccrelate">
-	delete from tbAccelerationGridBuildingOverlap
+      Truncate table tbAccelerationGridBuildingOverlap
     </delete>
     
     
     <delete id="DeleteBuildingAccrelate1">
-	delete from tbAccelerateGridBuilding
+      Truncate table tbAccelerateGridBuilding
     </delete>
 
     <insert id ="InsertBuildingAccelerate1" parameterClass="hashtable">
@@ -321,10 +321,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 
     <!-- 建筑物所在加速网格临时表 -->
     <delete id="tmpDeleteBuildingAccrelate">
-	delete from tmp_accelerate
+      Truncate table tmp_accelerate
     </delete>
     <delete id="tmpDeleteBuildingAccrelate1">
-	delete from tmp_accelerateGridBuilding
+      Truncate table tmp_accelerateGridBuilding
     </delete>
     <insert id ="tmpInsertBuildingAccelerate1" parameterClass="hashtable">
      	insert into tmp_accelerateGridBuilding

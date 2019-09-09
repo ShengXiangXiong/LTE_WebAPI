@@ -11,6 +11,7 @@ using System.Data;
 using LTE.InternalInterference.Grid;
 using System.Diagnostics;
 using LTE.Model;
+using LTE.WebAPI.Utils;
 
 namespace LTE.WebAPI.Models
 {
@@ -91,7 +92,6 @@ namespace LTE.WebAPI.Models
 
             Result rt = new Result(true);
 
-
             // 2019.6.11 地图范围,2019.7.26增加tin数据的最高点和最低点
             rt = calcRange(minLongitude, minLatitude, maxLongitude, maxLatitude, pMin.X, pMin.Y, pMax.X, pMax.Y, maxAgxid, maxAgyid, maxgxid, maxgyid, this.sideLength);
             if (!rt.ok)
@@ -126,6 +126,7 @@ namespace LTE.WebAPI.Models
             rt = calcGroundGrid(pMin.X, pMin.Y, maxgxid, maxgyid, this.sideLength);
             if (!rt.ok)
                 return rt;
+
             return rt;
         }
 
