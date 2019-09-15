@@ -799,11 +799,23 @@ namespace LTE.InternalInterference
         public double dbmPt(double EIRP, double mjDir, double mjTilt)
         {
             //dbmPt = EiRP－ HLoss(Dir,θ) － VLoss(Tilt, Φ)
-            AbstrGain abstrGain = GainFactory.GetabstractGain("KRE738819_902");
-            double[] HAGain = abstrGain.GetHAGain();
-            double[] VAGain = abstrGain.GetVAGain();
-            double HLoss = HAGain[(int)Math.Round(mjDir) % 360];
-            double VLoss = VAGain[(int)Math.Round(mjTilt) % 360];
+            Hashtable paramTable = new Hashtable();
+            paramTable["gainType"] = "KRE738819_902";
+            paramTable["direction"] = 0; // 0对应HLoss
+            paramTable["degree"] = (int)Math.Round(mjDir) % 360;
+            double HLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+
+            paramTable["direction"] = 1; // 1对应VLoss.
+            paramTable["degree"] = (int)Math.Round(mjTilt) % 360;
+            double VLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+
+            //旧版代码，从内存读取
+            //AbstrGain abstrGain = GainFactory.GetabstractGain("KRE738819_902");
+            //double[] HAGain = abstrGain.GetHAGain();
+            //double[] VAGain = abstrGain.GetVAGain();
+            //double HLoss = HAGain[(int)Math.Round(mjDir) % 360];
+            //double VLoss = VAGain[(int)Math.Round(mjTilt) % 360];
+
             double dbmPt = EIRP - HLoss - VLoss - 2;
             return dbmPt;
         }
@@ -811,13 +823,25 @@ namespace LTE.InternalInterference
         public double dbmPt(double EIRP, double mjDir, double mjTilt, out double HLoss, out double VLoss)
         {
             //dbmPt = EiRP－ HLoss(Dir,θ) － VLoss(Tilt, Φ)
-            AbstrGain abstrGain = GainFactory.GetabstractGain("KRE738819_902");
-            double[] HAGain = abstrGain.GetHAGain();
-            double[] VAGain = abstrGain.GetVAGain();
-            //double HLoss = HAGain[(int)Math.Round(mjDir)];
-            //double VLoss = VAGain[(int)Math.Round(mjTilt)];
-            HLoss = HAGain[(int)mjDir%360];
-            VLoss = VAGain[(int)mjTilt%360];
+            Hashtable paramTable = new Hashtable();
+            paramTable["gainType"] = "KRE738819_902";
+            paramTable["direction"] = 0; // 0对应HLoss
+            paramTable["degree"] = (int)mjDir % 360;
+            HLoss = Convert.ToDouble( IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+
+            paramTable["direction"] = 1; // 1对应VLoss.
+            paramTable["degree"] = (int)mjTilt % 360;
+            VLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+
+            //旧版代码，从内存读取
+            //AbstrGain abstrGain = GainFactory.GetabstractGain("KRE738819_902");
+            //double[] HAGain = abstrGain.GetHAGain();
+            //double[] VAGain = abstrGain.GetVAGain();
+            ////double HLoss = HAGain[(int)Math.Round(mjDir)];
+            ////double VLoss = VAGain[(int)Math.Round(mjTilt)];
+            //HLoss = HAGain[(int)mjDir % 360];
+            //VLoss = VAGain[(int)mjTilt % 360];
+
             //double dbmPt = EIRP - HAGain[(int)Math.Round(mjDir)] - VAGain[(int)Math.Round(mjTilt)] - 2;
             double dbmPt = EIRP - HLoss - VLoss - 2;
             return dbmPt;

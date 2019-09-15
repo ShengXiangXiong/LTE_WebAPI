@@ -951,6 +951,7 @@ namespace LTE.InternalInterference.Grid
             buildingCenter.Clear();
             buildingVertex.Clear();
             buildingHeight.Clear();
+            buildingAltitude.Clear();
         }
 
         /// <summary>

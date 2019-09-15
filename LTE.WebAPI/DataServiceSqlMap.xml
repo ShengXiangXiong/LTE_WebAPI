@@ -856,5 +856,11 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		from tbTINOriginal
 	</select>
 
+	<!--获得由天线波瓣导致的功率损失-->
+	<select id="getLoss" parameterClass="HashTable">
+		select Loss from tbGain
+		where GainType = '$gainType$' and Direction = $direction$ and Degree = $degree$
+	</select>
+
   </statements>
 </sqlMap>
