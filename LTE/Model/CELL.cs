@@ -186,6 +186,26 @@ namespace LTE.Model
             set { _pci = value; }
         }
 
+        private double? _KDis;
+        public double? KDis
+        {
+            get { return _KDis; }
+            set { _KDis = value; }
+        }
+
+        private double? _MaxDis;
+        public double? MaxDis
+        {
+            get { return _MaxDis; }
+            set { _MaxDis = value; }
+        }
+        private double? _MinDis;
+        public double? MinDis
+        {
+            get { return _MinDis; }
+            set { _MinDis = value; }
+        }
+
         #endregion
 
     }

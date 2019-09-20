@@ -89,7 +89,7 @@ namespace LTE.InternalInterference.Grid
             Hashtable ht = new Hashtable();
             ht["id"] = 1;  // 1表示用的是全局地图，2表示用的是局部地图
             area = IbatisHelper.ExecuteQueryForDataTable("getGridRange", ht);
-
+             
             if (area.Rows.Count < 1)
             {
                 return false;

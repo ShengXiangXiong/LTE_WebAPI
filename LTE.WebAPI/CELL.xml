@@ -33,6 +33,9 @@
 			<result column="CellNameChs" property="CellNameChs" />
 			<result column="EARFCN" property="EARFCN" />
 			<result column="PCI" property="PCI" />
+      <result column="KDis" property="KDis" />
+      <result column="MaxDis" property="MaxDis" />
+      <result column="MinDis" property="MinDis" />
 		</resultMap>
 	</resultMaps>
 	<statements>
@@ -95,7 +98,17 @@
       <iterate conjunction=";" open="" close="">
         update cell set
         Altitude = #[].Altitude#
-        where id = #[].ID#
+        where id = #[].ID# or id = #[].ID#+1 or id = #[].ID#+2
+      </iterate>
+    </update>
+
+    <update id="CELLBatchUpdateKDis" parameterClass="ArrayList">
+      <iterate conjunction=";" open="" close="">
+        update cell set
+        KDis = #[].KDis#,
+        MaxDis = #[].MaxDis#,
+        MinDis = #[].MinDis#
+        where id = #[].ID# or id = #[].ID#+1 or id = #[].ID#+2
       </iterate>
     </update>
 
@@ -234,7 +247,7 @@
 		</select>
     
     <select id="getAllCellProjPos" parameterClass="HashTable" >
-      SELECT [ID],[x],[y],[Altitude] FROM [dbo].[CELL]
+      SELECT [ID],[x],[y],[Altitude] FROM [dbo].[CELL] where id % 3 = 1
     </select>
     
 	</statements>

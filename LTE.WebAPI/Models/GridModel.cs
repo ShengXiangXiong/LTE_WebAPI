@@ -92,33 +92,33 @@ namespace LTE.WebAPI.Models
 
             Result rt = new Result(true);
 
-            // 2019.6.11 地图范围,2019.7.26增加tin数据的最高点和最低点
+            //// 2019.6.11 地图范围,2019.7.26增加tin数据的最高点和最低点
             rt = calcRange(minLongitude, minLatitude, maxLongitude, maxLatitude, pMin.X, pMin.Y, pMax.X, pMax.Y, maxAgxid, maxAgyid, maxgxid, maxgyid, this.sideLength);
             if (!rt.ok)
                 return rt;
 
-            //// 2019.5.28 地形和地形所在的加速栅格
+            ////// 2019.5.28 地形和地形所在的加速栅格
             rt = calcTIN(pMin.X, pMin.Y, pMax.X, pMax.Y, 30, maxAgxid, maxAgyid);
             if (!rt.ok)
                 return rt;
 
-            //// 2019.6.5 得到建筑物海拔，基于地形
+            ////// 2019.6.5 得到建筑物海拔，基于地形
             rt = calcBuildingAltitude(pMin.X, pMin.Y, pMax.X, pMax.Y, 0, 0, maxAgxid, maxAgyid, 0, 0, maxgxid, maxgyid);
             if (!rt.ok)
                 return rt;
 
-            //// 2019.6.11 建筑物所在的加速栅格，基于地形
+            ////// 2019.6.11 建筑物所在的加速栅格，基于地形
             rt = calcAcclerateBuilding(pMin.X, pMin.Y, pMax.X, pMax.Y, 30, maxAgxid, maxAgyid);
             if (!rt.ok)
                 return rt;
 
-            //// 2019.6.11 建筑物表面栅格，基于地形
+            ////// 2019.6.11 建筑物表面栅格，基于地形
             rt = calcBuildingGrids(pMin.X, pMin.Y, pMax.X, pMax.Y, this.sideLength, maxgxid, maxgyid);
             if (!rt.ok)
                 return rt;
 
-            //根据tin数据更新cell的altitude信息
-            rt = addAltitude(maxAgxid, maxAgyid, 30,batchSize:100);
+            //更新cell的altitude信息以及计算k个邻近小区的平均距离和最大最小距离
+            rt = updateCell(maxAgxid, maxAgyid, 30,batchSize:100,k:5);
             if (!rt.ok)
                 return rt;
 
@@ -771,6 +771,26 @@ namespace LTE.WebAPI.Models
             }
         }
 
+        class keyCompare : IComparer<gridKey>
+        {
+
+            public int Compare(gridKey o1, gridKey o2)
+            {
+                return o1.x_id == o2.x_id ? o1.x_id - o2.x_id : o1.y_id - o2.y_id;
+            }
+        }
+        class gridKey
+        {
+            public int x_id;
+            public int y_id;
+
+            public gridKey(int gxid,int gyid)
+            {
+                this.x_id = gxid;
+                this.y_id = gyid;
+            }
+        }
+
         /// <summary>
         /// 根据划分好的加速栅格，按栅格筛选出所有在此栅格的tin数据
         /// </summary>
@@ -779,14 +799,15 @@ namespace LTE.WebAPI.Models
         /// <param name="agridsize"></param>
         /// <param name="batchSize"></param>
         /// <returns></returns>
-        Result addAltitude(int maxAxid, int maxAyid, int agridsize=30, int batchSize=300)
+        Result updateCell(int maxAxid, int maxAyid, int agridsize=30, int batchSize=300,int k=5)
         {
             Hashtable ht = new Hashtable();
             DataTable cells = IbatisHelper.ExecuteQueryForDataTable("getAllCellProjPos", null);
             List<CELL> res = new List<CELL>();
             List<tbAccelerateGridTIN> cellGrids = new List<tbAccelerateGridTIN>();
-            Dictionary<string, List<CELL>> grid2cell = new Dictionary<string, List<CELL>>();
-
+            //Dictionary<string, List<CELL>> grid2cell = new Dictionary<string, List<CELL>>();
+            SortedDictionary<gridKey, List<CELL>> grid2cell = new SortedDictionary<gridKey, List<CELL>>(new keyCompare());
+            
             foreach (DataRow cell in cells.Rows)
             {
                 int gxid = 0;
@@ -794,7 +815,8 @@ namespace LTE.WebAPI.Models
                 int gzid = 0;
                 if (GridHelper.getInstance().XYZToAccGrid(Convert.ToDouble(cell["x"]),Convert.ToDouble(cell["y"]),0,ref gxid,ref gyid,ref gzid))
                 {
-                    string key = string.Format("{0},{1}", gxid,gyid);
+                    //string key = string.Format("{0},{1}", gxid,gyid);
+                    gridKey key = new gridKey(gxid, gyid);
                     CELL cELL = new CELL { ID=Convert.ToInt32(cell["ID"]),x = Convert.ToDecimal(cell["x"]), y = Convert.ToDecimal(cell["y"]) };
                     if (grid2cell.ContainsKey(key))
                     {
@@ -811,13 +833,136 @@ namespace LTE.WebAPI.Models
                 }
             }
 
+            Dictionary<CELL, List<double>> cDis = new Dictionary<CELL, List<double>>();
+            foreach (var item in grid2cell)
+            {
+
+                int cnt = 0;
+                int dx = 0;
+                int dy = 0;
+                while (cnt<k)
+                {
+                    //不满足条件时，清空当前网格内所有小区的dis
+                    foreach (var oc in item.Value)
+                    {
+                        if (cDis.ContainsKey(oc))
+                        {
+                            cDis[oc].Clear();
+                        }
+                    }
+                    //扩大范围重新寻找
+                    dx += 50;
+                    dy += 50;
+                    cnt = 0;
+                    int mindx = Math.Max(item.Key.x_id - dx, 0);
+                    int mindy = Math.Max(item.Key.y_id - dy, 0);
+                    int maxdx = item.Key.x_id + dx;
+                    int maxdy = item.Key.y_id + dy;
+                    var tmp = grid2cell.Where(kv => kv.Key.x_id >= mindx && kv.Key.x_id <= maxdx
+                    && kv.Key.y_id >= mindy && kv.Key.y_id <= maxdy);
+                    foreach (var kv in tmp)
+                    {
+                        foreach (var cELL in kv.Value)
+                        {
+                            int all = 0;
+                            foreach (var oc in item.Value)
+                            {
+                                var dis = Math.Sqrt(Math.Pow(Convert.ToDouble((cELL.x - oc.x)), 2) + Math.Pow(Convert.ToDouble((cELL.y - oc.y)), 2));
+                                //过滤掉距离太近的基站
+                                if (dis < 100)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    if (cDis.ContainsKey(oc))
+                                    {
+                                        cDis[oc].Add(dis);
+                                    }
+                                    else
+                                    {
+                                        List<double> tmpOc = new List<double>();
+                                        tmpOc.Add(dis);
+                                        cDis[oc] = tmpOc;
+                                    }
+                                    all++;
+                                }
+                            }
+                            if (all == item.Value.Count) { cnt++; }
+                        }
+                    }
+                }
+                #region
+                //foreach (var cELL in item.Value)
+                //{
+                //    var ox = cELL.x;
+                //    var oy = cELL.y;
+                //    List<double> vs = new List<Double>();
+                //    foreach (var otherCell in cs)
+                //    {
+                //        if (otherCell.Equals(cELL)){
+                //            continue;
+                //        }
+                //        var dis = Math.Sqrt(Math.Pow(Convert.ToDouble((otherCell.x-ox)),2)+ Math.Pow(Convert.ToDouble((otherCell.y - oy)), 2));
+                //        //过滤掉距离太近的基站
+                //        if (dis < 100)
+                //        {
+                //            continue;
+                //        }
+                //        vs.Add(dis);
+                //    }
+                //    vs.Sort();
+                //    double KDis = 0;
+                //    for (int i = 0; i < k; i++)
+                //    {
+                //        KDis += vs[i];
+                //    }
+                //    cELL.KDis = KDis;
+                //    cELL.MaxDis = vs[k - 1];
+                //    cELL.MinDis = vs[0];
+                //    res.Add(cELL);
+                //}
+                #endregion
+            }
+
+            //HashSet<int> hs1 = new HashSet<int>();
+            //foreach (DataRow cell in cells.Rows)
+            //{
+            //    hs1.Add((int)cell["ID"]);
+            //}
+            //HashSet<int> hs2 = new HashSet<int>();
+            //foreach (var item in cDis.Keys)
+            //{
+            //    hs2.Add(item.ID.Value);
+            //}
+            //hs1.ExceptWith(hs2);
+
+            foreach (var cs in cDis)
+            {
+                CELL cELL = cs.Key;
+                List<double> vs = cs.Value;
+                vs.Sort();
+                double KDis = 0;
+                for (int i = 0; i < k; i++)
+                {
+                    KDis += vs[i];
+                }
+                cELL.KDis = KDis/k;
+                cELL.MaxDis = vs[k - 1];
+                cELL.MinDis = vs[0];
+                res.Add(cELL);
+            }
+
+            int rows1 = IbatisHelper.ExecuteUpdate("CELLBatchUpdateKDis", res);
+
             DataTable grid2Tin = IbatisHelper.ExecuteQueryForDataTable("getTinByGrids", cellGrids);
-            Dictionary<string, List<Geometric.Point[]>> grid2vertx = new Dictionary<string, List<Geometric.Point[]>>();
+            Dictionary<gridKey, List<Geometric.Point[]>> grid2vertx = new Dictionary<gridKey, List<Geometric.Point[]>>();
             for (int i = 0; i < grid2Tin.Rows.Count; i += 3)
             {
                 Geometric.Point[] ps = new Geometric.Point[3];
                 int cnt = 0;
-                string key = string.Format("{0},{1}", grid2Tin.Rows[i]["gxid"], grid2Tin.Rows[i]["gyid"]);
+                //string key = string.Format("{0},{1}", grid2Tin.Rows[i]["gxid"], grid2Tin.Rows[i]["gyid"]);
+                gridKey key = new gridKey((int)grid2Tin.Rows[i]["gxid"], (int)grid2Tin.Rows[i]["gyid"]);
                 object tinid = grid2Tin.Rows[i]["tinid"];
                 for (int j = i; j < i + 3; j++)
                 {
@@ -843,7 +988,7 @@ namespace LTE.WebAPI.Models
                 }
             }
 
-            foreach (string key in grid2vertx.Keys)
+            foreach (gridKey key in grid2vertx.Keys)
             {
                 List<Geometric.Point[]> points = grid2vertx[key];
                 List<CELL> cELLs = grid2cell[key];
@@ -863,7 +1008,7 @@ namespace LTE.WebAPI.Models
                     }
                 }
             }
-            int rows = IbatisHelper.ExecuteUpdate("CELLBatchUpdateAltitude", res);
+            int rows2 = IbatisHelper.ExecuteUpdate("CELLBatchUpdateAltitude", res);
             #region batch operate
             //int minAgxid = minGxid;
             //int maxAgxid = Math.Min(maxGxid, minGxid + batchSize);
