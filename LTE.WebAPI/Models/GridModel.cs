@@ -92,27 +92,27 @@ namespace LTE.WebAPI.Models
 
             Result rt = new Result(true);
 
-            //// 2019.6.11 地图范围,2019.7.26增加tin数据的最高点和最低点
+            // 2019.6.11 地图范围,2019.7.26增加tin数据的最高点和最低点
             rt = calcRange(minLongitude, minLatitude, maxLongitude, maxLatitude, pMin.X, pMin.Y, pMax.X, pMax.Y, maxAgxid, maxAgyid, maxgxid, maxgyid, this.sideLength);
             if (!rt.ok)
                 return rt;
 
-            ////// 2019.5.28 地形和地形所在的加速栅格
+            // 2019.5.28 地形和地形所在的加速栅格
             rt = calcTIN(pMin.X, pMin.Y, pMax.X, pMax.Y, 30, maxAgxid, maxAgyid);
             if (!rt.ok)
                 return rt;
 
-            ////// 2019.6.5 得到建筑物海拔，基于地形
+            // 2019.6.5 得到建筑物海拔，基于地形
             rt = calcBuildingAltitude(pMin.X, pMin.Y, pMax.X, pMax.Y, 0, 0, maxAgxid, maxAgyid, 0, 0, maxgxid, maxgyid);
             if (!rt.ok)
                 return rt;
 
-            ////// 2019.6.11 建筑物所在的加速栅格，基于地形
+            // 2019.6.11 建筑物所在的加速栅格，基于地形
             rt = calcAcclerateBuilding(pMin.X, pMin.Y, pMax.X, pMax.Y, 30, maxAgxid, maxAgyid);
             if (!rt.ok)
                 return rt;
 
-            ////// 2019.6.11 建筑物表面栅格，基于地形
+            // 2019.6.11 建筑物表面栅格，基于地形
             rt = calcBuildingGrids(pMin.X, pMin.Y, pMax.X, pMax.Y, this.sideLength, maxgxid, maxgyid);
             if (!rt.ok)
                 return rt;
@@ -776,7 +776,7 @@ namespace LTE.WebAPI.Models
 
             public int Compare(gridKey o1, gridKey o2)
             {
-                return o1.x_id == o2.x_id ? o1.x_id - o2.x_id : o1.y_id - o2.y_id;
+                return o1.x_id == o2.x_id ? o1.y_id - o2.y_id : o1.x_id - o2.x_id;
             }
         }
         class gridKey
@@ -803,8 +803,10 @@ namespace LTE.WebAPI.Models
         {
             Hashtable ht = new Hashtable();
             DataTable cells = IbatisHelper.ExecuteQueryForDataTable("getAllCellProjPos", null);
+
             List<CELL> res = new List<CELL>();
             List<tbAccelerateGridTIN> cellGrids = new List<tbAccelerateGridTIN>();
+            //List<gridKey> cellGrids = new List<gridKey>();
             //Dictionary<string, List<CELL>> grid2cell = new Dictionary<string, List<CELL>>();
             SortedDictionary<gridKey, List<CELL>> grid2cell = new SortedDictionary<gridKey, List<CELL>>(new keyCompare());
             
@@ -813,11 +815,16 @@ namespace LTE.WebAPI.Models
                 int gxid = 0;
                 int gyid = 0;
                 int gzid = 0;
-                if (GridHelper.getInstance().XYZToAccGrid(Convert.ToDouble(cell["x"]),Convert.ToDouble(cell["y"]),0,ref gxid,ref gyid,ref gzid))
+                LTE.Geometric.Point p = new LTE.Geometric.Point();
+                p.X = Convert.ToDouble(cell["Longitude"]);
+                p.Y = Convert.ToDouble(cell["Latitude"]);
+                p = PointConvertByProj.Instance.GetProjectPoint(p);
+                if (GridHelper.getInstance().XYZToAccGrid(p.X,p.Y,0,ref gxid,ref gyid,ref gzid))
                 {
                     //string key = string.Format("{0},{1}", gxid,gyid);
                     gridKey key = new gridKey(gxid, gyid);
-                    CELL cELL = new CELL { ID=Convert.ToInt32(cell["ID"]),x = Convert.ToDecimal(cell["x"]), y = Convert.ToDecimal(cell["y"]) };
+                    CELL cELL = new CELL { ID=Convert.ToInt32(cell["ID"]),x = (decimal)p.X, y = (decimal)p.Y };
+
                     if (grid2cell.ContainsKey(key))
                     {
                         grid2cell[key].Add(cELL);
@@ -955,6 +962,8 @@ namespace LTE.WebAPI.Models
 
             int rows1 = IbatisHelper.ExecuteUpdate("CELLBatchUpdateKDis", res);
 
+            //update alititude
+            res.Clear();
             DataTable grid2Tin = IbatisHelper.ExecuteQueryForDataTable("getTinByGrids", cellGrids);
             Dictionary<gridKey, List<Geometric.Point[]>> grid2vertx = new Dictionary<gridKey, List<Geometric.Point[]>>();
             for (int i = 0; i < grid2Tin.Rows.Count; i += 3)

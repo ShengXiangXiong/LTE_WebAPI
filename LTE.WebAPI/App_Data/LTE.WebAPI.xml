@@ -1102,7 +1102,7 @@
             <param name="maxAyid"></param>
             <returns></returns>
         </member>
-        <member name="M:LTE.WebAPI.Models.GridModel.addAltitude(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+        <member name="M:LTE.WebAPI.Models.GridModel.updateCell(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
             <summary>
             根据划分好的加速栅格，按栅格筛选出所有在此栅格的tin数据
             </summary>

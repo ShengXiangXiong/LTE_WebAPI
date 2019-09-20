@@ -107,7 +107,9 @@
         update cell set
         KDis = #[].KDis#,
         MaxDis = #[].MaxDis#,
-        MinDis = #[].MinDis#
+        MinDis = #[].MinDis#,
+        x = #[].x#,
+        y = #[].y#
         where id = #[].ID# or id = #[].ID#+1 or id = #[].ID#+2
       </iterate>
     </update>
@@ -247,7 +249,7 @@
 		</select>
     
     <select id="getAllCellProjPos" parameterClass="HashTable" >
-      SELECT [ID],[x],[y],[Altitude] FROM [dbo].[CELL] where id % 3 = 1
+      SELECT [ID],[Longitude],[Latitude],[Altitude] FROM [dbo].[CELL] where id % 3 = 1
     </select>
     
 	</statements>
