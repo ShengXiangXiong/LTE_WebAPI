@@ -227,6 +227,9 @@ namespace LTE.CalcProcess
                         }
                     }
                     break;
+                case IPC.WM_POST_Kill:
+                    System.Environment.Exit(0);
+                    break;
                 default:
                     base.DefWndProc(ref m);
                     break;
@@ -279,7 +282,7 @@ namespace LTE.CalcProcess
             AccelerateStruct.setAccGridRange(mingxid, mingyid, maxgxid, maxgyid);
 
             double extend = 1.5;
-
+            //Console.ReadKey();
             // 从数据库表tbAccelerateGridBuilding中取出所有符合条件的数据,并以GXID,GYID,GZID排序, 构造结果集的哈希表
             AccelerateStruct.constructAccelerateStruct();
             t1 = DateTime.Now;
@@ -329,6 +332,8 @@ namespace LTE.CalcProcess
             {
                 if (GroundGrid.constructGGrids(ref p1, ref p2, ref p3, ref p4) == 0)
                 {
+                    //当前区域没有数据则返回父进程，而不是直接退出，若直接退出会造成父进程假死
+                    IPC.PostMessage(this.parentHandle, IPC.WM_POST_CALCDONE, this.Handle, 0);
                     System.Environment.Exit(0);
                 }
             }
@@ -336,6 +341,8 @@ namespace LTE.CalcProcess
             {
                 if (GroundGrid.constructGGrids() == 0)
                 {
+                    //当前区域没有数据则返回父进程，而不是直接退出，若直接退出会造成父进程假死
+                    IPC.PostMessage(this.parentHandle, IPC.WM_POST_CALCDONE, this.Handle, 0);
                     System.Environment.Exit(0);
                 }
             }
@@ -1929,13 +1936,18 @@ namespace LTE.CalcProcess
                 BuildingGrid3D.clearBuildingVertexOriginal();
                 BuildingGrid3D.clearGrid3D();
                 GroundGrid.ggrids.Clear();
+
+                //int dataSize1 = this.writeReRayToMMF(this.MMFName1);
+
                 if (isRecordReray && this.interAnalysis.reRays.Count > 0)  // 2019.5.22
                 {
                     int dataSize1 = this.writeReRayToMMF(this.MMFName1);
                     IPC.PostMessage(this.parentHandle, IPC.WM_POST_ReRayDONE, this.Handle, dataSize1);
+                    Console.WriteLine("post reray to parent process succees................");
                 }
                 int dataSize = this.writeDataToMMF(this.MMFName, false);
                 IPC.PostMessage(this.parentHandle, IPC.WM_POST_CALCDONE, this.Handle, dataSize);
+                Console.WriteLine("post calcDone to parent process succees................");
             }
         }
 
@@ -1957,13 +1969,13 @@ namespace LTE.CalcProcess
             if (hmap == IntPtr.Zero)
             {
                 MMF.CloseHandle(mmf);
-                MessageBox.Show("文件写入映射失败！");
+                Console.WriteLine("文件写入映射失败！");
                 return 0;
             }
             dataSize = 0;
             MMFGSStruct mmfgs;
-
-            for (int i = 0, sp = hmap.ToInt32(); i < cnt; i++, dataSize += ssize)
+            long sp = hmap.ToInt64();
+            for (int i = 0; i < cnt; i++, dataSize += ssize)
             {
                 GridStrength gs = gridStrengths[i];
                 //if (Object.ReferenceEquals(gs, null))
@@ -1984,6 +1996,7 @@ namespace LTE.CalcProcess
                     Console.WriteLine("出错：{0}", i);
                     //MessageBox.Show(string.Format("mmf={0}, dataSize={1}, sizeof={2}, content = {5}, num = {3}, error = {4}", mmf.ToInt32(), ret, ssize, i, e.Message, gridStrengths[i].RefBuildingID + "," + gridStrengths[i].DiffBuildingID + "," + gridStrengths[i].TransmitBuildingID));
                     outGS(gridStrengths[i]);
+
                     //string s = string.Format("gxid={0}, gyid={1}, level={2}, lac={3}, ci={4}, px = {5}, rxlev = {6}", gs.GXID, gs.GYID, gs.Level, gs.eNodeB, gs.CI, gs.GCenter.X, gs.ReceivedPowerW);
                     //Console.WriteLine(s);
                     //MessageBox.Show(s);
@@ -1999,6 +2012,8 @@ namespace LTE.CalcProcess
 
         /// <summary>
         /// 将出界射线写入共享内存，返回数据大小
+        /// 创建共享内存文件(CreateFileMapping)---》映射文件视图到调用进程的地址空间（MapViewOfFile）---》
+        ///     写数据到共享内存(Marshal.StructureToPtr)----》发送消息通知需要读共享内存的窗口（PostMessage）
         /// </summary>
         /// <param name="sharename"></param>
         /// <returns></returns>
@@ -2006,8 +2021,12 @@ namespace LTE.CalcProcess
         {
             List<ReRay> reRays = this.interAnalysis.reRays;
 
-            int ssize = Marshal.SizeOf(typeof(MMFReRayStruct)), cnt = reRays.Count, dataSize = ssize * cnt, ret = dataSize;
+            int ssize = Marshal.SizeOf(typeof(MMFReRayStruct));
+            int cnt = reRays.Count;
+            int dataSize = ssize * cnt;
+            int ret = dataSize;
             IntPtr mmf, hmap, tp;
+            
             mmf = MMF.CreateOrOpenMMF(sharename, dataSize);
             hmap = MMF.MapViewOfFile(mmf, MMF.FileMapAccess.FileMapWrite, 0, 0, (uint)dataSize);
             if (hmap == IntPtr.Zero)
@@ -2018,8 +2037,8 @@ namespace LTE.CalcProcess
             }
             dataSize = 0;
             MMFReRayStruct mmfgs;
-
-            for (int i = 0, sp = hmap.ToInt32(); i < cnt; i++, dataSize += ssize)
+            long sp = hmap.ToInt64();
+            for (int i = 0; i < cnt; i++, dataSize += ssize)
             {
                 ReRay ray = reRays[i];
                 mmfgs = convertFromReRay(ray);

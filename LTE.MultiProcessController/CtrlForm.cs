@@ -80,6 +80,8 @@ namespace LTE.MultiProcessController
         private bool rayAdj; // 生成的射线用于系数校正
         private bool isRecordReray;  // 是否记录当前批出界射线，以供下批二次投射
 
+        private List<IntPtr> childPtr;  //用于记录所有子进程的句柄
+
         private DateTime start, end, t1, t2, read, merge;
         private IntPtr parentHandle;
         public CtrlForm()
@@ -88,6 +90,8 @@ namespace LTE.MultiProcessController
 
             //MessageBox.Show("4");
             InitializeComponent();
+
+            childPtr = new List<IntPtr>();
 
             this.paList = new List<ProcessArgs>();
             this.procDoneNum = 0;
@@ -182,6 +186,10 @@ namespace LTE.MultiProcessController
 
         private void startChildPro()
         {
+            ////test
+            //processNum = 1;
+            //this.processNum = 1;
+
             Random r = new Random(DateTime.Now.Second);
             LTE.Geometric.Point p = cellInfo.SourcePoint;
             double deltaA = (this.toAngle - this.fromAngle + 360) % 360 / processNum;
@@ -227,7 +235,8 @@ namespace LTE.MultiProcessController
             catch (Exception ee)
             {
                 MessageBox.Show(string.Format("启动子程序异常：路径 = {0}\n, 原因：", this.basePath, ee.Message));
-                System.Environment.Exit(0);
+                //修改为异常退出
+                System.Environment.Exit(3);
             }
         }
 
@@ -240,6 +249,7 @@ namespace LTE.MultiProcessController
             
             IPC.PostMessage(handle, IPC.WM_POST_NOTIFY, this.Handle, 0);
             Console.WriteLine(string.Format("子进程{0} ready, mmf name: {1}, 启动计算...", handle, pa.MMFName));
+            childPtr.Add(handle);
         }
 
         protected override void DefWndProc(ref System.Windows.Forms.Message m)
@@ -267,6 +277,23 @@ namespace LTE.MultiProcessController
         // 2019.5.22
         private void readReRayResult(IntPtr Chandle, int dataSize)
         {
+            //-1代表子进程写入共享内存失败
+            if (dataSize == -1)
+            {
+                Console.WriteLine(string.Format("Write mmf {0} failed", Chandle));
+                errorExit();
+            }
+            if (dataSize == 0)
+            {
+                Console.WriteLine(string.Format("当前批{0}没有数据", Chandle));
+                //将写入数据库操作剥离
+                if (++this.procDoneNum1 == this.processNum)
+                {
+                    writeReRayToDb();
+                }
+                return;
+            }
+
             string shareName = this.getMMFName(Chandle) + "_ReRay";
 
             IntPtr mmf = IntPtr.Zero;
@@ -277,12 +304,16 @@ namespace LTE.MultiProcessController
             catch (Exception e)
             {
                 Console.WriteLine(string.Format("open mmf {0} failed, error : {1}", shareName, e.Message));
+                errorExit();
             }
             if (IntPtr.Zero == mmf)
             {
                 Console.WriteLine(string.Format("共享内存<{0}>打开失败，错误信息编号：{1}", shareName, MMF.GetLastError()));
-                return;
+                errorExit();
             }
+            //共享内存打开成功通知
+            Console.WriteLine(string.Format("read reRay................. open mmf {0} success", shareName));
+
             IntPtr reader = IntPtr.Zero;
             try
             {
@@ -291,21 +322,22 @@ namespace LTE.MultiProcessController
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                errorExit();
             }
             if (reader == IntPtr.Zero)
             {
                 Console.WriteLine(string.Format("共享内存<{0}>映射失败，错误信息编号：{1}", shareName, MMF.GetLastError()));
-                return;
+                errorExit();
             }
 
             IntPtr tp = IntPtr.Zero;
             Type type = typeof(MMFReRayStruct);
             int ssize = Marshal.SizeOf(type);
 
-            tp = new IntPtr(reader.ToInt32());
+            tp = new IntPtr(reader.ToInt64());
             MMFReRayStruct data = new MMFReRayStruct();
-
-            for (int dsize = 0, sp = reader.ToInt32(); dsize < dataSize; dsize += ssize)
+            long sp = reader.ToInt64();
+            for (int dsize = 0; dsize < dataSize; dsize += ssize)
             {
                 try
                 {
@@ -315,62 +347,88 @@ namespace LTE.MultiProcessController
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(string.Format("read error : tp = {0}, dsize = {1}, msg = {2}", tp.ToInt32(), dsize, e.Message));
+                    Console.WriteLine(string.Format("read error : tp = {0}, dsize = {1}, msg = {2}", tp.ToInt64(), dsize, e.Message));
                 }
             }
             MMF.UnmapViewOfFile(reader);
             MMF.CloseHandle(mmf);
             mmf = reader = IntPtr.Zero;
 
+            //共享内存打开成功通知
+            Console.WriteLine(string.Format("add reRay to MultiTasksReRay success..................................."));
+
+            //将写入数据库操作剥离
             if (++this.procDoneNum1 == this.processNum)
             {
-                // 删除旧的reRay
-                Hashtable ht = new Hashtable();
-                ht["CI"] = this.cellInfo.CI;
-                ht["eNodeB"] = this.cellInfo.eNodeB;
-                IbatisHelper.ExecuteDelete("deleteSpecifiedReRay", ht);
-
-                System.Data.DataTable dtable = new System.Data.DataTable();
-                dtable.Columns.Add("ci");
-                dtable.Columns.Add("emitX");
-                dtable.Columns.Add("emitY");
-                dtable.Columns.Add("emitZ");
-                dtable.Columns.Add("pwrDbm");
-                dtable.Columns.Add("dirX");
-                dtable.Columns.Add("dirY");
-                dtable.Columns.Add("dirZ");
-                dtable.Columns.Add("type");
-
-                for (int i = 0; i < this.MultiTasksReRay.Count; i++)
-                {
-                    System.Data.DataRow thisrow = dtable.NewRow();
-                    thisrow["ci"] = this.cellInfo.CI;
-                    thisrow["emitX"] = Math.Round(this.MultiTasksReRay[i].emitX, 3);
-                    thisrow["emitY"] = Math.Round(this.MultiTasksReRay[i].emitY, 3);
-                    thisrow["emitZ"] = Math.Round(this.MultiTasksReRay[i].emitZ, 3);
-                    thisrow["pwrDbm"] = Math.Round(this.MultiTasksReRay[i].pwrDbm, 3);
-                    thisrow["dirX"] = Math.Round(this.MultiTasksReRay[i].dirX, 4);
-                    thisrow["dirY"] = Math.Round(this.MultiTasksReRay[i].dirY, 4);
-                    thisrow["dirZ"] = Math.Round(this.MultiTasksReRay[i].dirZ, 4);
-                    thisrow["type"] = this.MultiTasksReRay[i].type;
-                    dtable.Rows.Add(thisrow);
-                }
-
-                using (System.Data.SqlClient.SqlBulkCopy bcp = new System.Data.SqlClient.SqlBulkCopy(DataUtil.ConnectionString))
-                {
-                    bcp.BatchSize = dtable.Rows.Count;
-                    bcp.BulkCopyTimeout = 1000;
-                    bcp.DestinationTableName = "tbReRay";
-                    bcp.WriteToServer(dtable);
-                    bcp.Close();
-                }
-                dtable.Clear();
-                Console.WriteLine("tbReRay 写入结束！");
+                writeReRayToDb();
             }
+            
         }
+        private void writeReRayToDb()
+        {
+            Console.WriteLine("start writing reRay to db...................................");
+            // 删除旧的reRay
+            Hashtable ht = new Hashtable();
+            ht["CI"] = this.cellInfo.CI;
+            ht["eNodeB"] = this.cellInfo.eNodeB;
+            IbatisHelper.ExecuteDelete("deleteSpecifiedReRay", ht);
 
+            System.Data.DataTable dtable = new System.Data.DataTable();
+            dtable.Columns.Add("ci");
+            dtable.Columns.Add("emitX");
+            dtable.Columns.Add("emitY");
+            dtable.Columns.Add("emitZ");
+            dtable.Columns.Add("pwrDbm");
+            dtable.Columns.Add("dirX");
+            dtable.Columns.Add("dirY");
+            dtable.Columns.Add("dirZ");
+            dtable.Columns.Add("type");
+
+            for (int i = 0; i < this.MultiTasksReRay.Count; i++)
+            {
+                System.Data.DataRow thisrow = dtable.NewRow();
+                thisrow["ci"] = this.cellInfo.CI;
+                thisrow["emitX"] = Math.Round(this.MultiTasksReRay[i].emitX, 3);
+                thisrow["emitY"] = Math.Round(this.MultiTasksReRay[i].emitY, 3);
+                thisrow["emitZ"] = Math.Round(this.MultiTasksReRay[i].emitZ, 3);
+                thisrow["pwrDbm"] = Math.Round(this.MultiTasksReRay[i].pwrDbm, 3);
+                thisrow["dirX"] = Math.Round(this.MultiTasksReRay[i].dirX, 4);
+                thisrow["dirY"] = Math.Round(this.MultiTasksReRay[i].dirY, 4);
+                thisrow["dirZ"] = Math.Round(this.MultiTasksReRay[i].dirZ, 4);
+                thisrow["type"] = this.MultiTasksReRay[i].type;
+                dtable.Rows.Add(thisrow);
+            }
+
+            using (System.Data.SqlClient.SqlBulkCopy bcp = new System.Data.SqlClient.SqlBulkCopy(DataUtil.ConnectionString))
+            {
+                bcp.BatchSize = dtable.Rows.Count;
+                bcp.BulkCopyTimeout = 1000;
+                bcp.DestinationTableName = "tbReRay";
+                bcp.WriteToServer(dtable);
+                bcp.Close();
+            }
+            dtable.Clear();
+            Console.WriteLine("tbReRay 写入结束！");
+        }
         private void readCalcResult(IntPtr Chandle, int dataSize)
         {
+            //-1代表子进程写入共享内存失败
+            if (dataSize == -1)
+            {
+                Console.WriteLine(string.Format("Write mmf {0} failed", Chandle));
+                System.Environment.Exit(2);
+            }
+            //0代表当前共享内存中不存在数据，则直接返回，且让++this.procDoneNum
+            if (dataSize == 0)
+            {
+                Console.WriteLine(string.Format("当前批{0}没有数据", Chandle));
+                if (++this.procDoneNum== this.processNum)
+                {
+                    writeResToDb();
+                }
+                return;
+            }
+
             DateTime t1, t2;
             t1 = DateTime.Now;
             Console.WriteLine(string.Format("read params :child handle = {0}, data size = {1}", Chandle, dataSize));
@@ -388,11 +446,13 @@ namespace LTE.MultiProcessController
             {
                 //MessageBox.Show(string.Format("open mmf {0} failed, error : {1}", shareName, e.Message));
                 Console.WriteLine(string.Format("open mmf {0} failed, error : {1}", shareName, e.Message));
+                System.Environment.Exit(2);
             }
             if (IntPtr.Zero == mmf)
             {
                 //MessageBox.Show(string.Format("共享内存<{0}>打开失败，错误信息编号：{1}", shareName, MMF.GetLastError()));
                 Console.WriteLine(string.Format("共享内存<{0}>打开失败，错误信息编号：{1}", shareName, MMF.GetLastError()));
+                System.Environment.Exit(2);
                 return;
             }
             IntPtr reader = IntPtr.Zero;
@@ -403,11 +463,15 @@ namespace LTE.MultiProcessController
             }
             catch (Exception e)
             {
+                Console.WriteLine("map view failed");
+                System.Environment.Exit(2);
+                return;
             }
             if (reader == IntPtr.Zero)
             {
                 //MessageBox.Show(string.Format("共享内存<{0}>映射失败，错误信息编号：{1}", shareName, MMF.GetLastError()));
                 Console.WriteLine(string.Format("共享内存<{0}>映射失败，错误信息编号：{1}", shareName, MMF.GetLastError()));
+                System.Environment.Exit(2);
                 return;
             }
 
@@ -416,10 +480,10 @@ namespace LTE.MultiProcessController
             int ssize = Marshal.SizeOf(type);
             Console.WriteLine("ssize = " + ssize);
 
-            tp = new IntPtr(reader.ToInt32());
+            //tp = new IntPtr(reader.ToInt64());
             MMFGSStruct data = new MMFGSStruct();
-
-            for (int dsize = 0, sp = reader.ToInt32(); dsize < dataSize; dsize += ssize)
+            long sp = reader.ToInt64();
+            for (int dsize = 0; dsize < dataSize; dsize += ssize)
             {
                 try
                 {
@@ -431,7 +495,8 @@ namespace LTE.MultiProcessController
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(string.Format("read error : tp = {0}, dsize = {1}, msg = {2}", tp.ToInt32(), dsize, e.Message));
+                    Console.WriteLine(string.Format("read error : tp = {0}, dsize = {1}, msg = {2}", tp.ToInt64(), dsize, e.Message));
+                    System.Environment.Exit(2);
                     //MessageBox.Show(string.Format("read error : tp = {0}, dsize = {1}, msg = {2}", tp.ToInt32(), dsize, e.Message));
                 }
             }
@@ -441,62 +506,76 @@ namespace LTE.MultiProcessController
             mmf = reader = IntPtr.Zero;
             t2 = DateTime.Now;
             Console.WriteLine(string.Format("read {0} done. now total : {1}, using time: {2}", shareName, this.MultiTasksGridStrengths.Count, (t2 - t1).TotalMilliseconds));
-
+            Console.WriteLine("**********************************************************************");
+            this.procDoneNum++;
+            Console.WriteLine(String.Format("已处理{0}/{1}个进程", this.procDoneNum, this.processNum));
+            Console.WriteLine("**********************************************************************");
             //this.outGSs();
 
             //if (++this.procDoneNum == Math.Min(this.maxProcNum, this.processNum - this.procDoneNum1))
-            if (++this.procDoneNum == this.processNum)
+            if (this.procDoneNum == this.processNum)
             {
-                //Console.WriteLine(string.Format("merge outcome..., init num : {0}", this.GridStrengths.Count));
-                //Console.ReadKey();
-                DateTime d1, d2;
-                d1 = DateTime.Now;
-                CalcGridStrength calc = new CalcGridStrength(this.cellInfo, null);
-                this.GridStrengths = calc.MergeMultipleTaskStrength(this.MultiTasksGridStrengths);
-                d2 = DateTime.Now;
-                Console.WriteLine(string.Format("merge done. now num : {0}, using time: {1}ms", this.GridStrengths.Count, (d2 - d1).TotalMilliseconds));
-
-                // 2017.6.14
-                Console.WriteLine();
-                Console.WriteLine("射线所能达到的最远地面距离: {0} m，该点功率：{1} dbm", calc.maxDistGround, calc.dbm);
-                Console.WriteLine("小区平面坐标：({0}, {1})", calc.cellInfo.SourcePoint.X, calc.cellInfo.SourcePoint.Y);
-                Console.WriteLine("射线所能达到的最远地面坐标：({0}, {1})", calc.gx, calc.gy);
-                Console.WriteLine("覆盖栅格总数: {0}", this.GridStrengths.Count);
-                Console.WriteLine();
-
-                //Console.WriteLine("connection = " + DB.DataUtil.ConnectionString);
-
-                Console.WriteLine("writing to database ...");
-
-                GridCover gc = GridCover.getInstance();
-                gc.convertToDt(this.GridStrengths);
-                Hashtable ht = new Hashtable();
-                ht["eNodeB"] = this.cellInfo.eNodeB;
-                ht["CI"] = this.cellInfo.CI;
-                //gc.deleteGroundCover(ht);
-                gc.wirteGroundCover(ht);
-                gc.clearGround();
-                //if (this.computeIndoor)
-                {
-                    //gc.deleteBuildingCover(ht);
-                    gc.writeBuildingCover(ht);
-                    gc.clearBuilding();
-                }
-                Console.WriteLine("地面栅格总数: {0}", gc.ng);
-                Console.WriteLine("立体栅格总数: {0}", gc.nb);
-                end = DateTime.Now;
-                string info = string.Format("总运行时间：{0}毫秒\n", (end - start).TotalMilliseconds);
-                Console.WriteLine(info);
-                Console.WriteLine("write done");
-
-                this.GridStrengths.Clear();
-                //Console.ReadKey(); // 2019.04.12
-                this.cs.free();
-                this.Close();  // 2019.04.12
-                //this.procDoneNum = 0;
+                writeResToDb();
             }
         }
+        private void writeResToDb()
+        {
+            //Console.WriteLine(string.Format("merge outcome..., init num : {0}", this.GridStrengths.Count));
+            //Console.ReadKey();
+            DateTime d1, d2;
+            d1 = DateTime.Now;
+            CalcGridStrength calc = new CalcGridStrength(this.cellInfo, null);
+            this.GridStrengths = calc.MergeMultipleTaskStrength(this.MultiTasksGridStrengths);
+            d2 = DateTime.Now;
+            Console.WriteLine(string.Format("merge done. now num : {0}, using time: {1}ms", this.GridStrengths.Count, (d2 - d1).TotalMilliseconds));
 
+            // 2017.6.14
+            Console.WriteLine();
+            Console.WriteLine("射线所能达到的最远地面距离: {0} m，该点功率：{1} dbm", calc.maxDistGround, calc.dbm);
+            Console.WriteLine("小区平面坐标：({0}, {1})", calc.cellInfo.SourcePoint.X, calc.cellInfo.SourcePoint.Y);
+            Console.WriteLine("射线所能达到的最远地面坐标：({0}, {1})", calc.gx, calc.gy);
+            Console.WriteLine("覆盖栅格总数: {0}", this.GridStrengths.Count);
+            Console.WriteLine();
+
+            //Console.WriteLine("connection = " + DB.DataUtil.ConnectionString);
+
+            Console.WriteLine("writing to database ...");
+
+            GridCover gc = GridCover.getInstance();
+            gc.convertToDt(this.GridStrengths);
+            Hashtable ht = new Hashtable();
+            ht["eNodeB"] = this.cellInfo.eNodeB;
+            ht["CI"] = this.cellInfo.CI;
+            //gc.deleteGroundCover(ht);
+            gc.wirteGroundCover(ht);
+            gc.clearGround();
+            //if (this.computeIndoor)
+            {
+                //gc.deleteBuildingCover(ht);
+                gc.writeBuildingCover(ht);
+                gc.clearBuilding();
+            }
+            Console.WriteLine("地面栅格总数: {0}", gc.ng);
+            Console.WriteLine("立体栅格总数: {0}", gc.nb);
+            end = DateTime.Now;
+            string info = string.Format("总运行时间：{0}毫秒\n", (end - start).TotalMilliseconds);
+            Console.WriteLine(info);
+            Console.WriteLine("write done");
+
+            this.GridStrengths.Clear();
+            //Console.ReadKey(); // 2019.04.12
+            this.cs.free();
+            this.Close();  // 2019.04.12
+                           //this.procDoneNum = 0;
+        }
+        private void errorExit()
+        {
+            foreach (IntPtr ptr in childPtr)
+            {
+                IPC.PostMessage(ptr, IPC.WM_POST_Kill, this.Handle, 0);
+            }
+            System.Environment.Exit(3);
+        }
         /// <summary>
         /// 将共享内存传递的计算结果转换为GridStrength
         /// </summary>

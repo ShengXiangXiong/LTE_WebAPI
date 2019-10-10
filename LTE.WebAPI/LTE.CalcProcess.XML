@@ -62,6 +62,8 @@
         <member name="M:LTE.CalcProcess.CalcForm.writeReRayToMMF(System.String)">
             <summary>
             将出界射线写入共享内存，返回数据大小
+            创建共享内存文件(CreateFileMapping)---》映射文件视图到调用进程的地址空间（MapViewOfFile）---》
+                写数据到共享内存(Marshal.StructureToPtr)----》发送消息通知需要读共享内存的窗口（PostMessage）
             </summary>
             <param name="sharename"></param>
             <returns></returns>

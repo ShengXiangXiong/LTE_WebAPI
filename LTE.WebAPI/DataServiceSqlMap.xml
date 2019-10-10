@@ -267,7 +267,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		<select id="GetGridStrengthPwToSync">
 			select  GXID, GYID, ReceivedPowerW, PathLoss from tbGridPathloss
 		</select>
-		<delete id="deleteSpecifiedCelltbGrids" parameterClass="Hashtable">
+		<delete id="deleteSpecifiedCelltbGrids" parameterClass="Hashtable" timeout="600000">
 			delete from tbGridPathloss where eNodeB='$eNodeB$' and CI='$CI$'
 		</delete>
 		<delete id="deleteSpecifiedCelltbBuildingGrid3Ds" parameterClass="Hashtable">

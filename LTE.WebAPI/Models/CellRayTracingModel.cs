@@ -159,6 +159,11 @@ namespace LTE.WebAPI.Models
                     pa.pro = Process.Start(psi);
                     paList.Add(pa);
                     pa.pro.WaitForExit();
+                    //子进程异常处理，防止父进程无限阻塞，Controller不能及时返回消息
+                    if (pa.pro.ExitCode != 0)
+                    {
+                        return new Result(false, "多进程计算失败，请重试，错误代码：{0}",pa.pro.ExitCode );
+                    }
                 }
                 catch (InvalidOperationException exception)
                 {
@@ -372,6 +377,9 @@ namespace LTE.WebAPI.Models
                 else  // 无法一次性计算整个覆盖区域
                 {
                     threadCnt = 3;
+                    ////test
+                    //threadCnt = 1;
+
 
                     while ((F + R) / batchNum > capacity)
                         ++batchNum;

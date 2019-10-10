@@ -94,6 +94,7 @@ namespace LTE.InternalInterference.Grid
                     accgrids[key].Add(Convert.ToInt32(dt.Rows[i][3]));//这样可以更新成功吗？
                 }
             }
+            dt.Clear();
 
             // 2019.3.25  场景记录
             ht["minGXID"] = minGXID - 300;
@@ -106,7 +107,8 @@ namespace LTE.InternalInterference.Grid
                 string key = dt1.Rows[i][0].ToString() + "," + dt1.Rows[i][1].ToString() + "," + dt1.Rows[i][2].ToString();
                 gridScene[key] = Convert.ToInt32(dt1.Rows[i]["Scene"]);
             }
-
+            
+            dt1.Clear();
             // 2019.5.28 地形
             DataTable dt2 = IbatisHelper.ExecuteQueryForDataTable("GetAccelerateStructTIN", ht);
 
@@ -126,6 +128,7 @@ namespace LTE.InternalInterference.Grid
                     gridTIN[key].Add(Convert.ToInt32(dt2.Rows[i]["TINID"]));
                 }
             }
+            dt2.Clear();
         }
 
         public static int getDataMemory()

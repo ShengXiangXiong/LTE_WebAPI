@@ -1,0 +1,11 @@
+﻿{
+  "profiles": {
+    "Walterlv.Debugging": {
+      "commandName": "Project"
+    },
+    "本机调试": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

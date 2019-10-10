@@ -1664,6 +1664,13 @@ namespace LTE.InternalInterference
                 }
                 return;
             }
+            //fix bug 可能与地形碰撞
+            else if (ray.SideFromPoint == null)
+            {
+                rayList.Add(ray);
+                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                return;
+            }
 
             rayList.Add(ray);
 
