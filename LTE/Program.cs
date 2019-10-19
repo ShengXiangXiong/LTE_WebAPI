@@ -13,7 +13,7 @@ namespace LTE
         [STAThread]
         static void Main()
         {
-            ESRI.ArcGIS.RuntimeManager.Bind(ESRI.ArcGIS.ProductCode.EngineOrDesktop);
+            //ESRI.ArcGIS.RuntimeManager.Bind(ESRI.ArcGIS.ProductCode.EngineOrDesktop);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
         }

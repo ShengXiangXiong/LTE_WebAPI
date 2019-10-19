@@ -1,7 +1,6 @@
 using System;
 using System.Data;
 using LTE.DB;
-using ESRI.ArcGIS.Geometry;
 using LTE.InternalInterference.Grid;
 
 namespace LTE.InternalInterference

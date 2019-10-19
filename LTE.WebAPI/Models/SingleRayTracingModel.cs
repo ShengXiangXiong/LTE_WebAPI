@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using LTE.DB;
-using LTE.GIS;
 using LTE.InternalInterference;
-using ESRI.ArcGIS.Geometry;
 
 namespace LTE.WebAPI.Models
 {
@@ -54,8 +52,8 @@ namespace LTE.WebAPI.Models
                 return rt;
 
             CellInfo cellInfo = new CellInfo(this.cellName, 0, 0);
-            IPoint p = GeometryUtilities.ConstructPoint3D(this.longitude, this.latitude, 0);
-            p = PointConvert.Instance.GetProjectPoint(p);
+            LTE.Geometric.Point p = new Geometric.Point(this.longitude, this.latitude, 0);
+            p = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p);
 
             RayTracing interAnalysis = new RayTracing(cellInfo, 3, 2, false);
             string msg = interAnalysis.SingleRayAnalysis(p.X, p.Y, p.Z);

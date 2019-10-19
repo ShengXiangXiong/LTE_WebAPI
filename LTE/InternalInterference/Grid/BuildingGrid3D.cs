@@ -6,7 +6,6 @@ using System.Text;
 using LTE.Model;
 using LTE.DB;
 using System.Data;
-using LTE.GIS;
 using LTE.Geometric;
 using System.IO;
 

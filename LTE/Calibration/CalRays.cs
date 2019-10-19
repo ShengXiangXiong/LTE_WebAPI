@@ -10,9 +10,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using LTE.Geometric;
 
-using LTE.GIS;
 using LTE.DB;
-using ESRI.ArcGIS.Geometry;
 using LTE.InternalInterference.Grid;
 using LTE.InternalInterference;
 

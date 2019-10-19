@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using LTE.Geometric;
-using LTE.GIS;
 
 namespace LTE.InternalInterference.Grid
 {

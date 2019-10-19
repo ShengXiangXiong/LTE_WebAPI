@@ -6,7 +6,6 @@ using System.Text;
 using System.Data;
 
 using LTE.Geometric;
-using LTE.GIS;
 using LTE.DB;
 
 namespace LTE.InternalInterference

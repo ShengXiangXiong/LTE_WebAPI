@@ -6,8 +6,6 @@ using LTE.DB;
 using System.Data;
 using System.Data.SqlClient;
 using LTE.InternalInterference.Grid;
-using ESRI.ArcGIS.Geometry;
-using LTE.GIS;
 using System.Collections;
 using LTE.InternalInterference;
 
@@ -41,10 +39,14 @@ namespace LTE.WebAPI.Models
         private void initRange()
         {
             #region 经纬度 转 xy
-            IPoint pt = GeometryUtilities.ConstructPoint3D(this.minLongitude, this.minLatitude, 0);
-            IPoint pt1 = GeometryUtilities.ConstructPoint3D(this.maxLongitude, this.maxLatitude, 0);
-            pt = PointConvert.Instance.GetProjectPoint(pt);
-            pt1 = PointConvert.Instance.GetProjectPoint(pt1);
+            LTE.Geometric.Point pt = new Geometric.Point(this.minLongitude, this.minLatitude, 0);
+            LTE.Geometric.Point pt1 = new Geometric.Point(this.maxLongitude, this.maxLatitude, 0);
+            pt = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(pt);
+            pt1 = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(pt1);
+            //IPoint pt = GeometryUtilities.ConstructPoint3D(this.minLongitude, this.minLatitude, 0);
+            //IPoint pt1 = GeometryUtilities.ConstructPoint3D(this.maxLongitude, this.maxLatitude, 0);
+            //pt = PointConvert.Instance.GetProjectPoint(pt);
+            //pt1 = PointConvert.Instance.GetProjectPoint(pt1);
             #endregion
 
             leftBound = pt.X;
@@ -875,8 +877,10 @@ namespace LTE.WebAPI.Models
                 thisrow["x"] = Math.Round(FinalResult[i].x, 3);
                 thisrow["y"] = Math.Round(FinalResult[i].y, 3);
                 thisrow["z"] = Math.Round(FinalResult[i].z, 3);
-                IPoint pt = GeometryUtilities.ConstructPoint3D(FinalResult[i].x, FinalResult[i].y, 0);
-                PointConvert.Instance.GetGeoPoint(pt);
+                LTE.Geometric.Point pt = new Geometric.Point(FinalResult[i].x, FinalResult[i].y, 0);
+                pt = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(pt);
+                //IPoint pt = GeometryUtilities.ConstructPoint3D(FinalResult[i].x, FinalResult[i].y, 0);
+                //PointConvert.Instance.GetGeoPoint(pt);
                 thisrow["Longitude"] = Math.Round(pt.X, 6);
                 thisrow["Latitude"] = Math.Round(pt.Y, 6);
                 dtable.Rows.Add(thisrow);

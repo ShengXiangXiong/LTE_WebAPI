@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using LTE.DB;
-using ESRI.ArcGIS.Geometry;
-using LTE.GIS;
 using System.Data.SqlClient;
 using System.Collections;
 using System.Data;
@@ -55,17 +53,18 @@ namespace LTE.WebAPI.Models
         public Result ConstructGrid()
         {
             // 经纬度转投影坐标
-            ESRI.ArcGIS.Geometry.IPoint pMin = new ESRI.ArcGIS.Geometry.PointClass();
+            //ESRI.ArcGIS.Geometry.IPoint pMin = new ESRI.ArcGIS.Geometry.PointClass();
+            LTE.Geometric.Point pMin = new Geometric.Point();
             pMin.X = this.minLongitude;
             pMin.Y = this.minLatitude;
             pMin.Z = 0;
-            PointConvert.Instance.GetProjectPoint(pMin);
+            LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(pMin);
 
-            ESRI.ArcGIS.Geometry.IPoint pMax = new ESRI.ArcGIS.Geometry.PointClass();
+            LTE.Geometric.Point pMax = new Geometric.Point();
             pMax.X = this.maxLongitude;
             pMax.Y = this.maxLatitude;
             pMax.Z = 0;
-            PointConvert.Instance.GetProjectPoint(pMax);
+            LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(pMax);
 
             // 最大栅格和均匀栅格
             //2019.07.20 方便后面计算，统一以m为单位
@@ -818,7 +817,7 @@ namespace LTE.WebAPI.Models
                 LTE.Geometric.Point p = new LTE.Geometric.Point();
                 p.X = Convert.ToDouble(cell["Longitude"]);
                 p.Y = Convert.ToDouble(cell["Latitude"]);
-                p = PointConvertByProj.Instance.GetProjectPoint(p);
+                p = LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(p);
                 if (GridHelper.getInstance().XYZToAccGrid(p.X,p.Y,0,ref gxid,ref gyid,ref gzid))
                 {
                     //string key = string.Format("{0},{1}", gxid,gyid);
@@ -1209,9 +1208,9 @@ namespace LTE.WebAPI.Models
                     //PointConvert.Instance.GetGeoPoint(p1);
                     //PointConvert.Instance.GetGeoPoint(p2);
                     //PointConvert.Instance.GetGeoPoint(p3);
-                    p1 = PointConvertByProj.Instance.GetGeoPoint(p1);
-                    p2 = PointConvertByProj.Instance.GetGeoPoint(p2);
-                    p3 = PointConvertByProj.Instance.GetGeoPoint(p3);
+                    p1 = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p1);
+                    p2 = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p2);
+                    p3 = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p3);
 
 
                     System.Data.DataRow thisrow = dtable.NewRow();

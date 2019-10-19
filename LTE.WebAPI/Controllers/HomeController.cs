@@ -8,10 +8,10 @@ namespace LTE.WebAPI.Controllers
 {
     public class HomeController : Controller
     {
-        public HomeController()
-        {
-            ESRI.ArcGIS.RuntimeManager.Bind(ESRI.ArcGIS.ProductCode.EngineOrDesktop);
-        }
+        //public HomeController()
+        //{
+        //    ESRI.ArcGIS.RuntimeManager.Bind(ESRI.ArcGIS.ProductCode.EngineOrDesktop);
+        //}
 
         //
         // GET: /Home/

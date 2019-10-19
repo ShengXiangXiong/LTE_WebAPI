@@ -10,7 +10,6 @@ using ESRI.ArcGIS.Analyst3D;
 using ESRI.ArcGIS.Geometry;
 using ESRI.ArcGIS.Geodatabase;
 
-using LTE.GIS;
 using LTE.InternalInterference;
 using LTE.DB;
 

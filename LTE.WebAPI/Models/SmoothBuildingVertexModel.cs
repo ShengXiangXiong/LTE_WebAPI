@@ -5,7 +5,6 @@ using System.Web;
 using LTE.InternalInterference.Grid;
 using System.Data;
 using LTE.DB;
-using LTE.GIS;
 using System.Data;
 using System.Collections;
 
@@ -61,7 +60,7 @@ namespace LTE.WebAPI.Models
                     {
                         //使用proj.net库转换坐标,by JinHaijia
                         LTE.Geometric.Point pCopy=new LTE.Geometric.Point(ps[j]);
-                        pCopy = PointConvertByProj.Instance.GetGeoPoint(pCopy);
+                        pCopy = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(pCopy);
                         
                         //旧版使用arcgis接口转换坐标
                         //ESRI.ArcGIS.Geometry.IPoint p = GeometryUtilities.ConstructPoint2D(ps[j].X, ps[j].Y);

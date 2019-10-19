@@ -5,10 +5,8 @@ using System.Web;
 using System.Collections;
 using LTE.InternalInterference.Grid;
 using LTE.DB;
-using LTE.GIS;
 using System.Data.SqlClient;
 using System.Data;
-using ESRI.ArcGIS.Geometry;
 
 namespace LTE.WebAPI.Models
 {
@@ -52,17 +50,17 @@ namespace LTE.WebAPI.Models
         public Result defectAnalysis()
         {
             // 经纬度转换为栅格ID
-            IPoint pMin = new PointClass();
+            LTE.Geometric.Point pMin = new Geometric.Point();
             pMin.X = this.minLongitude;
             pMin.Y = this.minLatitude;
             pMin.Z = 0;
-            PointConvert.Instance.GetProjectPoint(pMin);
+            pMin = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(pMin);
 
-            ESRI.ArcGIS.Geometry.IPoint pMax = new ESRI.ArcGIS.Geometry.PointClass();
+            LTE.Geometric.Point pMax = new Geometric.Point();
             pMax.X = this.maxLongitude;
             pMax.Y = this.maxLatitude;
             pMax.Z = 0;
-            PointConvert.Instance.GetProjectPoint(pMax);
+            pMin = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(pMax);
 
             int minxid = 0, minyid = 0, maxxid = 0, maxyid = 0;
             GridHelper.getInstance().XYToGGrid(pMin.X, pMin.Y, ref minxid, ref minyid);

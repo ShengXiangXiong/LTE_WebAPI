@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using LTE.Geometric;
-using LTE.GIS;
 using LTE.DB;
 using System.Collections;
 

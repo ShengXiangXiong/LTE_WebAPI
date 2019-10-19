@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-using LTE.GIS;
 using LTE.Geometric;
 using LTE.InternalInterference.Grid;
 

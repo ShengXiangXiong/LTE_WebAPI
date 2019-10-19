@@ -12,7 +12,6 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System.Data.SqlClient;
 
-using LTE.GIS;
 using LTE.InternalInterference;
 using LTE.InternalInterference.Grid;
 using LTE.Geometric;

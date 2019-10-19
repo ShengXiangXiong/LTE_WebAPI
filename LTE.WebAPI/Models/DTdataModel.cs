@@ -6,8 +6,6 @@ using LTE.DB;
 using System.Data;
 using System.Data.SqlClient;
 using LTE.InternalInterference.Grid;
-using LTE.GIS;
-using ESRI.ArcGIS.Geometry;
 
 namespace LTE.WebAPI.Models
 {
@@ -352,11 +350,12 @@ namespace LTE.WebAPI.Models
             {
                 GridHelper.getInstance().XYToGGrid(tbDT[i].x, tbDT[i].y, ref xid, ref yid); // 网格编号
 
-                IPoint p = new PointClass();
+                //IPoint p = new PointClass();
+                Geometric.Point p = new Geometric.Point();
                 p.X = tbDT[i].x;
                 p.Y = tbDT[i].y;
                 p.Z = 0;
-                PointConvert.Instance.GetGeoPoint(p);
+                LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p);
 
                 DateTime dt = DateTime.Now;
 

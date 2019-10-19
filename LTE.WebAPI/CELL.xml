@@ -244,9 +244,9 @@
 		</select>
 
 		<select id="CELL_SelectAll" resultMap="CELL_Result" >
-			SELECT [ID],[CellName],[BtsName],[Longitude],[Latitude],[x],[y],[Altitude],[AntHeight],[Azimuth],[MechTilt],[ElecTilt],[Tilt],[CoverageRadius],[FeederLength],[EIRP],[PathlossMode],[CoverageType],[NetType],[Comments],[eNodeB],[CI],[CellNameChs],[EARFCN],[PCI]
-				FROM [dbo].[CELL]
-		</select>
+      SELECT [ID],[CellName],[BtsName],[Longitude],[Latitude],[x],[y],[Altitude],[AntHeight],[Azimuth],[MechTilt],[ElecTilt],[Tilt],[CoverageRadius],[FeederLength],[EIRP],[PathlossMode],[CoverageType],[NetType],[Comments],[eNodeB],[CI],[CellNameChs],[EARFCN],[PCI],KDis,MaxDis,MinDis
+      FROM [dbo].[CELL]
+    </select>
     
     <select id="getAllCellProjPos" parameterClass="HashTable" >
       SELECT [ID],[Longitude],[Latitude],[Altitude] FROM [dbo].[CELL] where id % 3 = 1

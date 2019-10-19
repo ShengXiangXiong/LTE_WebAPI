@@ -6,14 +6,7 @@ using System.Linq;
 using System.Data;
 using System.Windows.Forms;
 
-using ESRI.ArcGIS.Controls;
-using ESRI.ArcGIS.SystemUI;
-using ESRI.ArcGIS.Carto;
-using ESRI.ArcGIS.Analyst3D;
-using ESRI.ArcGIS.Geodatabase;
-
 //using LTE.Enos;
-using LTE.GIS;
 using LTE.Geometric;
 using LTE.DB;
 using LTE.InternalInterference.Grid;
@@ -63,7 +56,7 @@ namespace LTE.InternalInterference
         public int rayCountRef3;  // 统计三级反射线总数
         private IntPtr parentHandle;
 
-        private IFeatureClass pFeatureClass;
+        //private IFeatureClass pFeatureClass;
         private int heightIndex;
 
         public double calTime;
@@ -2824,31 +2817,31 @@ namespace LTE.InternalInterference
                     }
                 }
                 // 画绕射线
-                IGraphicsLayer pGraphicsLayer = (GISMapApplication.Instance.Scene as IBasicMap).BasicGraphicsLayer;
-                List<ESRI.ArcGIS.Geometry.IPoint> linePoints = new List<ESRI.ArcGIS.Geometry.IPoint>();
-                ESRI.ArcGIS.Geometry.IPoint p = null;
-                ESRI.ArcGIS.Geometry.IPoint p1 = null;
+                //IGraphicsLayer pGraphicsLayer = (GISMapApplication.Instance.Scene as IBasicMap).BasicGraphicsLayer;
+                //List<ESRI.ArcGIS.Geometry.IPoint> linePoints = new List<ESRI.ArcGIS.Geometry.IPoint>();
+                //ESRI.ArcGIS.Geometry.IPoint p = null;
+                //ESRI.ArcGIS.Geometry.IPoint p1 = null;
 
-                if (rayList.Count > 0)
-                {
-                    linePoints.Clear();
-                    p = GeometryUtilities.ConstructPoint3D(originPoint.X, originPoint.Y, originPoint.Z);
-                    p1 = GeometryUtilities.ConstructPoint3D(rayList[0].CrossPoint.X, rayList[0].CrossPoint.Y, rayList[0].CrossPoint.Z);
-                    linePoints.Add(p);
-                    linePoints.Add(p1);  // p为三维点
-                    DrawUtilities.DrawLine(pGraphicsLayer as IGraphicsContainer3D, linePoints);
-                }
-                for (int i = 1; i < rayList.Count; i++)
-                {
-                    if (rayList[i].rayType == RayType.VDiffraction || rayList[i].rayType == RayType.HDiffraction)
-                    {
-                        linePoints.Clear();
-                        linePoints.Add(p1);  // p为三维点
-                        p = GeometryUtilities.ConstructPoint3D(rayList[i].CrossPoint.X, rayList[i].CrossPoint.Y, rayList[i].CrossPoint.Z);
-                        linePoints.Add(p);
-                        DrawUtilities.DrawLine(pGraphicsLayer as IGraphicsContainer3D, linePoints);
-                    }
-                }
+                //if (rayList.Count > 0)
+                //{
+                //    linePoints.Clear();
+                //    p = GeometryUtilities.ConstructPoint3D(originPoint.X, originPoint.Y, originPoint.Z);
+                //    p1 = GeometryUtilities.ConstructPoint3D(rayList[0].CrossPoint.X, rayList[0].CrossPoint.Y, rayList[0].CrossPoint.Z);
+                //    linePoints.Add(p);
+                //    linePoints.Add(p1);  // p为三维点
+                //    DrawUtilities.DrawLine(pGraphicsLayer as IGraphicsContainer3D, linePoints);
+                //}
+                //for (int i = 1; i < rayList.Count; i++)
+                //{
+                //    if (rayList[i].rayType == RayType.VDiffraction || rayList[i].rayType == RayType.HDiffraction)
+                //    {
+                //        linePoints.Clear();
+                //        linePoints.Add(p1);  // p为三维点
+                //        p = GeometryUtilities.ConstructPoint3D(rayList[i].CrossPoint.X, rayList[i].CrossPoint.Y, rayList[i].CrossPoint.Z);
+                //        linePoints.Add(p);
+                //        DrawUtilities.DrawLine(pGraphicsLayer as IGraphicsContainer3D, linePoints);
+                //    }
+                //}
                 return;
                 #endregion
 
@@ -3020,41 +3013,41 @@ namespace LTE.InternalInterference
             }
         }
 
-        public ESRI.ArcGIS.Geometry.IPoint LocPointToArcPoint(ref Point p)
-        {
-            ESRI.ArcGIS.Geometry.IPoint point = new ESRI.ArcGIS.Geometry.PointClass();
-            point.X = p.X;
-            point.Y = p.Y;
-            point.Z = p.Z;
-            return point;
-        }
+        //public ESRI.ArcGIS.Geometry.IPoint LocPointToArcPoint(ref Point p)
+        //{
+        //    ESRI.ArcGIS.Geometry.IPoint point = new ESRI.ArcGIS.Geometry.PointClass();
+        //    point.X = p.X;
+        //    point.Y = p.Y;
+        //    point.Z = p.Z;
+        //    return point;
+        //}
 
-        public ESRI.ArcGIS.Geometry.IPoint LocPointToArcPoint(Point p)
-        {
-            ESRI.ArcGIS.Geometry.IPoint point = new ESRI.ArcGIS.Geometry.PointClass();
-            point.X = p.X;
-            point.Y = p.Y;
-            point.Z = p.Z;
-            return point;
-        }
+        //public ESRI.ArcGIS.Geometry.IPoint LocPointToArcPoint(Point p)
+        //{
+        //    ESRI.ArcGIS.Geometry.IPoint point = new ESRI.ArcGIS.Geometry.PointClass();
+        //    point.X = p.X;
+        //    point.Y = p.Y;
+        //    point.Z = p.Z;
+        //    return point;
+        //}
 
-        public Point ArcPointToLocPoint(ref ESRI.ArcGIS.Geometry.IPoint p)
-        {
-            Point point = new Point();
-            point.X = p.X;
-            point.Y = p.Y;
-            point.Z = p.Z;
-            return point;
-        }
+        //public Point ArcPointToLocPoint(ref ESRI.ArcGIS.Geometry.IPoint p)
+        //{
+        //    Point point = new Point();
+        //    point.X = p.X;
+        //    point.Y = p.Y;
+        //    point.Z = p.Z;
+        //    return point;
+        //}
 
-        public Point ArcPointToLocPoint(ESRI.ArcGIS.Geometry.IPoint p)
-        {
-            Point point = new Point();
-            point.X = p.X;
-            point.Y = p.Y;
-            point.Z = p.Z;
-            return point;
-        }
+        //public Point ArcPointToLocPoint(ESRI.ArcGIS.Geometry.IPoint p)
+        //{
+        //    Point point = new Point();
+        //    point.X = p.X;
+        //    point.Y = p.Y;
+        //    point.Z = p.Z;
+        //    return point;
+        //}
 
         #endregion
     }

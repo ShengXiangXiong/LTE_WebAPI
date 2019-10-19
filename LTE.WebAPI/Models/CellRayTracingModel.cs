@@ -9,7 +9,6 @@ using System.Management;
 using LTE.InternalInterference;
 using LTE.InternalInterference.Grid;
 using LTE.DB;
-using LTE.GIS;
 using System.Data;
 using System.Diagnostics;
 

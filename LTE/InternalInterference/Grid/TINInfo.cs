@@ -7,7 +7,6 @@ using System.Text;
 
 using LTE.Geometric;
 using LTE.DB;
-using LTE.GIS;
 
 namespace LTE.InternalInterference.Grid
 {

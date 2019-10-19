@@ -110,6 +110,10 @@ namespace LTE.WebAPI.Models
                     double antVAngle = getVAngle("", cells[i].Tilt.Value); //记录垂直功率角
 
                     double upper = 0, main = 0, lower = 0; //记录算出来的覆盖半径外，覆盖半径中，覆盖半径内的值
+
+                    //fix bug when the cell's altitude is null due to out of range
+                    if(cells[i].Altitude is null) { cells[i].Altitude = 0; }
+
                     cmptCovR(Convert.ToDouble(cells[i].AntHeight + cells[i].Altitude), cells[i].Tilt.Value, antVAngle, ref upper, ref main, ref lower); //返回计算出来的值
 
                     double outCellCover, inCellCover;

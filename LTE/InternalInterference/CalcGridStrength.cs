@@ -8,7 +8,6 @@ using System.IO;
 
 using LTE.DB;
 using LTE.Geometric;
-using LTE.GIS;
 //using ReflectionCoefficient;
 using LTE.InternalInterference.Grid;
 
