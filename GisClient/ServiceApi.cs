@@ -52,7 +52,7 @@ namespace GisClient
         {
             if (client is null)
             {
-                TTransport transport = new TSocket(url, port,6000);
+                transport = new TSocket(url, port);
                 protocol = new TBinaryProtocol(transport);
                 transport.Open();
                 client = new OpreateGisLayer.Client(protocol);

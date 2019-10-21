@@ -862,5 +862,35 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		where GainType = '$gainType$' and Direction = $direction$ and Degree = $degree$
 	</select>
 
+  <!--获取渔网位置-->
+  <select id="GetFishnetPosition">
+    select fileindex from tbDataPosition where filename='fishnet'
+  </select>
+
+  <!--获取渔网覆盖范围和栅格大小-->
+  <select id="GetFishnetRange">
+    select AreaMinX,AreaMinY,AreaMaxX,AreaMaxY,AGridSize from tbGridRange where id=1
+  </select>
+
+  <!--获取建筑物图层文件位置-->
+  <select id="GetBuildingPosition">
+    select fileindex from tbDataPosition where filename='building'
+  </select>
+
+  <!--获取建筑物叠加结果图层文件位置-->
+  <select id="GetBuildingOverlayPosition">
+    select fileindex from tbDataPosition where filename='building_overlay'
+  </select>
+
+  <!--获取水面图层文件位置-->
+  <select id="GetWaterPosition">
+    select fileindex from tbDataPosition where filename='water'
+  </select>
+
+  <!--获取水面叠加结果图层文件位置-->
+  <select id="GetWaterOverlayPosition">
+    select fileindex from tbDataPosition where filename='water_overlay'
+  </select>
+
   </statements>
 </sqlMap>

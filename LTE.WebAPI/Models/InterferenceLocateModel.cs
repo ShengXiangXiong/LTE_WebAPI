@@ -71,7 +71,10 @@ namespace LTE.WebAPI.Models
             ht["RoadID1"] = 0;
             ht["RoadID2"] = 6;
 
-            readData("getDT", ht);  // 读取路测
+            if (!readData("getDT", ht)) {
+                return new Result(false, "路测数据为空");
+            }
+                // 读取路测
             strongWeakPt();     // 强弱相间点、强点用到
             strongWeakPt2();    // 射线跟踪用到
 
@@ -88,7 +91,10 @@ namespace LTE.WebAPI.Models
             {
                 ht["RoadID1"] = 7;
                 ht["RoadID2"] = 10;
-                readData("getDT", ht);
+                if(!readData("getDT", ht))
+                {
+                    return new Result(false, "路测数据为空");
+                }
             }
             monotoneLoc();
             #endregion
@@ -179,7 +185,7 @@ namespace LTE.WebAPI.Models
         List<double> pwrDbm = new List<double>();
         List<double> y = new List<double>();
         int n = 0;
-        private void readData(string tbName, Hashtable ht)
+        private bool readData(string tbName, Hashtable ht)
         {
             roadID.Clear();
             roadDivide.Clear();
@@ -195,6 +201,8 @@ namespace LTE.WebAPI.Models
 
             DataTable tb = IbatisHelper.ExecuteQueryForDataTable(tbName, ht);
             n = tb.Rows.Count;
+            //fix bug of td count is 0
+            if (n == 0) { return false; }
 
             roadID.Add(Convert.ToInt32(tb.Rows[0]["roadID"].ToString()));
             longtitude.Add(Convert.ToDouble(tb.Rows[0]["longtitude"].ToString()));
@@ -250,7 +258,7 @@ namespace LTE.WebAPI.Models
             #endregion
 
             n = k;
-
+            return true;
         }
 
         List<StrongWeakPt> Pt = new List<StrongWeakPt>();
