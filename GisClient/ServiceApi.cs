@@ -50,7 +50,7 @@ namespace GisClient
 
         public static OpreateGisLayer.Client getGisLayerService(string url = "localhost", int port = 8800)
         {
-            if (client is null)
+            if (client == null)
             {
                 transport = new TSocket(url, port);
                 protocol = new TBinaryProtocol(transport);

@@ -29,7 +29,7 @@ namespace LTE.WebAPI.Models
         public string sub { get; set; }
         public string jti { get; set; }
 
-        public object userInfo { get; set; }
+        public LoginModel userInfo { get; set; }
         //public int userId { get; set; }
         //public string userName { get; set; }
         //public string userPwd { get; set; }

@@ -5,6 +5,7 @@ using System.Web;
 using System.Net.Http;
 using System.Web.Http;
 using LTE.WebAPI.Models;
+using LTE.WebAPI.Attributes;
 
 namespace LTE.WebAPI.Controllers
 {
@@ -16,6 +17,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="rt">射线跟踪计算参数</param>
         /// <returns></returns>
         [HttpPost]
+        [ApiAuthorize(Roles ="admin")]
         public Result PostRayTracing([FromBody]CellRayTracingModel rt)
         {
             return rt.calc();

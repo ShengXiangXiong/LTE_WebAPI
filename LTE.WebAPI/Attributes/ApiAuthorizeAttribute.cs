@@ -1,6 +1,7 @@
 ﻿using JWT;
 using JWT.Serializers;
 using LTE.WebAPI.Models;
+using Newtonsoft.Json;
 using System;
 using System.Configuration;
 using System.Linq;
@@ -18,8 +19,8 @@ namespace LTE.WebAPI.Attributes
         protected override bool IsAuthorized(HttpActionContext actionContext)
         {
             var authHeader = from t in actionContext.Request.Headers where t.Key == "auth" select t.Value.FirstOrDefault();
-            //Test valid, production annotations
-            return true;
+            //Todo: Test valid, production annotations
+            //return true;
 
             if (authHeader != null)
             {
@@ -39,8 +40,17 @@ namespace LTE.WebAPI.Attributes
                         var json = decoder.DecodeToObject<AuthInfo>(token, secret, verify: true);
                         if (json != null)
                         {
-                            actionContext.RequestContext.RouteData.Values.Add("auth", json);
-                            return true;
+                            //role check
+                            LoginModel user = (LoginModel)json.userInfo;
+                            foreach (var item in user.userRoles)
+                            {
+                                if (Roles.Equals(item))
+                                {
+                                    actionContext.RequestContext.RouteData.Values.Add("auth", json);
+                                    return true;
+                                }
+                            }
+                            return false;
                         }
                         return false;
                     }
