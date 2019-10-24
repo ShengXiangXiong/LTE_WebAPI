@@ -42,6 +42,7 @@
                 if (data.ok == true)
                 {
                     window.localStorage.setItem("token", data.token);
+                    window.localStorage.setItem("userId", data.obj.userId);
                     window.location.href = "@Url.Action("Home","Home")";
                 }
                 else

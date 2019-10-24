@@ -17,6 +17,10 @@ using LTE.InternalInterference.Grid;
 using LTE.Geometric;
 using LTE.DB;
 using LTE.Beam;
+using LTE.Model;
+using System.Net.Http;
+using System.Net;
+using System.Net.Http.Headers;
 
 namespace LTE.CalcProcess
 {
@@ -39,6 +43,14 @@ namespace LTE.CalcProcess
         /// 用于进度条显示
         /// </summary>
         private int totalRay;
+
+        //loading control
+        private int userId;
+        private string taskName;
+        private LoadInfo loadInfo = new LoadInfo();
+
+        //Http
+        private HttpClient httpClient = new HttpClient();
 
         private double fromAngle;
         private double toAngle;
@@ -66,9 +78,39 @@ namespace LTE.CalcProcess
 
         private ConsoleShow cs;
 
+        public void LoadApi() { }
+
+
+        /// <summary>
+        /// HttpClient实现Post请求
+        /// </summary>
+        public async void doPostLoading(LoadInfo loadInfo,string action)
+        {
+            string url = "http://localhost:3298/api/Loading/"+action;
+
+            HttpContent httpContent = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(loadInfo));
+            httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            httpContent.Headers.ContentType.CharSet = "utf-8";
+            try
+            {
+                //httpClient = new HttpClient();
+                //AuthenticationHeaderValue authValue = new AuthenticationHeaderValue("Basic", token);
+                //httpClient.DefaultRequestHeaders.Authorization = authValue;
+                HttpResponseMessage response = await httpClient.PostAsync(url, httpContent);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+        }
+
+
+
         public CalcForm()
         {
             InitializeComponent();
+
             reRay = false;   // 不进行二次投射
 
             string[] args = System.Environment.GetCommandLineArgs();
@@ -113,11 +155,13 @@ namespace LTE.CalcProcess
             {
                 System.Environment.Exit(0);
             }
+            loadInfo.UserId = userId;
+            loadInfo.taskName = taskName;
         }
 
         private bool dealParams(string[] args)
         {
-            if (args.Length == 35)
+            if (args.Length == 37)
             {
                 try
                 {
@@ -176,6 +220,11 @@ namespace LTE.CalcProcess
                     this.isRayLoc = Convert.ToBoolean(args[33]);
                     this.isRayAdj = Convert.ToBoolean(args[34]);
                     //MessageBox.Show(args[31] + " " + args[32] + " " + args[33] + " " + args[34] + " ");
+
+                    //执行此程序的用户id以及taskName
+                    this.userId = Convert.ToInt32(args[35]);
+                    this.taskName = args[36];
+
                     return true;
                 }
                 catch (Exception ee)
@@ -464,6 +513,22 @@ namespace LTE.CalcProcess
             Console.WriteLine("扇区内10~30m建筑物数量 = {0}, 占比 = {1} ", h2, (double)h2 / (double)this.bids.Count);
             Console.WriteLine("扇区内>30m建筑物数量 = {0}, 占比 = {1} ", h3, (double)h3 / (double)this.bids.Count);
             Console.WriteLine("扇区内建筑物占比 = {0}", (double)topPoints.Count / (double)gfPoints.Count);
+
+
+            gray = gfPoints.Count;
+            gray += topPoints.Count;
+            bray = vmPoints.Count;
+            vray = diffPoints.Count;
+
+            //init load
+            int count = gray + bray + vray;
+
+            loadInfo.cnt = 0;
+            loadInfo.count = count;
+            loadInfo.UserId = userId;
+            loadInfo.taskName = taskName;
+            doPostLoading(loadInfo, "addCountByMulti");
+
 
             t2 = DateTime.Now;
             this.label1.Text = "直射分析 ...";
@@ -2158,6 +2223,10 @@ namespace LTE.CalcProcess
         /// <param name="val"></param>
         private void updateProgress(int val)
         {
+            loadInfo.cnt = (int)this.interAnalysis.rayCount;
+            doPostLoading(loadInfo, "updateLoadingInfo");
+            //loading.updateLoading(userId, taskName, (int)this.interAnalysis.rayCount);
+
             this.label1.Text = string.Format("已经计算{0}/{1}条射线", val, this.totalRay);
             this.label1.Refresh();
             this.progressBar1.Value = val;

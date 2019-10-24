@@ -14,6 +14,10 @@ namespace LTE.WebAPI.Models
 {
     public class LoginModel
     {
+        /// <summary>
+        /// 用户ID
+        /// </summary>
+        public int userId { get; set; }
         /// <summary> 
         /// 用户名 
         /// </summary>   
@@ -27,7 +31,7 @@ namespace LTE.WebAPI.Models
         /// <summary>
         /// 角色
         /// </summary>
-        public string[] userRoles { get; set; }
+        public string userRole { get; set; }
 
         /// <summary>
         /// 用户头像
@@ -52,7 +56,7 @@ namespace LTE.WebAPI.Models
         }
         public override string ToString()
         {
-            return string.Format("role:{2} userName:{0} passWord:{1}", this.userName, this.userPwd, this.userRoles);
+            return string.Format("role:{2} userName:{0} passWord:{1}", this.userName, this.userPwd, this.userRole);
         }
         /// <summary>
         /// 检查用户是否合法
@@ -79,8 +83,16 @@ namespace LTE.WebAPI.Models
                     DataRow userInfoDt = dt.Rows[0];
                     //Regex rgx = new Regex(@"[,./?:'\]");
                     //System.Diagnostics.Debug.Write(userInfo["Role"]);
-                    LoginModel userInfo = new LoginModel{userName=(string)userInfoDt["userName"],
-                        userRoles=((string)userInfoDt["Role"]).Trim().Split(new char[] { ',', ' ', '/', ';','\\' })};
+
+                    //LoginModel userInfo = new LoginModel{userName=(string)userInfoDt["userName"],userId= (int)userInfoDt["ID"],
+                    //    userRoles =((string)userInfoDt["Role"]).Trim().Split(new char[] { ',', ' ', '/', ';','\\' })};
+
+                    LoginModel userInfo = new LoginModel
+                    {
+                        userName = (string)userInfoDt["userName"],
+                        userId = (int)userInfoDt["ID"],
+                        userRole = (string)userInfoDt["Role"]
+                    };
                     AuthInfo auth = new AuthInfo {userInfo=userInfo};
                     string token = JwtHelper.SetJwtEncode(auth);
                     return new Result { ok = true, code = "1", obj = userInfo, msg = "登陆成功", token = token };

@@ -14,6 +14,11 @@ namespace LTE.WebAPI.Models
     // 如果虚拟路测为空，则生成的射线轨迹不会记在数据库中
     public class RayRecordAdjModel : CellRayTracing
     {
+        /// <summary>
+        /// 执行当前操作的用户ID
+        /// </summary>
+        public int userId { get; set; }
+
         public Result rayRecord()
         {
             List<ProcessArgs> paList = new List<ProcessArgs>();
@@ -28,13 +33,14 @@ namespace LTE.WebAPI.Models
             double fromAngle = cellInfo.Azimuth - this.incrementAngle;
             double toAngle = cellInfo.Azimuth + this.incrementAngle;
 
-            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, false, true);
+            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, false, true, userId, "RayRecordAdj");
         }
     }
 
     // 记录用于干扰定位的射线
     public class RayRecordLocModel : CellRayTracing
     {
+        public int userId { get; set; }
         /// <summary>
         /// 是否手动指定发射源（可选）
         /// </summary>
@@ -130,7 +136,7 @@ namespace LTE.WebAPI.Models
                 toAngle = cellInfo.Azimuth + this.incrementAngle;
             }
 
-            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, true, false);
+            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, true, false,userId, "RayRecordLoc");
         }
 
     }

@@ -214,6 +214,7 @@
     <Compile Include="Controllers\GridController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\InterferenceLocateController.cs" />
+    <Compile Include="Controllers\LoadingController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
     <Compile Include="Controllers\RayRecordController.cs" />
     <Compile Include="Controllers\RefreshLayerController.cs" />
@@ -340,12 +341,8 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\TestClientDialogs.cshtml" />
     <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
     <Content Include="Properties\settings.json" />
+    <Content Include="providers.config" />
     <None Include="Scripts\jquery-1.8.2.intellisense.js" />
-    <Content Include="Logs\iBatisMapper_20190724.txt" />
-    <Content Include="Logs\iBatis_20190724.txt" />
-    <Content Include="Logs\iBatis_20190725.txt" />
-    <Content Include="Logs\Log_20190724.txt" />
-    <Content Include="Logs\Log_20190725.txt" />
     <Content Include="Scripts\jquery-1.8.2.js" />
     <Content Include="Scripts\jquery-1.8.2.min.js" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
@@ -426,7 +423,9 @@
       <SubType>Designer</SubType>
     </Content>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Logs\" />
+  </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
   </ItemGroup>
@@ -469,6 +468,8 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <FilesToIncludeForPublish>AllFilesInProjectFolder</FilesToIncludeForPublish>
+    <IncludeIisSettings>true</IncludeIisSettings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\</OutputPath>

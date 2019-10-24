@@ -52,6 +52,7 @@
         rt.reflectCoeff = parseFloat($("#reflectCoeff").val()).toFixed(2);
         rt.diffractCoeff = parseFloat($("#diffractCoeff").val()).toFixed(2);
         rt.diffractCoeff2 = parseFloat($("#diffractCoeff2").val()).toFixed(2);
+        rt.userId = window.localStorage.getItem("userId");
 
         $.ajax
         ({

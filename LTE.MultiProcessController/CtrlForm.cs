@@ -52,6 +52,11 @@ namespace LTE.MultiProcessController
         private Dictionary<string, GridStrength> GridStrengths;
         private List<MMFReRayStruct> MultiTasksReRay; // 2019.5.22
 
+
+        //loading control 
+        private int userId;
+        private string taskName;
+
         /// <summary>
         /// 子进程数
         /// </summary>
@@ -119,7 +124,7 @@ namespace LTE.MultiProcessController
 
         private bool dealParams(string[] args)
         {
-            if (args.Length == 32)
+            if (args.Length == 34)
             {
                 try
                 {
@@ -167,6 +172,10 @@ namespace LTE.MultiProcessController
                     this.isRecordReray = this.rayLoc = Convert.ToBoolean(args[29]);
                     this.rayLoc = Convert.ToBoolean(args[30]);
                     this.rayAdj = Convert.ToBoolean(args[31]);
+
+                    this.userId = Convert.ToInt32(args[32]);
+                    this.taskName = args[33];
+
                     this.baseMMFName = string.Format("MMF_{0}_{1}", cellInfo.eNodeB, cellInfo.CI);
                     this.Text = string.Format("计算小区{0}({1}-{2}覆盖), 共{3}个计算进程", cellInfo.SourceName, cellInfo.eNodeB, cellInfo.CI, processNum);
                     
@@ -200,6 +209,7 @@ namespace LTE.MultiProcessController
             {
                 for (int i = 0; i < this.processNum; i++)
                 {
+                    //string threadTaskName = taskName + i;
                     from = (fromAngle + i * deltaA + 360) % 360;
                     to = (fromAngle + (i + 1) * deltaA + 360) % 360;
 
@@ -216,13 +226,13 @@ namespace LTE.MultiProcessController
 
                     ProcessStartInfo psi = new ProcessStartInfo();
                     psi.FileName = "LTE.CalcProcess.exe";
-                    psi.Arguments = string.Format("{0} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19} {20} {21} {22} {23} {24} {25} {26} {27} {28} {29} {30} {31} {32} {33} {34}",
+                    psi.Arguments = string.Format("{0} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19} {20} {21} {22} {23} {24} {25} {26} {27} {28} {29} {30} {31} {32} {33} {34} {35} {36}",
                         this.baseMMFName, 0, i + 1, cellInfo.SourceName, p.X, p.Y, 0, 0, p.Z, cellInfo.eNodeB, cellInfo.CI,
                         cellInfo.Azimuth, cellInfo.Inclination, cellInfo.cellType, cellInfo.frequncy, cellInfo.EIRP,
                         cellInfo.directCoefficient, cellInfo.reflectCoefficient, cellInfo.diffracteCoefficient, cellInfo.diffracteCoefficient2,
                         from, to, this.distance, this.reflectionNum, this.diffractionNum, this.computeIndoor, this.Handle.ToInt32(), calcBids,
-                        this.diffPointsMargin, this.computeVSide, deltaA, this.reRay, this.isRecordReray, this.rayLoc, this.rayAdj);
-                    psi.UseShellExecute = true;
+                        this.diffPointsMargin, this.computeVSide, deltaA, this.reRay, this.isRecordReray, this.rayLoc, this.rayAdj,this.userId, taskName);
+                    psi.UseShellExecute = true; 
                     //当前exe与子进程在同一级目录下
                     psi.WorkingDirectory = this.basePath;
                     psi.ErrorDialog = true;

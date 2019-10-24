@@ -919,6 +919,11 @@
             <param name="rt">栅格二维坐标</param>
             <returns></returns>
         </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjModel.userId">
+            <summary>
+            执行当前操作的用户ID
+            </summary>
+        </member>
         <member name="P:LTE.WebAPI.Models.RayRecordLocModel.manSource">
             <summary>
             是否手动指定发射源（可选）
@@ -957,6 +962,11 @@
         <member name="P:LTE.WebAPI.Models.RayRecordLocModel.dirY">
             <summary>
             方位角中心线末端 y 坐标
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.CellRayTracing.userId">
+            <summary>
+            执行当前覆盖分析的用户ID
             </summary>
         </member>
         <member name="P:LTE.WebAPI.Models.CellRayTracing.cellName">
@@ -1132,6 +1142,11 @@
             最大纬度
             </summary>
         </member>
+        <member name="P:LTE.WebAPI.Models.LoginModel.userId">
+            <summary>
+            用户ID
+            </summary>
+        </member>
         <member name="P:LTE.WebAPI.Models.LoginModel.userName">
             <summary> 
             用户名 
@@ -1142,7 +1157,7 @@
             密码 
             </summary> 
         </member>
-        <member name="P:LTE.WebAPI.Models.LoginModel.userRoles">
+        <member name="P:LTE.WebAPI.Models.LoginModel.userRole">
             <summary>
             角色
             </summary>

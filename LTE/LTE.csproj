@@ -146,6 +146,7 @@
     <Compile Include="InternalInterference\Reflection_vh.cs" />
     <Compile Include="InternalInterference\TrajInfo.cs" />
     <Compile Include="Model\CELL.cs" />
+    <Compile Include="Model\Loading.cs" />
     <Compile Include="Model\PropertyCELL.cs" />
     <Compile Include="Model\PropertyGrid.cs" />
     <Compile Include="InternalInterference\Gain\AbstrGain.cs" />

@@ -25,9 +25,81 @@ namespace LTE.WebAPI.Models
         double constraint_scaled_size = 0.01;   // 策略3的控制参数
         double constraint_low_bound = 0.02;     // 策略3的控制参数
 
+        //public Result smoothBuildingPoints()
+        //{
+        //    IbatisHelper.ExecuteDelete("DeleteBuildingVertex", null);
+
+        //    DataTable dt = new DataTable();
+        //    dt.Columns.Add("BuildingID", System.Type.GetType("System.Int32"));
+        //    dt.Columns.Add("VertexLong", System.Type.GetType("System.Double"));
+        //    dt.Columns.Add("VertexLat", System.Type.GetType("System.Double"));
+        //    dt.Columns.Add("VertexX", System.Type.GetType("System.Double"));
+        //    dt.Columns.Add("VertexY", System.Type.GetType("System.Double"));
+        //    dt.Columns.Add("VIndex", System.Type.GetType("System.Int16"));
+
+        //    Hashtable ht = new Hashtable();
+        //    int pageindex = 0;
+        //    int pagesize = 10000;
+        //    ht["pageindex"] = pageindex;
+        //    ht["pagesize"] = pagesize;
+        //    BuildingGrid3D.constructBuildingVertexOriginalByBatch(pageParam: ht);
+        //    while (BuildingGrid3D.buildingVertexOriginal.Count > 0)
+        //    {
+        //        int minBid, maxBid;
+        //        BuildingGrid3D.getAllBuildingIDRange(out minBid, out maxBid);
+
+        //        for (int i = minBid; i <= maxBid; i++)
+        //        {
+        //            List<LTE.Geometric.Point> bpoints = BuildingGrid3D.getBuildingVertexOriginal(i);
+
+        //            List<LTE.Geometric.Point> ps = Process(ref bpoints);  // 2018-05-08
+        //            if (ps.Count < 20)
+        //                ps = bpoints;
+
+        //            for (int j = 0; j < ps.Count; j++)
+        //            {
+        //                //使用proj.net库转换坐标,by JinHaijia
+        //                LTE.Geometric.Point pCopy=new LTE.Geometric.Point(ps[j]);
+        //                pCopy = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(pCopy);
+                        
+        //                //旧版使用arcgis接口转换坐标
+        //                //ESRI.ArcGIS.Geometry.IPoint p = GeometryUtilities.ConstructPoint2D(ps[j].X, ps[j].Y);
+        //                //PointConvert.Instance.GetGeoPoint(p);
+
+        //                //System.Diagnostics.Debug.WriteLine("transfNew long:" + pCopy.X + " latitude:" + pCopy.Y);
+        //                //System.Diagnostics.Debug.WriteLine("transfOld long:" + p.X + " latitude:" + p.Y);
+        //                //System.Diagnostics.Debug.WriteLine("_________");
+
+        //                DataRow dr = dt.NewRow();
+        //                dr["BuildingID"] = i;
+        //                dr["VertexLong"] = pCopy.X;
+        //                dr["VertexLat"] = pCopy.Y;
+        //                dr["VertexX"] = ps[j].X;
+        //                dr["VertexY"] = ps[j].Y;
+        //                dr["VIndex"] = j;
+        //                dt.Rows.Add(dr);
+        //            }
+        //            if (dt.Rows.Count >= 5000)
+        //            {
+        //                DataUtil.BCPDataTableImport(dt, "tbBuildingVertex");
+        //                dt.Clear();
+        //            }
+        //        }
+        //        DataUtil.BCPDataTableImport(dt, "tbBuildingVertex");
+        //        dt.Clear();
+        //        BuildingGrid3D.clearBuildingVertexOriginal();
+        //        ht["pageindex"] = ++pageindex;
+        //        BuildingGrid3D.constructBuildingVertexOriginalByBatch(pageParam: ht);
+        //    }
+        //    return new Result(true,"建筑物顶点平滑完成");
+        //}
+
+
         public Result smoothBuildingPoints()
         {
-            IbatisHelper.ExecuteDelete("DeleteBuildingVertex", null);
+            BuildingGrid3D.constructBuildingVertexOriginal();
+            int minBid, maxBid;
+            BuildingGrid3D.getAllBuildingIDRange(out minBid, out maxBid);
 
             DataTable dt = new DataTable();
             dt.Columns.Add("BuildingID", System.Type.GetType("System.Int32"));
@@ -37,61 +109,51 @@ namespace LTE.WebAPI.Models
             dt.Columns.Add("VertexY", System.Type.GetType("System.Double"));
             dt.Columns.Add("VIndex", System.Type.GetType("System.Int16"));
 
-            Hashtable ht = new Hashtable();
-            int pageindex = 0;
-            int pagesize = 10000;
-            ht["pageindex"] = pageindex;
-            ht["pagesize"] = pagesize;
-            BuildingGrid3D.constructBuildingVertexOriginalByBatch(pageParam: ht);
-            while (BuildingGrid3D.buildingVertexOriginal.Count > 0)
+            try
             {
-                int minBid, maxBid;
-                BuildingGrid3D.getAllBuildingIDRange(out minBid, out maxBid);
-
-                for (int i = minBid; i <= maxBid; i++)
-                {
-                    List<LTE.Geometric.Point> bpoints = BuildingGrid3D.getBuildingVertexOriginal(i);
-
-                    List<LTE.Geometric.Point> ps = Process(ref bpoints);  // 2018-05-08
-                    if (ps.Count < 20)
-                        ps = bpoints;
-
-                    for (int j = 0; j < ps.Count; j++)
-                    {
-                        //使用proj.net库转换坐标,by JinHaijia
-                        LTE.Geometric.Point pCopy=new LTE.Geometric.Point(ps[j]);
-                        pCopy = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(pCopy);
-                        
-                        //旧版使用arcgis接口转换坐标
-                        //ESRI.ArcGIS.Geometry.IPoint p = GeometryUtilities.ConstructPoint2D(ps[j].X, ps[j].Y);
-                        //PointConvert.Instance.GetGeoPoint(p);
-
-                        //System.Diagnostics.Debug.WriteLine("transfNew long:" + pCopy.X + " latitude:" + pCopy.Y);
-                        //System.Diagnostics.Debug.WriteLine("transfOld long:" + p.X + " latitude:" + p.Y);
-                        //System.Diagnostics.Debug.WriteLine("_________");
-
-                        DataRow dr = dt.NewRow();
-                        dr["BuildingID"] = i;
-                        dr["VertexLong"] = pCopy.X;
-                        dr["VertexLat"] = pCopy.Y;
-                        dr["VertexX"] = ps[j].X;
-                        dr["VertexY"] = ps[j].Y;
-                        dr["VIndex"] = j;
-                        dt.Rows.Add(dr);
-                    }
-                    if (dt.Rows.Count >= 5000)
-                    {
-                        DataUtil.BCPDataTableImport(dt, "tbBuildingVertex");
-                        dt.Clear();
-                    }
-                }
-                DataUtil.BCPDataTableImport(dt, "tbBuildingVertex");
-                dt.Clear();
-                BuildingGrid3D.clearBuildingVertexOriginal();
-                ht["pageindex"] = ++pageindex;
-                BuildingGrid3D.constructBuildingVertexOriginalByBatch(pageParam: ht);
+                IbatisHelper.ExecuteDelete("DeleteBuildingVertex", null);
             }
-            return new Result(true,"建筑物顶点平滑完成");
+            catch (Exception e)
+            {
+                return new Result(false, e.ToString());
+            }
+
+            for (int i = minBid; i <= maxBid; i++)
+            {
+                List<LTE.Geometric.Point> bpoints = BuildingGrid3D.getBuildingVertexOriginal(i);
+
+                List<LTE.Geometric.Point> ps = Process(ref bpoints);  // 2018-05-08
+
+
+                if (ps.Count < 20)
+                    ps = bpoints;
+
+                for (int j = 0; j < ps.Count; j++)
+                {
+                    LTE.Geometric.Point p = new Geometric.Point(ps[j].X, ps[j].Y,0);
+                    LTE.Geometric.Point pCopy = new LTE.Geometric.Point(ps[j]);
+                    p = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p);
+
+                    DataRow dr = dt.NewRow();
+                    dr["BuildingID"] = i;
+                    dr["VertexLong"] = p.X;
+                    dr["VertexLat"] = p.Y;
+                    dr["VertexX"] = ps[j].X;
+                    dr["VertexY"] = ps[j].Y;
+                    dr["VIndex"] = j;
+                    dt.Rows.Add(dr);
+                }
+                if (dt.Rows.Count >= 5000)
+                {
+                    DataUtil.BCPDataTableImport(dt, "tbBuildingVertex");
+                    dt.Clear();
+                }
+            }
+            DataUtil.BCPDataTableImport(dt, "tbBuildingVertex");
+            dt.Clear();
+            BuildingGrid3D.clearBuildingVertexOriginal();
+
+            return new Result(true);
         }
 
         public double cross(LTE.Geometric.Point p1,
