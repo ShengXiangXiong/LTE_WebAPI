@@ -130,6 +130,8 @@
     <Compile Include="DB\IbatisHelper.cs" />
     <Compile Include="DataOperate\CSVFileHelper.cs" />
     <Compile Include="DataOperate\ImportExcel.cs" />
+    <Compile Include="ExternalInterference\Struct\GridInfo.cs" />
+    <Compile Include="ExternalInterference\Struct\PathInfo.cs" />
     <Compile Include="Geometric\GetPointHeight.cs" />
     <Compile Include="InternalInterference\AdjCoeffHelper.cs" />
     <Compile Include="InternalInterference\Grid\Math\Divide.cs" />
@@ -184,6 +186,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AsyncUI\AsyncService.cs" />
+    <Compile Include="Utils\DT\PTHandler.cs" />
     <Compile Include="Utils\PointConvertByProj.cs" />
     <Compile Include="Win32Lib\ConsoleShow.cs" />
     <Compile Include="Win32Lib\IPC.cs" />
