@@ -261,7 +261,13 @@ namespace LTE.MultiProcessController
                     break;
                 case IPC.WM_POST_CALCDONE:
                     if (this.rayLoc || this.rayAdj)
+                    {
                         Console.WriteLine("完成！");
+                        if(++procDoneNum== this.processNum)
+                        {
+                            this.Close();
+                        }
+                    }
                     else
                         readCalcResult(m.WParam, m.LParam.ToInt32());
                     break;

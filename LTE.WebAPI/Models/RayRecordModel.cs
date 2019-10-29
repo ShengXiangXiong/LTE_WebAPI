@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Web;
 using LTE.InternalInterference;
 using System.Data;
 using System.Data.SqlClient;
 using LTE.DB;
-
+using System.Diagnostics;
 namespace LTE.WebAPI.Models
 {
     // 记录用于系数校正的射线
@@ -33,104 +34,158 @@ namespace LTE.WebAPI.Models
     }
 
     // 记录用于干扰定位的射线
-    public class RayRecordLocModel : CellRayTracing
+    public class RayLocRecordModel
     {
+        //
+        // GET: /RayLocRecordModel/
+        #region 变量定义
         /// <summary>
-        /// 是否手动指定发射源（可选）
+        /// 干扰源点
         /// </summary>
-        public bool manSource { get; set; } 
+        public string virsource { get; set; }
+        /// <summary>
+        /// 反向发射点发射半径
+        /// </summary>
+        public double distance { get; set; }
 
         /// <summary>
-        /// 发射源 ID
+        /// 以方位角为中心，两边扩展的角度
         /// </summary>
-        public int sourceID { get; set; } 
-   
-        /// <summary>
-        /// 发射源 x 坐标
-        /// </summary>
-        public double sourceX { get; set; }   
+        public double incrementAngle { get; set; }
 
         /// <summary>
-        /// 发射源 y 坐标
+        /// 线程个数
         /// </summary>
-        public double sourceY { get; set; }   
+        public int threadNum { get; set; }
 
         /// <summary>
-        /// 发射源 z 坐标
+        /// 反射次数
         /// </summary>
-        public double sourceZ { get; set; }   
+        public int reflectionNum { get; set; }
 
         /// <summary>
-        /// 是否手动指定方位角（可选）
+        /// 绕射次数
         /// </summary>
-        public bool manDir { get; set; } 
+        public int diffractionNum { get; set; }
 
         /// <summary>
-        /// 方位角中心线末端 x 坐标
+        /// 建筑物棱边绕射点间隔
         /// </summary>
-        public double dirX { get; set; }   
+        public double sideSplitUnit { get; set; }
 
         /// <summary>
-        /// 方位角中心线末端 y 坐标
+        /// 计算立体覆盖
         /// </summary>
-        public double dirY { get; set; }   
+        public bool computeIndoor { get; set; }
 
+        /// <summary>
+        /// 计算棱边绕射
+        /// </summary>
+        public bool computeVSide { get; set; }
 
-        public Result rayRecord()
+        /// <summary>
+        /// 直射校正系数
+        /// </summary>
+        public double directCoefficient { get; set; }
+
+        /// <summary>
+        /// 反射校正系数
+        /// </summary>
+        public double reflectCoefficient { get; set; }
+
+        /// <summary>
+        /// 绕射校正系数
+        /// </summary>
+        public double diffractCoefficient { get; set; }
+
+        /// <summary>
+        /// 菲涅尔绕射校正系数
+        /// </summary>
+        public double FCoefficient { get; set; }
+
+        
+        #endregion
+        /// <summary>
+        /// 计算射线
+        /// </summary>
+        /// <returns></returns>
+        public Result RecordRayLoc()
         {
-            List<ProcessArgs> paList = new List<ProcessArgs>();
-            double fromAngle = 0, toAngle = 0;
-            int eNodeB = 0, CI = 0;
-            string cellType = "";
-            CellInfo cellInfo;
-
-            if (this.manSource)  // 手动指定发射源
+            Hashtable ht = new Hashtable();
+            ht["fromName"] = virsource;
+            //读取selectPoint 表信息
+            DataTable tb = IbatisHelper.ExecuteQueryForDataTable("GetSelectedPoint", ht);
+            
+            if (tb.Rows.Count < 2)
             {
-                cellInfo = new CellInfo();
-                cellInfo.SourcePoint = new Geometric.Point(this.sourceX, this.sourceY, this.sourceZ);
-                cellInfo.SourceName = this.sourceID.ToString();
-                cellInfo.CI = this.sourceID;
+                return new Result(false, "该干扰源未完成选点操作，请重新选取干扰源"); ;
+            }
+            //清除表中tbRayLoc当前cellname对应的selectpoint对应的CI的数据
+            IbatisHelper.ExecuteDelete("deletetbRayLoc", ht);
+            
+            for (int i = 0; i < tb.Rows.Count; i++)
+            {
+                CellInfo cellInfo = new CellInfo();
+                cellInfo.SourcePoint = new Geometric.Point();
+                cellInfo.SourcePoint.X = Convert.ToDouble(tb.Rows[i]["x"]);
+                cellInfo.SourcePoint.Y = Convert.ToDouble(tb.Rows[i]["y"]);
+                cellInfo.SourcePoint.Z = 1;
+                cellInfo.SourceName = Convert.ToString(tb.Rows[i]["CI"]);
+                cellInfo.CI = Convert.ToInt32(tb.Rows[i]["CI"]);
+                cellInfo.Inclination = 0;
+
                 cellInfo.EIRP = 53;
-                cellInfo.Inclination = -7;
-                cellInfo.diffracteCoefficient = this.diffractCoeff;
-                cellInfo.reflectCoefficient = this.reflectCoeff;
-                cellInfo.directCoefficient = this.directCoeff;
-                cellInfo.diffracteCoefficient2 = this.diffractCoeff2;
-
-                if (this.manDir) // 手动指定方位角
+                cellInfo.Inclination = 7;
+                cellInfo.diffracteCoefficient = (float)this.diffractCoefficient;
+                cellInfo.reflectCoefficient = (float)this.reflectCoefficient;
+                cellInfo.directCoefficient = (float)this.directCoefficient;
+                cellInfo.diffracteCoefficient2 = (float)this.FCoefficient;
+                cellInfo.Azimuth = Convert.ToDouble(tb.Rows[i]["Azimuth"]);
+                double fromAngle = cellInfo.Azimuth - this.incrementAngle;
+                double toAngle = cellInfo.Azimuth + this.incrementAngle;
+                Result res = parallelComputing(cellInfo, fromAngle, toAngle);
+                Debug.WriteLine("fromAngle " + fromAngle + "   toAngle" + toAngle);
+                if (res.ok == false)
                 {
-                    Geometric.Point end = new Geometric.Point(this.dirX, this.dirY, 0);
-                    cellInfo.Azimuth = LTE.Geometric.GeometricUtilities.getPolarCoord(end, cellInfo.SourcePoint).theta / Math.PI * 180;
+                    return res;
                 }
-                else if (this.cellName != null && this.cellName != string.Empty)  // 方位角中心线末端为指定小区
-                {
-                    Result rt = validateCell(ref eNodeB, ref CI, ref cellType);
-                    if (!rt.ok)
-                        return rt;
-
-                    CellInfo end = new CellInfo(this.cellName, eNodeB, CI, this.directCoeff, this.reflectCoeff, this.diffractCoeff, this.diffractCoeff2);
-                    cellInfo.Azimuth = LTE.Geometric.GeometricUtilities.getPolarCoord(end.SourcePoint, cellInfo.SourcePoint).theta / Math.PI * 180;
-                }
-                else
-                {
-                    return new Result(false, "请填写小区名称或手动指定方位角");
-                }
-
-                fromAngle = cellInfo.Azimuth - this.incrementAngle;
-                toAngle = cellInfo.Azimuth + this.incrementAngle;
             }
-            else  // 发射源为指定的小区
+            return new Result(true, "完成" + tb.Rows.Count + "个点的反向射线跟踪计算");
+        }
+
+        private Result parallelComputing(CellInfo cellInfo, double fromAngle, double toAngle)
+        {
+            string bidstext = "-1";
+
+            LTE.Geometric.Point p = cellInfo.SourcePoint;
+            ProcessArgs pa = new ProcessArgs();
+            ProcessStartInfo psi = new ProcessStartInfo();
+            psi.UseShellExecute = true;
+            psi.ErrorDialog = true;
+
+            psi.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            psi.FileName = "LTE.MultiProcessController.exe";
+            psi.Arguments = string.Format("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19} {20} {21} {22} {23} {24} {25} {26} {27} {28} {29} {30}",
+                cellInfo.SourceName, p.X, p.Y, 0, 0, p.Z, cellInfo.eNodeB, cellInfo.CI,
+                cellInfo.Azimuth, cellInfo.Inclination, cellInfo.cellType, cellInfo.frequncy, cellInfo.EIRP,
+                cellInfo.directCoefficient, cellInfo.reflectCoefficient, cellInfo.diffracteCoefficient, cellInfo.diffracteCoefficient,
+                fromAngle, toAngle, this.distance, this.reflectionNum, this.diffractionNum, this.computeIndoor,
+                this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false);
+
+            try
             {
-                Result rt = validateCell(ref eNodeB, ref CI, ref cellType);
-                if (!rt.ok)
-                    return rt;
-
-                cellInfo = new CellInfo(this.cellName, eNodeB, CI, this.directCoeff, this.reflectCoeff, this.diffractCoeff, this.diffractCoeff2);
-                fromAngle = cellInfo.Azimuth - this.incrementAngle;
-                toAngle = cellInfo.Azimuth + this.incrementAngle;
+                pa.pro = Process.Start(psi);
+                pa.pro.WaitForExit();
             }
-
-            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, true, false);
+            catch (InvalidOperationException exception)
+            {
+                return new Result(false, "多进程计算启动失败，原因： " + exception.Message);
+            }
+            catch (Exception ee)
+            {
+                return new Result(false, "多进程计算启动失败，原因： " + ee.Message);
+            }
+            return new Result(true);
         }
 
     }

@@ -208,6 +208,7 @@ namespace LTE.CalcProcess
                         {
                             //MessageBox.Show("1");
                             this.startCalcLoc();
+                            this.Close();
                         }
                         else if (this.isRayAdj)
                             this.startCalcAdj();
@@ -680,9 +681,9 @@ namespace LTE.CalcProcess
 
             #region  反射，采用 beam 或射线跟踪
 
-            if (false)
+            if (true)
             {
-                Console.WriteLine("射线跟踪");
+                Console.WriteLine("Loc反向射线跟踪");
                 #region 采用射线跟踪生成反射线
                 //建筑物立面栅格
                 List<LTE.Geometric.Point> vPoints = VerticalPlaneGrid.GetAllVerticalGrid(source, this.bids, diffPointsMargin);
@@ -709,7 +710,7 @@ namespace LTE.CalcProcess
             DateTime t2 = DateTime.Now;
 
             #region 绕射
-
+            Console.WriteLine("Loc绕射射线跟踪");
             List<Geometric.Point> diffPoints = BuildingGrid3D.getBuildingsEdgePointsByShelter(source.Z, disAngle.Values.ToList(), diffPointsMargin);
 
             for (int i = 0; i < diffPoints.Count; i++)
@@ -720,6 +721,7 @@ namespace LTE.CalcProcess
             #endregion
 
             #region 直射
+            Console.WriteLine("Loc直射射线跟踪");
             double interval = 10;
             List<Geometric.Point> pts = GroundGrid.getPointBySector(source, this.distance, this.fromAngle, this.toAngle, interval);
 
@@ -768,6 +770,7 @@ namespace LTE.CalcProcess
             Console.WriteLine(string.Format("直射、绕射：{0}秒", (t3 - t2).TotalMilliseconds / 1000));
             Console.WriteLine(string.Format("写入mmf：{0}秒", (t4 - t3).TotalMilliseconds / 1000));
             Console.WriteLine(string.Format("总运行时间：{0}秒", (t4 - t0).TotalMilliseconds / 1000));
+            
         }
 
         #endregion

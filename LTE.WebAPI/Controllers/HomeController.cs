@@ -154,6 +154,16 @@ namespace LTE.WebAPI.Controllers
         {
             return View();
         }
+        public ActionResult ExternalInfLocate()
+        {
+            return View();
+        }
+
+        public ActionResult PointsSelect()
+        {
+            return View();
+        }
+       
 
     }
 }

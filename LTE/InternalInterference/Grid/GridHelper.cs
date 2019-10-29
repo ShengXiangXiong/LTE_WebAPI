@@ -630,6 +630,43 @@ namespace LTE.InternalInterference.Grid
             }
             return ret;
         }
+
+        public bool PointXYZGrid(Point p, ref Grid3D grid, int gridxy, int gridz)
+        {
+
+            bool ret = p.Z >= 0.0 && checkXYZInGrid(p.X, p.Y, 0);
+
+            if (ret)
+            {
+                //同划分网格一致
+                double dy = p.Y - oY;
+                double dx = p.X - oX;
+                grid.gxid = Convert.ToInt32(Math.Ceiling(dx / gridxy)) - 1;
+                grid.gyid = Convert.ToInt32(Math.Ceiling(dy / gridxy)) - 1;
+                grid.gzid = (int)Math.Ceiling(p.Z / gridz);
+            }
+
+            return ret;
+        }
+
+        /// <summary>
+        /// 2019/3/1
+        /// 将加速栅格转为地理坐标
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="grid"></param>
+        /// <param name="gridxy"></param>
+        /// <param name="gridz"></param>
+        /// <returns></returns>
+        public void PointGridXYZ(ref Point p, Grid3D grid, int agridsize, int agridVsize)
+        {
+
+            double half = 0.5 * agridsize;
+            p.X = oX + grid.gxid * agridsize + half;
+            p.Y = oY + grid.gyid * agridsize + half;
+            p.Z = 0 + (grid.gzid + 0.5) * agridVsize;
+
+        }
     }
 
     /// <summary>
@@ -655,7 +692,12 @@ namespace LTE.InternalInterference.Grid
             this.gyid = g.gyid;
             this.gzid = g.gzid;
         }
-
+        public Grid3D(int xid, int yid, int zid)
+        {
+            this.gxid = xid;
+            this.gyid = yid;
+            this.gzid = zid;
+        }
         public bool Equals(Grid3D g)
         {
             return g != null && this.gxid == g.gxid && this.gyid == g.gyid && this.gzid == g.gzid;

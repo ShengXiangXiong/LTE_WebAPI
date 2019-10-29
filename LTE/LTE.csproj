@@ -130,8 +130,10 @@
     <Compile Include="DB\IbatisHelper.cs" />
     <Compile Include="DataOperate\CSVFileHelper.cs" />
     <Compile Include="DataOperate\ImportExcel.cs" />
+    <Compile Include="ExternalInterference\PathAnalysis.cs" />
     <Compile Include="ExternalInterference\Struct\GridInfo.cs" />
     <Compile Include="ExternalInterference\Struct\PathInfo.cs" />
+    <Compile Include="ExternalInterference\Struct\ResultRecord.cs" />
     <Compile Include="Geometric\GetPointHeight.cs" />
     <Compile Include="InternalInterference\AdjCoeffHelper.cs" />
     <Compile Include="InternalInterference\Grid\Math\Divide.cs" />

@@ -892,5 +892,90 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     select fileindex from tbDataPosition where filename='water_overlay'
   </select>
 
+  <!--获取路测信息，用于路测信息填充-->
+  <select id="SelectTbDTData">
+    select ID,Lon,Lat,PCI
+    from tbDTData
+    where Lon between 118.401 and 119.192 and  Lat between 31.2864 and 32.5508
+  </select>
+
+  <delete id="deletetbtmpDTData" parameterClass="Hashtable">
+    delete from tbtmpDTData
+  </delete>
+
+  <!--路测数据批量更新相关操作，包含借助临时表批量表更新，临时表删除-->
+  <update id="UpdatetbDTDataByTmp">
+    update tbDTData
+    set tbDTData.x = tbtmpDTData.x,
+    tbDTData.y=tbtmpDTData.y,
+    tbDTData.eNodeBID = tbtmpDTData.eNodeBID,
+    tbDTData.CellID=tbtmpDTData.CellID,
+    tbDTData.BtsName=tbtmpDTData.BtsName,
+    tbDTData.SCell_Dist = tbtmpDTData.SCell_Dist
+    from tbDTData,tbtmpDTData
+    where tbDTData.ID = tbtmpDTData.ID
+  </update>
+
+  <!--网外干扰定位选点相关-->
+  <select id="GetDTSet" parameterClass="Hashtable">
+    select ID,x, y, RSRP,SINR
+    from tbDTData
+    where  RSRP>$RSRP$ and BtsName='$BtsName$' and 3000>SCell_Dist
+    order by RSRP desc
+  </select>
+  <select id="GetVirSourceAllInfo" parameterClass="Hashtable">
+    select * from tbVirSource
+    where CellName = '$cellname$'
+  </select>
+  <delete id="deletbSelectedPoint" parameterClass="Hashtable">
+    delete from tbSelectedPoints
+    where fromName = '$cellname$'
+  </delete>
+  <select id ="GetSource" parameterClass="Hashtable">
+    select TOP(1) Longitude,Latitude,x,y,Altitude,AntHeight,Tilt,EIRP,CI,EARFCN,eNodeB,NetType
+    from CELL
+    where BtsName = '$BtsName$'
+  </select>
+  <!--插入到设定的干扰源表中tbVirSource-->
+  <insert id="insertVirSource" parameterClass="Hashtable">
+    insert into tbVirSource
+    values('$CellName$', '$Longitude$', '$Latitude$', '$x$','$y$', '$z$', '$Altitude$',
+    '$AntHeight$', '$Tilt$', '$EIRP$', '$NetType$', '$CI$', '$EARFCN$', '$eNodeB$');
+  </insert>
+  <select id="GettbSource" parameterClass="Hashtable">
+    select avg(x) as x,avg(y) as y
+    from CELL
+    where BtsName = '$BtsName$'
+    group by BtsName
+  </select>
+  <select id = "GetSelectedPoint" parameterClass="Hashtable">
+    SELECT  *
+    FROM  tbSelectedPoints
+    where fromName = '$fromName$'
+  </select>
+  <delete id="deletetbRayLoc" parameterClass="Hashtable">
+    delete from tbRayLoc
+    where cellid in (select distinct CI from tbSelectedPoints where fromName = '$fromName$' )
+  </delete>
+  <!--网外干扰定位定位相关-->
+  <select id="GetRayLoc" parameterClass="Hashtable">
+    select *  from tbRayLoc
+    where cellid in (select distinct CI from tbSelectedPoints where fromName = '$fromName$' )
+  </select>
+  <!--显示一个路测点ci对应射线跟踪信息相关的数据库语句-->
+  <select id ="GetRaylocByCI" parameterClass="Hashtable">
+    select cellID,trajID,rayLevel
+    ,rayStartPointX
+    ,rayStartPointY
+    ,rayStartPointZ
+    ,rayEndPointX
+    ,rayEndPointY
+    ,rayEndPointZ
+    ,rayType
+    ,attenuation
+    from tbRayLoc
+    where cellid = $CI$
+  </select>
+  
   </statements>
 </sqlMap>

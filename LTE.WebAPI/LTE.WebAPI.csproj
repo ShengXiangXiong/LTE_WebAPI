@@ -210,11 +210,13 @@
     <Compile Include="Controllers\CellRayTracingController.cs" />
     <Compile Include="Controllers\DebugController.cs" />
     <Compile Include="Controllers\DTdataController.cs" />
+    <Compile Include="Controllers\ExternalInfLocateController.cs" />
     <Compile Include="Controllers\Grid3DStrengthQueryController.cs" />
     <Compile Include="Controllers\GridController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\InterferenceLocateController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\PointsSelectController.cs" />
     <Compile Include="Controllers\RayRecordController.cs" />
     <Compile Include="Controllers\RefreshLayerController.cs" />
     <Compile Include="Controllers\ScenePartController.cs" />
@@ -228,7 +230,9 @@
     <Compile Include="Models\CalibrationModel.cs" />
     <Compile Include="Models\CellRadiusModel.cs" />
     <Compile Include="Models\DebugModel.cs" />
+    <Compile Include="Models\ExternalInfLocateModel.cs" />
     <Compile Include="Models\Grid3DStrengthQueryModel.cs" />
+    <Compile Include="Models\PointsSelectModel.cs" />
     <Compile Include="Models\RayRecordModel.cs" />
     <Compile Include="Models\CellRayTracingModel.cs" />
     <Compile Include="Models\DTdataModel.cs" />
@@ -425,6 +429,8 @@
     <Content Include="SqlMap.config">
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="Views\Home\ExternalInfLocate.cshtml" />
+    <Content Include="Views\Home\PointsSelect.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

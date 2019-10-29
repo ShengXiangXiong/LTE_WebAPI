@@ -581,7 +581,14 @@
             <param name="user">用户信息</param>
             <returns>失败时返回错误提示</returns>
         </member>
-        <member name="M:LTE.WebAPI.Controllers.RayRecordController.PostRayRecordLoc(LTE.WebAPI.Models.RayRecordLocModel)">
+        <member name="M:LTE.WebAPI.Controllers.PointsSelectController.GetSeletePoints(LTE.WebAPI.Models.PointsSelectModel)">
+            <summary>
+            
+            </summary>
+            <param name="rt"></param>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Controllers.RayRecordController.PostRayRecordLoc(LTE.WebAPI.Models.RayLocRecordModel)">
             <summary>
             记录用于干扰定位的射线
             </summary>
@@ -919,45 +926,118 @@
             <param name="rt">栅格二维坐标</param>
             <returns></returns>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayRecordLocModel.manSource">
+        <member name="M:LTE.WebAPI.Models.PointsSelectModel.Init">
             <summary>
-            是否手动指定发射源（可选）
+            构造函数
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayRecordLocModel.sourceID">
+        <member name="M:LTE.WebAPI.Models.PointsSelectModel.GetPoints">
             <summary>
-            发射源 ID
+            选点程序
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Models.PointsSelectModel.WriteDataToBase(System.Int32)">
+            <summary>
+            写入数据库
+            </summary>
+            <param name="batchSize"></param>
+        </member>
+        <member name="M:LTE.WebAPI.Models.PointsSelectModel.CompleteAzimuthVir(System.Data.DataTable)">
+            <summary>
+            用目标干扰源计算方位角
+            </summary>
+            <param name="dtinfo"></param>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Models.PointsSelectModel.ComputePointByA(System.Data.DataTable,System.Int32,System.Double)">
+            <summary>
+            角度约束
+            </summary>
+            <param name="dtinfo"></param>
+            <param name="num"></param>
+            <param name="angle"></param>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Models.PointsSelectModel.ComputePointByD(System.Data.DataTable,System.Int32,System.Double)">
+            <summary>
+            初步获取点间距满足要求的路测点
+            </summary>
+            <param name="points">从数据库读取的数据</param>
+            <param name="num">选取的点的个数</param>
+            <param name="distanceBT">点间距</param>
+            <returns></returns>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.virsource">
+            <summary>
+            干扰源点
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayRecordLocModel.sourceX">
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.distance">
             <summary>
-            发射源 x 坐标
+            反向发射点发射半径
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayRecordLocModel.sourceY">
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.incrementAngle">
             <summary>
-            发射源 y 坐标
+            以方位角为中心，两边扩展的角度
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayRecordLocModel.sourceZ">
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.threadNum">
             <summary>
-            发射源 z 坐标
+            线程个数
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayRecordLocModel.manDir">
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.reflectionNum">
             <summary>
-            是否手动指定方位角（可选）
+            反射次数
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayRecordLocModel.dirX">
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.diffractionNum">
             <summary>
-            方位角中心线末端 x 坐标
+            绕射次数
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayRecordLocModel.dirY">
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.sideSplitUnit">
             <summary>
-            方位角中心线末端 y 坐标
+            建筑物棱边绕射点间隔
             </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.computeIndoor">
+            <summary>
+            计算立体覆盖
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.computeVSide">
+            <summary>
+            计算棱边绕射
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.directCoefficient">
+            <summary>
+            直射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.reflectCoefficient">
+            <summary>
+            反射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.diffractCoefficient">
+            <summary>
+            绕射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.FCoefficient">
+            <summary>
+            菲涅尔绕射校正系数
+            </summary>
+        </member>
+        <member name="M:LTE.WebAPI.Models.RayLocRecordModel.RecordRayLoc">
+            <summary>
+            计算射线
+            </summary>
+            <returns></returns>
         </member>
         <member name="P:LTE.WebAPI.Models.CellRayTracing.cellName">
             <summary>

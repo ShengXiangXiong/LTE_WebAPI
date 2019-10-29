@@ -16,9 +16,9 @@ namespace LTE.WebAPI.Controllers
         /// <param name="ray">界面输入参数</param>
         /// <returns></returns>
         [HttpPost]
-        public Result PostRayRecordLoc([FromBody]RayRecordLocModel ray)
+        public Result PostRayRecordLoc([FromBody]RayLocRecordModel ray)
         {
-            return ray.rayRecord();
+            return ray.RecordRayLoc();
         }
 
         /// <summary>
