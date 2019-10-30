@@ -19,6 +19,11 @@
             用于进度条显示
             </summary>
         </member>
+        <member name="M:LTE.CalcProcess.CalcForm.doPostLoading(LTE.Model.LoadInfo,System.String)">
+            <summary>
+            HttpClient实现Post请求
+            </summary>
+        </member>
         <member name="M:LTE.CalcProcess.CalcForm.beforeCalc">
             <summary>
             构建加速结构和内存数据等

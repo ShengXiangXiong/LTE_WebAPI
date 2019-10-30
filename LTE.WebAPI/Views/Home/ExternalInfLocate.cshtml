@@ -1,0 +1,56 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>网外干扰定位程序</title>
+</head>
+<body>
+    <div>
+        <h3>选点参数</h3>
+        干扰源Btsname：<input type="text" id="virname" value="新集变中兴宏基站" /> <br />
+        强信号射线加权值：<input type="text" id="ratioAP" value=0.3 /><br />
+        损耗差值加权值：<input type="text" id="ratioP" value=0.3 /> <br />
+        From约束加权值：<input type="text" id="ratioAPW" value=0.4 /> <br />
+        <input type="button" id="ComfirmAnalysis" value="确定" /><br />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+    $("#ComfirmAnalysis").click(function () {
+        var rt = {};
+        rt.virname = $("#virname").val();
+        rt.ratioAP = parseFloat($("#ratioAP").val()).toFixed(2);
+        rt.ratioP = parseFloat($("#ratioP").val()).toFixed(2);
+        rt.ratioAPW = parseFloat($("#ratioAPW").val()).toFixed(2);
+        $.ajax
+        ({
+                url: "/api/ExternalInfLocate/LocateAnalysis",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(rt),
+            headers: { "auth": window.localStorage.getItem("token") },
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("成功完成定位！" + data.msg);
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("定位失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("定位失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+</script>
+

@@ -42,9 +42,10 @@ namespace LTE.WebAPI.Attributes
                         {
                             //role check
                             LoginModel user = (LoginModel)json.userInfo;
-                            foreach (var item in user.userRoles)
+                            string[] vs = Roles.Trim().Split(new char[] { ',', ' ', '/', ';', '\\' });
+                            foreach (var item in vs)
                             {
-                                if (Roles.Equals(item))
+                                if (item.Equals(user.userRole.Trim()))
                                 {
                                     actionContext.RequestContext.RouteData.Values.Add("auth", json);
                                     return true;

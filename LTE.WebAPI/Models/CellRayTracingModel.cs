@@ -19,6 +19,10 @@ namespace LTE.WebAPI.Models
     public class CellRayTracing
     {
         /// <summary>
+        /// 执行当前覆盖分析的用户ID
+        /// </summary>
+        public int userId { get; set; }
+        /// <summary>
         /// 小区名称
         /// </summary>
         public string cellName { get; set; }  
@@ -132,7 +136,7 @@ namespace LTE.WebAPI.Models
             return false;
         }
         public Result parallelComputing(ref CellInfo cellInfo, double fromAngle, double toAngle, int eNodeB, int CI,
-            ref List<ProcessArgs> paList, bool isReRay, bool isRecordReRay, bool isRayLoc, bool isRayAdj)
+            ref List<ProcessArgs> paList, bool isReRay, bool isRecordReRay, bool isRayLoc, bool isRayAdj,int userID,string taskName)
         {
             string bidstext = "-1";
 
@@ -146,12 +150,12 @@ namespace LTE.WebAPI.Models
                 psi.ErrorDialog = true;
                 psi.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 psi.FileName = "LTE.MultiProcessController.exe";
-                psi.Arguments = string.Format("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19} {20} {21} {22} {23} {24} {25} {26} {27} {28} {29} {30}",
+                psi.Arguments = string.Format("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19} {20} {21} {22} {23} {24} {25} {26} {27} {28} {29} {30} {31} {32}",
                     cellInfo.SourceName, p.X, p.Y, 0, 0, p.Z, cellInfo.eNodeB, cellInfo.CI,
                     cellInfo.Azimuth, cellInfo.Inclination, cellInfo.cellType, cellInfo.frequncy, cellInfo.EIRP,
                     cellInfo.directCoefficient, cellInfo.reflectCoefficient, cellInfo.diffracteCoefficient, cellInfo.diffracteCoefficient,
                     fromAngle, toAngle, this.distance, this.reflectionNum, this.diffractionNum, this.computeIndoor,
-                    this.threadNum, bidstext, this.diffPointsMargin, this.computeDiffrac, isReRay, isRecordReRay, isRayLoc, isRayAdj);
+                    this.threadNum, bidstext, this.diffPointsMargin, this.computeDiffrac, isReRay, isRecordReRay, isRayLoc, isRayAdj, userID, taskName);
 
                 try
                 {
@@ -199,6 +203,8 @@ namespace LTE.WebAPI.Models
         /// <returns></returns>
         public Result calc()
         {
+            string taskName = "coverAnlysis";
+
             int eNodeB = 0, CI = 0;
             string cellType = "";
 
@@ -235,7 +241,7 @@ namespace LTE.WebAPI.Models
                 bool recordReRay = false;  // 是否需要记录当前批的出界射线
 
                 // 小区覆盖计算
-                return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false);
+                return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false,userId,taskName);
             }
             // 需要分批计算
             else  
@@ -251,6 +257,8 @@ namespace LTE.WebAPI.Models
                     
                     for (int currBatch = 1; currBatch <= batchNum; currBatch++)
                     {
+                        //var batchTaskName = taskName + batchNum;
+
                         fromAngle = (startAngle + (currBatch - 1) * delta + 360) % 360;
                         toAngle = (fromAngle + delta + 360) % 360;
 
@@ -265,7 +273,7 @@ namespace LTE.WebAPI.Models
                             recordReRay = true;
 
                         // 小区覆盖计算
-                        Result result = parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false);
+                        Result result = parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false,userId, taskName);
                         if (!result.ok)
                             return result;
 
@@ -286,7 +294,7 @@ namespace LTE.WebAPI.Models
                     bool reRay = false;  // 是否需要进行二次投射，即读取前一批覆盖计算中出界的射线，并对其进行射线跟踪
                     bool recordReRay = false;  // 是否需要记录当前批的出界射线
 
-                    return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false);
+                    return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false,userId,taskName);
                 }
             }
         }

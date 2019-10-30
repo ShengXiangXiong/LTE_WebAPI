@@ -29,7 +29,7 @@ namespace LTE.WebAPI.Models
             double fromAngle = cellInfo.Azimuth - this.incrementAngle;
             double toAngle = cellInfo.Azimuth + this.incrementAngle;
 
-            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, false, true);
+            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, false, true,userId,"射线记录Adj");
         }
     }
 
@@ -39,6 +39,7 @@ namespace LTE.WebAPI.Models
         //
         // GET: /RayLocRecordModel/
         #region 变量定义
+        public int userId { get; set; }
         /// <summary>
         /// 干扰源点
         /// </summary>
@@ -165,12 +166,12 @@ namespace LTE.WebAPI.Models
 
             psi.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory;
             psi.FileName = "LTE.MultiProcessController.exe";
-            psi.Arguments = string.Format("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19} {20} {21} {22} {23} {24} {25} {26} {27} {28} {29} {30}",
+            psi.Arguments = string.Format("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19} {20} {21} {22} {23} {24} {25} {26} {27} {28} {29} {30} {31} {32}",
                 cellInfo.SourceName, p.X, p.Y, 0, 0, p.Z, cellInfo.eNodeB, cellInfo.CI,
                 cellInfo.Azimuth, cellInfo.Inclination, cellInfo.cellType, cellInfo.frequncy, cellInfo.EIRP,
                 cellInfo.directCoefficient, cellInfo.reflectCoefficient, cellInfo.diffracteCoefficient, cellInfo.diffracteCoefficient,
                 fromAngle, toAngle, this.distance, this.reflectionNum, this.diffractionNum, this.computeIndoor,
-                this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false);
+                this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false, userId,"射线记录Loc");
 
             try
             {

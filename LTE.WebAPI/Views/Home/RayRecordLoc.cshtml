@@ -52,7 +52,7 @@
         rt.reflectCoefficient = parseFloat($("#reflectCoefficient").val()).toFixed(2);
         rt.diffractCoefficient = parseFloat($("#diffractCoefficient").val()).toFixed(2);
         rt.FCoefficient = parseFloat($("#FCoefficient").val()).toFixed(2);
-
+        rt.userId = window.localStorage.getItem("userId");
         $.ajax
         ({
             url: "/api/RayRecord/PostRayRecordLoc",
