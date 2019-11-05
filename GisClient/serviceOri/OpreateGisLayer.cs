@@ -24,7 +24,7 @@ namespace GisClient
       Result refresh3DCover(string cellName);
       Result refreshGroundCoverLayer(int minXid, int minYid, int maxXid, int maxYid);
       Result refresh3DCoverLayer(int minXid, int minYid, int maxXid, int maxYid);
-      Result refreshDTLayer();
+      Result refreshDTLayer(string bts, int dis, double minx, double miny, double maxx, double maxy);
       Result refreshDefectLayer(int minXid, int minYid, int maxXid, int maxYid, DefectType type);
       Result refreshInfLayer();
       Result refreshTINLayer();
@@ -59,7 +59,7 @@ namespace GisClient
       Result End_refresh3DCoverLayer(IAsyncResult asyncResult);
       #endif
       #if SILVERLIGHT
-      IAsyncResult Begin_refreshDTLayer(AsyncCallback callback, object state);
+      IAsyncResult Begin_refreshDTLayer(AsyncCallback callback, object state, string bts, int dis, double minx, double miny, double maxx, double maxy);
       Result End_refreshDTLayer(IAsyncResult asyncResult);
       #endif
       #if SILVERLIGHT
@@ -518,9 +518,9 @@ namespace GisClient
       
       #if SILVERLIGHT
       
-      public IAsyncResult Begin_refreshDTLayer(AsyncCallback callback, object state)
+      public IAsyncResult Begin_refreshDTLayer(AsyncCallback callback, object state, string bts, int dis, double minx, double miny, double maxx, double maxy)
       {
-        return send_refreshDTLayer(callback, state);
+        return send_refreshDTLayer(callback, state, bts, dis, minx, miny, maxx, maxy);
       }
 
       public Result End_refreshDTLayer(IAsyncResult asyncResult)
@@ -531,23 +531,29 @@ namespace GisClient
 
       #endif
 
-      public Result refreshDTLayer()
+      public Result refreshDTLayer(string bts, int dis, double minx, double miny, double maxx, double maxy)
       {
         #if SILVERLIGHT
-        var asyncResult = Begin_refreshDTLayer(null, null);
+        var asyncResult = Begin_refreshDTLayer(null, null, bts, dis, minx, miny, maxx, maxy);
         return End_refreshDTLayer(asyncResult);
 
         #else
-        send_refreshDTLayer();
+        send_refreshDTLayer(bts, dis, minx, miny, maxx, maxy);
         return recv_refreshDTLayer();
 
         #endif
       }
       #if SILVERLIGHT
-      public IAsyncResult send_refreshDTLayer(AsyncCallback callback, object state)
+      public IAsyncResult send_refreshDTLayer(AsyncCallback callback, object state, string bts, int dis, double minx, double miny, double maxx, double maxy)
       {
         oprot_.WriteMessageBegin(new TMessage("refreshDTLayer", TMessageType.Call, seqid_));
         refreshDTLayer_args args = new refreshDTLayer_args();
+        args.Bts = bts;
+        args.Dis = dis;
+        args.Minx = minx;
+        args.Miny = miny;
+        args.Maxx = maxx;
+        args.Maxy = maxy;
         args.Write(oprot_);
         oprot_.WriteMessageEnd();
         return oprot_.Transport.BeginFlush(callback, state);
@@ -555,10 +561,16 @@ namespace GisClient
 
       #else
 
-      public void send_refreshDTLayer()
+      public void send_refreshDTLayer(string bts, int dis, double minx, double miny, double maxx, double maxy)
       {
         oprot_.WriteMessageBegin(new TMessage("refreshDTLayer", TMessageType.Call, seqid_));
         refreshDTLayer_args args = new refreshDTLayer_args();
+        args.Bts = bts;
+        args.Dis = dis;
+        args.Minx = minx;
+        args.Miny = miny;
+        args.Maxx = maxx;
+        args.Maxy = maxy;
         args.Write(oprot_);
         oprot_.WriteMessageEnd();
         oprot_.Transport.Flush();
@@ -1463,7 +1475,7 @@ namespace GisClient
         refreshDTLayer_result result = new refreshDTLayer_result();
         try
         {
-          result.Success = iface_.refreshDTLayer();
+          result.Success = iface_.refreshDTLayer(args.Bts, args.Dis, args.Minx, args.Miny, args.Maxx, args.Maxy);
           oprot.WriteMessageBegin(new TMessage("refreshDTLayer", TMessageType.Reply, seqid)); 
           result.Write(oprot);
         }
@@ -3041,6 +3053,104 @@ namespace GisClient
     #endif
     public partial class refreshDTLayer_args : TBase
     {
+      private string _bts;
+      private int _dis;
+      private double _minx;
+      private double _miny;
+      private double _maxx;
+      private double _maxy;
+
+      public string Bts
+      {
+        get
+        {
+          return _bts;
+        }
+        set
+        {
+          __isset.bts = true;
+          this._bts = value;
+        }
+      }
+
+      public int Dis
+      {
+        get
+        {
+          return _dis;
+        }
+        set
+        {
+          __isset.dis = true;
+          this._dis = value;
+        }
+      }
+
+      public double Minx
+      {
+        get
+        {
+          return _minx;
+        }
+        set
+        {
+          __isset.minx = true;
+          this._minx = value;
+        }
+      }
+
+      public double Miny
+      {
+        get
+        {
+          return _miny;
+        }
+        set
+        {
+          __isset.miny = true;
+          this._miny = value;
+        }
+      }
+
+      public double Maxx
+      {
+        get
+        {
+          return _maxx;
+        }
+        set
+        {
+          __isset.maxx = true;
+          this._maxx = value;
+        }
+      }
+
+      public double Maxy
+      {
+        get
+        {
+          return _maxy;
+        }
+        set
+        {
+          __isset.maxy = true;
+          this._maxy = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool bts;
+        public bool dis;
+        public bool minx;
+        public bool miny;
+        public bool maxx;
+        public bool maxy;
+      }
 
       public refreshDTLayer_args() {
       }
@@ -3060,6 +3170,48 @@ namespace GisClient
             }
             switch (field.ID)
             {
+              case 1:
+                if (field.Type == TType.String) {
+                  Bts = iprot.ReadString();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 2:
+                if (field.Type == TType.I32) {
+                  Dis = iprot.ReadI32();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 3:
+                if (field.Type == TType.Double) {
+                  Minx = iprot.ReadDouble();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 4:
+                if (field.Type == TType.Double) {
+                  Miny = iprot.ReadDouble();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 5:
+                if (field.Type == TType.Double) {
+                  Maxx = iprot.ReadDouble();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 6:
+                if (field.Type == TType.Double) {
+                  Maxy = iprot.ReadDouble();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
               default: 
                 TProtocolUtil.Skip(iprot, field.Type);
                 break;
@@ -3080,6 +3232,55 @@ namespace GisClient
         {
           TStruct struc = new TStruct("refreshDTLayer_args");
           oprot.WriteStructBegin(struc);
+          TField field = new TField();
+          if (Bts != null && __isset.bts) {
+            field.Name = "bts";
+            field.Type = TType.String;
+            field.ID = 1;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteString(Bts);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.dis) {
+            field.Name = "dis";
+            field.Type = TType.I32;
+            field.ID = 2;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI32(Dis);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.minx) {
+            field.Name = "minx";
+            field.Type = TType.Double;
+            field.ID = 3;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteDouble(Minx);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.miny) {
+            field.Name = "miny";
+            field.Type = TType.Double;
+            field.ID = 4;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteDouble(Miny);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.maxx) {
+            field.Name = "maxx";
+            field.Type = TType.Double;
+            field.ID = 5;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteDouble(Maxx);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.maxy) {
+            field.Name = "maxy";
+            field.Type = TType.Double;
+            field.ID = 6;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteDouble(Maxy);
+            oprot.WriteFieldEnd();
+          }
           oprot.WriteFieldStop();
           oprot.WriteStructEnd();
         }
@@ -3091,6 +3292,43 @@ namespace GisClient
 
       public override string ToString() {
         StringBuilder __sb = new StringBuilder("refreshDTLayer_args(");
+        bool __first = true;
+        if (Bts != null && __isset.bts) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Bts: ");
+          __sb.Append(Bts);
+        }
+        if (__isset.dis) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Dis: ");
+          __sb.Append(Dis);
+        }
+        if (__isset.minx) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Minx: ");
+          __sb.Append(Minx);
+        }
+        if (__isset.miny) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Miny: ");
+          __sb.Append(Miny);
+        }
+        if (__isset.maxx) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Maxx: ");
+          __sb.Append(Maxx);
+        }
+        if (__isset.maxy) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Maxy: ");
+          __sb.Append(Maxy);
+        }
         __sb.Append(")");
         return __sb.ToString();
       }
