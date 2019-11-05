@@ -216,6 +216,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\InterferenceLocateController.cs" />
     <Compile Include="Controllers\LoadingController.cs" />
+    <Compile Include="Controllers\LoadShpLayerController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
     <Compile Include="Controllers\PointsSelectController.cs" />
     <Compile Include="Controllers\RayRecordController.cs" />

@@ -976,6 +976,16 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     from tbRayLoc
     where cellid = $CI$
   </select>
+
+  <insert id ="insGroundCoverShp" parameterClass="Hashtable">
+    INSERT INTO [dbo].[tbShpLayer] (CellName,ShpName,Type)
+    VALUES (#CellName#,#ShpName#,#Type#)
+  </insert>
+
+  <select id = "getShpByCellName" parameterClass="string">
+    SELECT  ShpName FROM  tbShpLayer
+    where CellName = #CellName#
+  </select>
   
   </statements>
 </sqlMap>

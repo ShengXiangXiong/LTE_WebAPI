@@ -8,6 +8,7 @@ using LTE.InternalInterference;
 using LTE.InternalInterference.Grid;
 using System.Threading;
 using GisClient;
+using System.Collections;
 
 namespace LTE.WebAPI.Models
 {
@@ -70,16 +71,22 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshGroundCover(cellName);
                 if (res.Ok)
                 {
+                    Hashtable ht = new Hashtable();
+                    ht["CellName"] = cellName;
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "GroundCover";
+                    IbatisHelper.ExecuteInsert("insGroundCoverShp", ht);
+
                     return new Result(true, "地面覆盖图层刷新成功");
                 }
                 else
                 {
-                    return new Result(false, "地面覆盖图层刷新失败");
+                    return new Result(false, "地面覆盖图层刷新失败"+res.Msg);
                 }
             }
             catch (Exception e)
             {
-                return new Result(false, "远程调用失败" + e);
+                return new Result(false, "地面覆盖图层刷新失败" + e);
             }
             finally
             {
