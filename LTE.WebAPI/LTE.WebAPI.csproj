@@ -204,6 +204,7 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Attributes\ApiAuthorizeAttribute.cs" />
+    <Compile Include="Attributes\ParamsCheckAttribute.cs" />
     <Compile Include="Controllers\AreaCoverDefectController.cs" />
     <Compile Include="Controllers\CalibrationController.cs" />
     <Compile Include="Controllers\CellRadiusController.cs" />
