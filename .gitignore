@@ -10,6 +10,8 @@
 *.sln.docstates
 
 *.exe
+LTE.exe
+LTE.WebAPI.xml
 
 [Mm]apFiles
 

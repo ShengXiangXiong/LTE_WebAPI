@@ -978,13 +978,13 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   </select>
 
   <insert id ="insGroundCoverShp" parameterClass="Hashtable">
-    INSERT INTO [dbo].[tbShpLayer] (CellName,ShpName,Type)
-    VALUES (#CellName#,#ShpName#,#Type#)
+    INSERT INTO [dbo].[tbShpLayer] (IndexName,ShpName,Type,DateTime)
+    VALUES (#IndexName#,#ShpName#,#Type#,#DateTime#)
   </insert>
 
-  <select id = "getShpByCellName" parameterClass="string">
+  <select id = "getShpByIndexName" parameterClass="string">
     SELECT  ShpName FROM  tbShpLayer
-    where CellName = #CellName#
+    where IndexName = #IndexName#
   </select>
   
   </statements>

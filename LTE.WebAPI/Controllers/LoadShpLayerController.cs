@@ -13,14 +13,14 @@ namespace LTE.WebAPI.Controllers
     {
         public class shpLayer
         {
-            public string CellName;
+            public string IndexName;
         }
         // POST: api/LoadShpLayer
         [HttpPost]
         public Result getShpByCellName([FromBody]shpLayer ob)
         {
             Result res = new Result();
-            object shpobj = IbatisHelper.ExecuteQueryForObject("getShpByCellName", ob.CellName);
+            object shpobj = IbatisHelper.ExecuteQueryForObject("getShpByIndexName", ob.IndexName);
             if (shpobj != null)
             {
                 res.ok = true;

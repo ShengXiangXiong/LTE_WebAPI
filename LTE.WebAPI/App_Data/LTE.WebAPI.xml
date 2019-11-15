@@ -636,12 +636,6 @@
             <param name="layer">区域范围</param>
             <returns></returns>
         </member>
-        <member name="M:LTE.WebAPI.Controllers.RefreshLayerController.PostRefreshDTdataLayer">
-            <summary>
-            刷新虚拟路测图层
-            </summary>
-            <returns></returns>
-        </member>
         <member name="M:LTE.WebAPI.Controllers.RefreshLayerController.PostRefreshWeakLayer(LTE.WebAPI.Models.RefreshAreaCoverDefectLayerModel)">
             <summary>
             刷新弱覆盖点图层

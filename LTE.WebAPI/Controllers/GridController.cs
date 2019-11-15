@@ -16,6 +16,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="grid">区域范围</param>
         /// <returns></returns>
         [HttpPost]
+        //TODO：加一个非法参数检测切面，若前端输入到后端一个非法值，可能这边接收到的为null
         public Result PostGrid([FromBody]GridModel grid)
         {
             return grid.ConstructGrid();

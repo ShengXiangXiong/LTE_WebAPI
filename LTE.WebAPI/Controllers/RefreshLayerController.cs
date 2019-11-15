@@ -68,11 +68,11 @@ namespace LTE.WebAPI.Controllers
         /// 刷新虚拟路测图层
         /// </summary>
         /// <returns></returns>
-        [HttpPost]
-        public Result PostRefreshDTdataLayer()
-        {
-            return RefreshDTdataLayerModel.refreshDTLayer();
-        }
+        //[HttpPost]
+        //public Result PostRefreshDTdataLayer()
+        //{
+        //    return RefreshDTdataLayerModel.refreshDTLayer();
+        //}
 
         /// <summary>
         /// 刷新弱覆盖点图层

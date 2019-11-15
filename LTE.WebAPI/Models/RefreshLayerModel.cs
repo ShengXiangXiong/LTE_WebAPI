@@ -72,9 +72,10 @@ namespace LTE.WebAPI.Models
                 if (res.Ok)
                 {
                     Hashtable ht = new Hashtable();
-                    ht["CellName"] = cellName;
+                    ht["IndexName"] = cellName;
                     ht["ShpName"] = res.ShpName;
                     ht["Type"] = "GroundCover";
+                    ht["DateTime"] = DateTime.Now;
                     IbatisHelper.ExecuteInsert("insGroundCoverShp", ht);
 
                     return new Result(true, "地面覆盖图层刷新成功");
@@ -259,25 +260,25 @@ namespace LTE.WebAPI.Models
     #region 刷新虚拟路测图层
     public class RefreshDTdataLayerModel
     {
-        public static Result refreshDTLayer()
-        {
-            try
-            {
-                GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshDTLayer();
-                if (res.Ok)
-                {
-                    return new Result(true, "路测图层刷新成功");
-                }
-                else
-                {
-                    return new Result(false, "路测图层刷新失败");
-                }
-            }
-            catch (Exception e)
-            {
-                return new Result(false, "远程调用失败" + e);
-            }
-        }
+        //public static Result refreshDTLayer()
+        //{
+        //    try
+        //    {
+        //        GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshDTLayer();
+        //        if (res.Ok)
+        //        {
+        //            return new Result(true, "路测图层刷新成功");
+        //        }
+        //        else
+        //        {
+        //            return new Result(false, "路测图层刷新失败");
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        return new Result(false, "远程调用失败" + e);
+        //    }
+        //}
     }
     #endregion
 
