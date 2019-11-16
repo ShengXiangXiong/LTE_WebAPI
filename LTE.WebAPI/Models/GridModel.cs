@@ -375,11 +375,6 @@ namespace LTE.WebAPI.Models
                         {
                             List<Geometric.Point> pts = TINInfo.getTINVertex(TINs[i]);
 
-                            if (TINs[i] == 173047)
-                            {
-                                Console.WriteLine(TINInfo.getTINVertex(TINs[i]));
-                            }
-
                             if (pts.Count < 3)
                                 return new Result(false, "TIN 数据出错");
 

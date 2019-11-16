@@ -205,6 +205,7 @@
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Attributes\ApiAuthorizeAttribute.cs" />
     <Compile Include="Attributes\ParamsCheckAttribute.cs" />
+    <Compile Include="Controllers\AreaCoverAnalysisController.cs" />
     <Compile Include="Controllers\AreaCoverDefectController.cs" />
     <Compile Include="Controllers\CalibrationController.cs" />
     <Compile Include="Controllers\CellRadiusController.cs" />
@@ -228,6 +229,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\Area.cs" />
     <Compile Include="Models\AreaCoverDefectModel.cs" />
     <Compile Include="Models\AuthInfo.cs" />
     <Compile Include="Models\CalibrationModel.cs" />

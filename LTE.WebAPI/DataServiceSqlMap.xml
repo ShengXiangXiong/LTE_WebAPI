@@ -986,6 +986,11 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     SELECT  ShpName FROM  tbShpLayer
     where IndexName = #IndexName#
   </select>
+
+  <select id = "getCellByArea" parameterClass="Hashtable">
+    SELECT  CellName,x,y,CoverageRadius FROM  CELL
+    where x between $minX and $maxX and y between $minY and $maxY
+  </select>
   
   </statements>
 </sqlMap>

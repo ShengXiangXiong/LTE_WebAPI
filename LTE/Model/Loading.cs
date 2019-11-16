@@ -13,6 +13,8 @@ namespace LTE.Model
         public int cnt { get; set; }
         public int count { get; set; }
         public Dictionary<string,int> rayCount { get; set; }
+        //表示当前任务是否已经崩溃
+        public bool breakdown { get; set; }
     }
     public class Loading
     {

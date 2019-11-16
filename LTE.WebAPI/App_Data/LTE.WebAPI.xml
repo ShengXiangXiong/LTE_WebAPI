@@ -728,6 +728,86 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="P:LTE.WebAPI.Models.Area.minLongitude">
+            <summary>
+            最小经度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.minLatitude">
+            <summary>
+            最小纬度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.maxLongitude">
+            <summary>
+            最大经度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.maxLatitude">
+            <summary>
+            最大纬度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.userId">
+            <summary>
+            执行当前覆盖分析的用户ID
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.incrementAngle">
+            <summary>
+            以方位角为中心，两边扩展的角度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.threadNum">
+            <summary>
+            线程个数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.reflectionNum">
+            <summary>
+            反射次数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.diffractionNum">
+            <summary>
+            绕射次数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.diffPointsMargin">
+            <summary>
+            建筑物棱边绕射点间隔
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.computeIndoor">
+            <summary>
+            计算立体覆盖
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.computeDiffrac">
+            <summary>
+            计算棱边绕射
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.directCoeff">
+            <summary>
+            直射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.reflectCoeff">
+            <summary>
+            反射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.diffractCoeff">
+            <summary>
+            绕射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.diffractCoeff2">
+            <summary>
+            菲涅尔绕射校正系数
+            </summary>
+        </member>
         <member name="P:LTE.WebAPI.Models.AreaCoverDefectModel.minLongitude">
             <summary>
             最小经度
