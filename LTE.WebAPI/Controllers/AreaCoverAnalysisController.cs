@@ -13,7 +13,7 @@ namespace LTE.WebAPI.Controllers
     {
 
         [HttpPost]
-        [ApiAuthorize(Roles = "admin")]
+        //[ApiAuthorize(Roles = "admin")]
         public Result Post([FromBody]Area area)
         {
             return area.computeAreaAnlysis();

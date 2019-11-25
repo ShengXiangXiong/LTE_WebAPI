@@ -62,10 +62,10 @@ namespace LTE.Win32Lib
         public static IntPtr CreateOrOpenMMF(string shareName, int size)
         {
             IntPtr handle = CreateFileMapping(INVALID_HANDLE_VALUE, IntPtr.Zero, FileMapProtection.PageReadWrite, 0, (uint)size, shareName);
-            if (handle == IntPtr.Zero)
-            {
-                throw new Exception("create or open memory mapping file failed");
-            }
+            //if (handle == IntPtr.Zero)
+            //{
+            //    throw new Exception("create or open memory mapping file failed");
+            //}
             return handle;
         }
     }

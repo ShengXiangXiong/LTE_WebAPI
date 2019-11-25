@@ -76,7 +76,7 @@ namespace LTE.WebAPI.Models
                     ht["ShpName"] = res.ShpName;
                     ht["Type"] = "GroundCover";
                     ht["DateTime"] = DateTime.Now;
-                    IbatisHelper.ExecuteInsert("insGroundCoverShp", ht);
+                    IbatisHelper.ExecuteInsert("insShp", ht);
 
                     return new Result(true, "地面覆盖图层刷新成功");
                 }
@@ -181,11 +181,18 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshGroundCoverLayer(minXid, minYid, maxXid, maxYid);
                 if (res.Ok)
                 {
+                    Hashtable ht = new Hashtable();
+                    ht["IndexName"] = String.Format("%_%_%_%",minLongitude,minLatitude,maxLongitude,maxLatitude);
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "AreaGroundCover";
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
                     return new Result(true, "区域地面覆盖图层刷新成功");
                 }
                 else
                 {
-                    return new Result(false, "区域地面覆盖图层刷新失败");
+                    return new Result(false, "区域地面覆盖图层刷新失败" + res.Msg);
                 }
             } 
             catch (Exception e)

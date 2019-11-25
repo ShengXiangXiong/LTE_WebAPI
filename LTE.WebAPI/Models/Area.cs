@@ -92,11 +92,7 @@ namespace LTE.WebAPI.Models
 
         public bool matrixCover(matrix m1,matrix m2)
         {
-            if (m1.MaxGx < m2.MinGx || m1.MinGx > m2.MaxGx || m1.MaxGy < m2.MinGy || m1.MinGy> m2.MaxGy)
-            {
-                return false;
-            }
-            return true;
+            return !(m2.MinGx >= m1.MaxGx || m2.MinGy >= m1.MaxGy || m2.MaxGx <= m1.MinGx || m2.MaxGy <= m1.MinGy);
         }
         public class matrix
         {
@@ -132,7 +128,7 @@ namespace LTE.WebAPI.Models
             ht["maxY"] = pMax.Y+plus;
 
             List<CellRayTracingModel> cells = new List<CellRayTracingModel>();
-            DataTable dt = DB.IbatisHelper.ExecuteQueryForDataTable("getCellByArea", ht);
+            DataTable dt = DB.IbatisHelper.ExecuteQueryForDataTable("getNotComputedCellByArea", ht);
             matrix m1 = new matrix { MinGx = pMin.X, MinGy = pMin.Y, MaxGx = pMax.X, MaxGy = pMax.Y };
             for (int i = 0; i < dt.Rows.Count; i++)
             {
@@ -140,10 +136,10 @@ namespace LTE.WebAPI.Models
                 matrix m2 = new matrix();
                 var row = dt.Rows[i];
                 double dis = (double)row["CoverageRadius"];
-                m2.MinGx = (double)row["x"] - dis;
-                m2.MaxGx = (double)row["x"] + dis;
-                m2.MinGy = (double)row["y"] - dis;
-                m2.MaxGy = (double)row["y"] + dis;
+                m2.MinGx = Convert.ToDouble(row["x"]) - dis;
+                m2.MaxGx = Convert.ToDouble(row["x"]) + dis;
+                m2.MinGy = Convert.ToDouble(row["y"]) - dis;
+                m2.MaxGy = Convert.ToDouble(row["y"]) + dis;
 
                 if (matrixCover(m1, m2))
                 {
@@ -174,7 +170,7 @@ namespace LTE.WebAPI.Models
             loadInfo.breakdown = false;
 
             Loading loading = Loading.getInstance();
-
+            string fail = "";
             foreach (var item in cells)
             {
                 try
@@ -184,17 +180,23 @@ namespace LTE.WebAPI.Models
                         loadInfo.cnt++;
                         loading.updateLoading(loadInfo);
                     }
+                    else
+                    {
+                        fail += item.cellName+"\t";
+                    }
                 }
                 catch (Exception)
                 {
                     loadInfo.breakdown = true;
+                    loading.updateLoading(loadInfo);
                     return new Result(false, "区域覆盖计算失败");
                 }
             }
             if (loadInfo.cnt < loadInfo.count)
             {
                 loadInfo.breakdown = true;
-                return new Result(false, "区域覆盖计算失败");
+                loading.updateLoading(loadInfo);
+                return new Result(false, fail+"覆盖计算计算失败");
             }
 
             return new Result(true, "区域覆盖计算完成");
