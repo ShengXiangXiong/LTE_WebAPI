@@ -6,6 +6,7 @@ using System.Text;
 using LTE.Geometric;
 using LTE.DB;
 using System.Collections;
+using LTE.Utils;
 
 namespace LTE.InternalInterference.Grid
 {
@@ -461,7 +462,25 @@ namespace LTE.InternalInterference.Grid
             y = oY + gyid * ggridsize + half;
             z = 0 + (gzid - 1) * ggridsize + half;
         }
-
+        /// <summary>
+        /// 返回网格中心点对应的地理坐标
+        /// </summary>
+        /// <param name="gxid"></param>
+        /// <param name="gyid"></param>
+        /// <param name="gzid"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        public Point GridToGeo(int gxid, int gyid)
+        {
+            double half = 0.5 * ggridsize;
+            double x = oX + gxid * ggridsize + half;
+            double y = oY + gyid * ggridsize + half;
+            LTE.Geometric.Point p = new LTE.Geometric.Point();
+            p.X = x;
+            p.Y = y;
+            return PointConvertByProj.Instance.GetGeoPoint(p);
+        }
 
         /// <summary>
         /// 返回空间点所在的加速网格坐标

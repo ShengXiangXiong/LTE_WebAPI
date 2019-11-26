@@ -26,6 +26,14 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().RefreshCell();
                 if (res.Ok)
                 {
+                    Hashtable ht = new Hashtable();
+                    //TODO：最好以地区名最为索引标志，可以通过项目创建时数据库中的地区名称来获得
+                    ht["IndexName"] = "南京";
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "Cell";
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
                     return new Result(true, "小区图层刷新成功");
                 }
                 else
@@ -113,11 +121,18 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refresh3DCover(cellName);
                 if (res.Ok)
                 {
-                    return new Result(true, "地面覆盖图层刷新成功");
+                    Hashtable ht = new Hashtable();
+                    ht["IndexName"] = cellName;
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "Ground3DCover";
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
+                    return new Result(true, "立体覆盖图层刷新成功");
                 }
                 else
                 {
-                    return new Result(false, "地面覆盖图层刷新失败");
+                    return new Result(false, "立体覆盖图层刷新失败");
                 }
             }
             catch (Exception e)
@@ -222,6 +237,13 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refresh3DCoverLayer(minXid, minYid, maxXid, maxYid);
                 if (res.Ok)
                 {
+                    Hashtable ht = new Hashtable();
+                    ht["IndexName"] = String.Format("%_%_%_%", minLongitude, minLatitude, maxLongitude, maxLatitude);
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "AreaGround3DCover";
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
                     return new Result(true, "区域立体覆盖图层刷新成功");
                 }
                 else
@@ -359,7 +381,14 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshDefectLayer(minXid, minYid, maxXid, maxYid,type);
                 if (res.Ok)
                 {
-                    return new Result(true, "网内干扰图层刷新成功");
+                    Hashtable ht = new Hashtable();
+                    ht["IndexName"] = String.Format("%_%_%_%", minLongitude, minLatitude, maxLongitude, maxLatitude);
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = type;
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
+                    return new Result(true, "网内干扰图层图层刷新成功");
                 }
                 else
                 {
