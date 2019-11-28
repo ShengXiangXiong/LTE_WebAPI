@@ -121,7 +121,7 @@ namespace LTE.WebAPI.Models
             LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(pMax);
 
             Hashtable ht = new Hashtable();
-            int plus = 3000;
+            int plus = 2000;
             ht["minX"] = pMin.X-plus;
             ht["minY"] = pMin.Y-plus;
             ht["maxX"] = pMax.X+plus;

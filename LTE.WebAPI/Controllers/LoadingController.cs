@@ -15,7 +15,7 @@ namespace LTE.WebAPI.Controllers
         [HttpPost]
         public Result getLoadingInfo(int UserId)
         {
-            if (loading.getLoadInfo()[UserId] != null)
+            if (loading.getLoadInfo().ContainsKey(UserId))
             {
                 return new Result(true, "", loading.getLoadInfo()[UserId]);
             }
