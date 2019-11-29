@@ -11,8 +11,11 @@
 </head>
 <body>
     <div>
+
         <h2>场景划分</h2>
         <input type="button" id="part" value="确定" /><br /><br />
+        <h2>结果图层生成</h2>
+        <input type="button" id="cluster" value="确定" /><br /><br />
     </div>
 </body>
 </html>
@@ -24,14 +27,14 @@
 
         $.ajax
         ({
-            url: "/api/ScenePart/PostScenePart",
+                url: "/api/ScenePart/PostScenePart",
             type: "POST",
             contentType: "application/json; charset=utf-8",
             success: function (data, status)
             {
                 if (data.ok == true)
                 {
-                    alert("场景划分结束！");
+                    alert("场景划分结束！" + data.msg);
                     window.location.href = "@Url.Action("Home","Home")";
                 }
                 else
@@ -40,6 +43,34 @@
             error: function (XMLHttpRequest, textStatus, errorThrown)
             {
                 alert("场景划分失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+</script>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#cluster").click(function () {
+
+        $.ajax
+        ({
+            url: "/api/ScenePart/PostClusterShp",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("聚类图层生成结束！" + data.msg);
+                    window.location.href = "@Url.Action("Home","Home")";
+                }
+                else
+                    alert("聚类图层生成失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("聚类图层生成失败！，消息：" + textStatus + "  " + errorThrown);
             }
         });
     });

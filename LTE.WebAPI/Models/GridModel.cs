@@ -10,6 +10,7 @@ using LTE.InternalInterference.Grid;
 using System.Diagnostics;
 using LTE.Model;
 using LTE.WebAPI.Utils;
+using System.Xml.Linq;
 
 namespace LTE.WebAPI.Models
 {
@@ -52,6 +53,31 @@ namespace LTE.WebAPI.Models
         /// <returns></returns>
         public Result ConstructGrid()
         {
+            try//更新加速场景表，重置前提条件表
+            {
+                IbatisHelper.ExecuteDelete("DeleteFishnet", null);
+                IbatisHelper.ExecuteUpdate("UpdatetbDependTableDuetoGridRange", null);
+            }
+            catch (Exception ex)
+            { return new Result(false, ex.ToString()); }
+
+            string xmlpath = System.AppDomain.CurrentDomain.SetupInformation.ApplicationBase + "range.xml";//xml文件位置
+            //读xml文件获取参数
+            XDocument document = XDocument.Load(xmlpath);
+            XElement root = document.Root;
+            XElement ele = root.Element("parameter");
+            XElement para = ele.Element("minlon");
+            double minlon = Convert.ToDouble(para.Value.ToString());//最小经度
+            para = ele.Element("minlat");
+            double minlat = Convert.ToDouble(para.Value.ToString());//最小纬度
+            para = ele.Element("maxlon");
+            double maxlon = Convert.ToDouble(para.Value.ToString());//最大经度
+            para = ele.Element("maxlat");
+            double maxlat = Convert.ToDouble(para.Value.ToString());//最大纬度
+            if (!(this.minLongitude >= minlon && this.maxLongitude > this.minLongitude && maxlon >= this.maxLongitude &&
+               this.minLatitude >= minlat && this.maxLatitude > this.minLatitude && maxlat >= this.maxLatitude))
+            { return new Result(false, "范围错误"); }
+
             // 经纬度转投影坐标
             //ESRI.ArcGIS.Geometry.IPoint pMin = new ESRI.ArcGIS.Geometry.PointClass();
             LTE.Geometric.Point pMin = new Geometric.Point();
@@ -96,6 +122,9 @@ namespace LTE.WebAPI.Models
             if (!rt.ok)
                 return rt;
 
+            //更新tbDependTabled的GridRange
+            IbatisHelper.ExecuteUpdate("UpdatetbDependTableGridRange", null);
+
             // 2019.5.28 地形和地形所在的加速栅格
             rt = calcTIN(pMin.X, pMin.Y, pMax.X, pMax.Y, 30, maxAgxid, maxAgyid);
             if (!rt.ok)
@@ -132,186 +161,191 @@ namespace LTE.WebAPI.Models
         // 2018.6.11 计算建筑物所在的栅格，基于地形 
         Result calcBuildingGrids(double minX, double minY, double maxX, double maxY, double gridsize, int maxgxid, int maxgyid)
         {
-            // 删除旧的建筑物网格
-            IbatisHelper.ExecuteDelete("DeleteBuildingGrid", null);
-
-            double err = GridHelper.getInstance().getGGridSize() / 2 + 1;
-            int pageindex = 0;
-            int pagesize = 10000;
-            Hashtable ht = new Hashtable();
-            ht["pageindex"] = pageindex;
-            ht["pagesize"] = pagesize;
-            DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getBuildingVertexSmooth", ht);
-            double h = (int)GridHelper.getInstance().getGHeight();
-
-            System.Data.DataTable tb1 = new System.Data.DataTable();
-            tb1.Columns.Add("BuildingID");
-            tb1.Columns.Add("GXID");
-            tb1.Columns.Add("GYID");
-            tb1.Columns.Add("GZID");
-
-            if (tb.Rows.Count < 1)
+            try
             {
-                return new Result(false, "该范围内没有建筑物");
-            }
-            while (tb.Rows.Count > 0)
-            {
-                //System.Data.DataTable tb1 = new System.Data.DataTable();
-                //tb1.Columns.Add("BuildingID");
-                //tb1.Columns.Add("GXID");
-                //tb1.Columns.Add("GYID");
-                //tb1.Columns.Add("GZID");
-                List<BuildingVertex> tmp = new List<BuildingVertex>();
+                // 删除旧的建筑物网格
+                IbatisHelper.ExecuteDelete("DeleteBuildingGrid", null);
 
-                BuildingVertex bv = new BuildingVertex();
-                bv.bid = Convert.ToInt32(tb.Rows[0]["BuildingID"].ToString());
-                bv.vx = Convert.ToDouble(tb.Rows[0]["VertexX"].ToString());
-                bv.vy = Convert.ToDouble(tb.Rows[0]["VertexY"].ToString());
-                bv.altitude = Convert.ToDouble(tb.Rows[0]["BAltitude"].ToString());  // 地形
-                bv.vz = bv.altitude + Convert.ToDouble(tb.Rows[0]["Bheight"].ToString()); // 地形
-                bv.vid = Convert.ToInt32(tb.Rows[0]["VIndex"].ToString());
-                int lastid = bv.bid;
-                tmp.Add(bv);
+                double err = GridHelper.getInstance().getGGridSize() / 2 + 1;
+                int pageindex = 0;
+                int pagesize = 10000;
+                Hashtable ht = new Hashtable();
+                ht["pageindex"] = pageindex;
+                ht["pagesize"] = pagesize;
+                DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getBuildingVertexSmooth", ht);
+                double h = (int)GridHelper.getInstance().getGHeight();
 
-                double pMargin = gridsize;
-                double dh = GridHelper.getInstance().getGHeight();
+                System.Data.DataTable tb1 = new System.Data.DataTable();
+                tb1.Columns.Add("BuildingID");
+                tb1.Columns.Add("GXID");
+                tb1.Columns.Add("GYID");
+                tb1.Columns.Add("GZID");
 
-                for (int i = 1; i < tb.Rows.Count; i++)
+                if (tb.Rows.Count < 1)
                 {
-                    BuildingVertex bv1 = new BuildingVertex();
-                    bv1.bid = Convert.ToInt32(tb.Rows[i]["BuildingID"].ToString());
-                    bv1.vx = Convert.ToDouble(tb.Rows[i]["VertexX"].ToString());
-                    bv1.vy = Convert.ToDouble(tb.Rows[i]["VertexY"].ToString());
-                    bv1.altitude = Convert.ToDouble(tb.Rows[i]["BAltitude"].ToString()); // 地形
-                    bv1.vz = bv1.altitude + Convert.ToDouble(tb.Rows[i]["Bheight"].ToString()); // 地形
-                    bv1.vid = Convert.ToInt32(tb.Rows[i]["VIndex"].ToString());
+                    return new Result(false, "该范围内没有建筑物");
+                }
+                while (tb.Rows.Count > 0)
+                {
+                    //System.Data.DataTable tb1 = new System.Data.DataTable();
+                    //tb1.Columns.Add("BuildingID");
+                    //tb1.Columns.Add("GXID");
+                    //tb1.Columns.Add("GYID");
+                    //tb1.Columns.Add("GZID");
+                    List<BuildingVertex> tmp = new List<BuildingVertex>();
 
-                    if (i == tb.Rows.Count - 1 || bv1.bid != lastid)
+                    BuildingVertex bv = new BuildingVertex();
+                    bv.bid = Convert.ToInt32(tb.Rows[0]["BuildingID"].ToString());
+                    bv.vx = Convert.ToDouble(tb.Rows[0]["VertexX"].ToString());
+                    bv.vy = Convert.ToDouble(tb.Rows[0]["VertexY"].ToString());
+                    bv.altitude = Convert.ToDouble(tb.Rows[0]["BAltitude"].ToString());  // 地形
+                    bv.vz = bv.altitude + Convert.ToDouble(tb.Rows[0]["Bheight"].ToString()); // 地形
+                    bv.vid = Convert.ToInt32(tb.Rows[0]["VIndex"].ToString());
+                    int lastid = bv.bid;
+                    tmp.Add(bv);
+
+                    double pMargin = gridsize;
+                    double dh = GridHelper.getInstance().getGHeight();
+
+                    for (int i = 1; i < tb.Rows.Count; i++)
                     {
-                        double maxx = tmp[0].vx, maxy = tmp[0].vy, minx = tmp[0].vx, miny = tmp[0].vy;
-                        for (int j = 1; j < tmp.Count; ++j)
+                        BuildingVertex bv1 = new BuildingVertex();
+                        bv1.bid = Convert.ToInt32(tb.Rows[i]["BuildingID"].ToString());
+                        bv1.vx = Convert.ToDouble(tb.Rows[i]["VertexX"].ToString());
+                        bv1.vy = Convert.ToDouble(tb.Rows[i]["VertexY"].ToString());
+                        bv1.altitude = Convert.ToDouble(tb.Rows[i]["BAltitude"].ToString()); // 地形
+                        bv1.vz = bv1.altitude + Convert.ToDouble(tb.Rows[i]["Bheight"].ToString()); // 地形
+                        bv1.vid = Convert.ToInt32(tb.Rows[i]["VIndex"].ToString());
+
+                        if (i == tb.Rows.Count - 1 || bv1.bid != lastid)
                         {
-                            if (tmp[j].vx > maxx)
-                                maxx = tmp[j].vx;
-                            if (tmp[j].vx < minx)
-                                minx = tmp[j].vx;
-                            if (tmp[j].vy > maxy)
-                                maxy = tmp[j].vy;
-                            if (tmp[j].vy < miny)
-                                miny = tmp[j].vy;
-                        }
-
-                        int gzidBase = (int)(tmp[0].altitude / GridHelper.getInstance().getGHeight());  // 基于地形，海拔处的栅格高度
-                        if (gzidBase < 0)
-                            gzidBase = 1;
-                        int gzid = (int)(tmp[0].vz / GridHelper.getInstance().getGHeight()) + 1;
-
-                        int minGxid = 0, minGyid = 0, maxGxid = 0, maxGyid = 0;
-                        GridHelper.getInstance().XYToGGrid(minx, miny, ref minGxid, ref minGyid);
-                        GridHelper.getInstance().XYToGGrid(maxx, maxy, ref maxGxid, ref maxGyid);
-                        if (minGxid == -1 || minGyid == -1)
-                            continue;
-
-                        double x = 0, y = 0, z = 0;
-                        for (int j = minGxid; j <= maxGxid; j++)
-                        {
-                            for (int k = minGyid; k <= maxGyid; k++)
+                            double maxx = tmp[0].vx, maxy = tmp[0].vy, minx = tmp[0].vx, miny = tmp[0].vy;
+                            for (int j = 1; j < tmp.Count; ++j)
                             {
-                                GridHelper.getInstance().GridToXYZ(j, k, 0, ref x, ref y, ref z);
-
-                                #region 点是否在平面或边上
-                                bool okPlane = false;
-                                bool okEdge = false;
-
-                                double tx = Math.Round(x, 3);
-                                for (int ii = 0, jj = tmp.Count - 1; ii < tmp.Count; jj = ii++)
-                                {
-                                    if ((tmp[ii].vy > y) != (tmp[jj].vy > y))
-                                    {
-                                        double tmp1 = Math.Round((tmp[jj].vx - tmp[ii].vx) * (y - tmp[ii].vy) / (tmp[jj].vy - tmp[ii].vy) + tmp[ii].vx, 3);
-
-                                        if (Math.Abs(tx - tmp1) < err)
-                                        {
-                                            okPlane = true;
-                                            okEdge = true;
-                                            break;
-                                        }
-                                        else if (tx < tmp1)
-                                        {
-                                            okPlane = !okPlane;
-                                        }
-                                    }
-                                }
-
-                                if (okPlane)
-                                {
-                                    // 建筑物顶面
-                                    System.Data.DataRow thisrow = tb1.NewRow();
-                                    thisrow["BuildingID"] = tmp[0].bid;
-                                    thisrow["GXID"] = j;
-                                    thisrow["GYID"] = k;
-                                    thisrow["GZID"] = gzid;
-                                    tb1.Rows.Add(thisrow);
-
-                                    thisrow = tb1.NewRow();
-                                    thisrow["BuildingID"] = tmp[0].bid;
-                                    thisrow["GXID"] = j;
-                                    thisrow["GYID"] = k;
-                                    thisrow["GZID"] = 1;
-                                    tb1.Rows.Add(thisrow);
-
-                                    // 建筑物侧面
-                                    if (okEdge)
-                                    {
-                                        for (int zid = gzidBase; zid < gzid; zid++) // 基于地形，海拔以下没有侧面栅格
-                                        {
-                                            thisrow = tb1.NewRow();
-                                            thisrow["BuildingID"] = tmp[0].bid;
-                                            thisrow["GXID"] = j;
-                                            thisrow["GYID"] = k;
-                                            thisrow["GZID"] = zid;
-                                            tb1.Rows.Add(thisrow);
-                                        }
-                                    }
-                                }
-                                #endregion
+                                if (tmp[j].vx > maxx)
+                                    maxx = tmp[j].vx;
+                                if (tmp[j].vx < minx)
+                                    minx = tmp[j].vx;
+                                if (tmp[j].vy > maxy)
+                                    maxy = tmp[j].vy;
+                                if (tmp[j].vy < miny)
+                                    miny = tmp[j].vy;
                             }
+
+                            int gzidBase = (int)(tmp[0].altitude / GridHelper.getInstance().getGHeight());  // 基于地形，海拔处的栅格高度
+                            if (gzidBase < 0)
+                                gzidBase = 1;
+                            int gzid = (int)(tmp[0].vz / GridHelper.getInstance().getGHeight()) + 1;
+
+                            int minGxid = 0, minGyid = 0, maxGxid = 0, maxGyid = 0;
+                            GridHelper.getInstance().XYToGGrid(minx, miny, ref minGxid, ref minGyid);
+                            GridHelper.getInstance().XYToGGrid(maxx, maxy, ref maxGxid, ref maxGyid);
+                            if (minGxid == -1 || minGyid == -1)
+                                continue;
+
+                            double x = 0, y = 0, z = 0;
+                            for (int j = minGxid; j <= maxGxid; j++)
+                            {
+                                for (int k = minGyid; k <= maxGyid; k++)
+                                {
+                                    GridHelper.getInstance().GridToXYZ(j, k, 0, ref x, ref y, ref z);
+
+                                    #region 点是否在平面或边上
+                                    bool okPlane = false;
+                                    bool okEdge = false;
+
+                                    double tx = Math.Round(x, 3);
+                                    for (int ii = 0, jj = tmp.Count - 1; ii < tmp.Count; jj = ii++)
+                                    {
+                                        if ((tmp[ii].vy > y) != (tmp[jj].vy > y))
+                                        {
+                                            double tmp1 = Math.Round((tmp[jj].vx - tmp[ii].vx) * (y - tmp[ii].vy) / (tmp[jj].vy - tmp[ii].vy) + tmp[ii].vx, 3);
+
+                                            if (Math.Abs(tx - tmp1) < err)
+                                            {
+                                                okPlane = true;
+                                                okEdge = true;
+                                                break;
+                                            }
+                                            else if (tx < tmp1)
+                                            {
+                                                okPlane = !okPlane;
+                                            }
+                                        }
+                                    }
+
+                                    if (okPlane)
+                                    {
+                                        // 建筑物顶面
+                                        System.Data.DataRow thisrow = tb1.NewRow();
+                                        thisrow["BuildingID"] = tmp[0].bid;
+                                        thisrow["GXID"] = j;
+                                        thisrow["GYID"] = k;
+                                        thisrow["GZID"] = gzid;
+                                        tb1.Rows.Add(thisrow);
+
+                                        thisrow = tb1.NewRow();
+                                        thisrow["BuildingID"] = tmp[0].bid;
+                                        thisrow["GXID"] = j;
+                                        thisrow["GYID"] = k;
+                                        thisrow["GZID"] = 1;
+                                        tb1.Rows.Add(thisrow);
+
+                                        // 建筑物侧面
+                                        if (okEdge)
+                                        {
+                                            for (int zid = gzidBase; zid < gzid; zid++) // 基于地形，海拔以下没有侧面栅格
+                                            {
+                                                thisrow = tb1.NewRow();
+                                                thisrow["BuildingID"] = tmp[0].bid;
+                                                thisrow["GXID"] = j;
+                                                thisrow["GYID"] = k;
+                                                thisrow["GZID"] = zid;
+                                                tb1.Rows.Add(thisrow);
+                                            }
+                                        }
+                                    }
+                                    #endregion
+                                }
+                            }
+
+                            lastid = bv1.bid;
+                            tmp.Clear();
                         }
+                        tmp.Add(bv1);
 
-                        lastid = bv1.bid;
-                        tmp.Clear();
-                    }
-                    tmp.Add(bv1);
-
-                    if (tb1.Rows.Count >= 5000)
-                    {
-                        using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+                        if (tb1.Rows.Count >= 5000)
                         {
-                            bcp.BatchSize = tb1.Rows.Count;
-                            bcp.BulkCopyTimeout = 1000;
-                            bcp.DestinationTableName = "tbBuildingGrid3D";
-                            bcp.WriteToServer(tb1);
-                            bcp.Close();
+                            using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+                            {
+                                bcp.BatchSize = tb1.Rows.Count;
+                                bcp.BulkCopyTimeout = 1000;
+                                bcp.DestinationTableName = "tbBuildingGrid3D";
+                                bcp.WriteToServer(tb1);
+                                bcp.Close();
+                            }
+                            tb1.Clear();
                         }
-                        tb1.Clear();
                     }
+
+                    // 最后一批
+                    using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+                    {
+                        bcp.BatchSize = tb1.Rows.Count;
+                        bcp.BulkCopyTimeout = 1000;
+                        bcp.DestinationTableName = "tbBuildingGrid3D";
+                        bcp.WriteToServer(tb1);
+                        bcp.Close();
+                    }
+                    tb1.Clear();
+                    ht["pageindex"] = ++pageindex;
+                    tb = IbatisHelper.ExecuteQueryForDataTable("getBuildingVertexSmooth", ht);
                 }
 
-                // 最后一批
-                using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
-                {
-                    bcp.BatchSize = tb1.Rows.Count;
-                    bcp.BulkCopyTimeout = 1000;
-                    bcp.DestinationTableName = "tbBuildingGrid3D";
-                    bcp.WriteToServer(tb1);
-                    bcp.Close();
-                }
-                tb1.Clear();
-                ht["pageindex"] = ++pageindex;
-                tb = IbatisHelper.ExecuteQueryForDataTable("getBuildingVertexSmooth", ht);
+                return new Result(true);
             }
-
-            return new Result(true);
+            catch (Exception ex)
+            { return new Result(false, ex.ToString()); }
         }
 
         // 2019.6.5 根据地形得到建筑物海拔
@@ -319,119 +353,124 @@ namespace LTE.WebAPI.Models
             int minAxid, int minAyid, int maxAxid, int maxAyid,
             int mingxid, int mingyid, int maxgxid, int maxgyid)
         {
-            //2019.07.20 分页操作，防止内存溢出
-            int pageSize = 300;
-            int minAgxid = minAxid;
-            //int minAgyid = minAyid;
-            int maxAgxid = Math.Min(maxAxid, minAxid + pageSize);
-            //int maxAgyid = Math.Min(maxAyid, minAxid + pageSize);
-
-            while (minAgxid <= maxAxid)
+            try
             {
-                int minAgyid = 0;
-                int maxAgyid = Math.Min(maxAyid, minAgyid + pageSize);
-                while (minAgyid <= maxAyid)
+                //2019.07.20 分页操作，防止内存溢出
+                int pageSize = 300;
+                int minAgxid = minAxid;
+                //int minAgyid = minAyid;
+                int maxAgxid = Math.Min(maxAxid, minAxid + pageSize);
+                //int maxAgyid = Math.Min(maxAyid, minAxid + pageSize);
+
+                while (minAgxid <= maxAxid)
                 {
-                    //根据均匀栅格网格id获得平面坐标范围(注意坐标代表的是左下角的id，所以求范围时，min用原始坐标id计算即可，而max就得在原始坐标的基础上+1计算才行)
-                    double minGX = minX + minAgxid * 30;
-                    double minGY = minY + minAgyid * 30;
-                    double maxGX = minX + (maxAgxid + 1) * 30;
-                    double maxGY = minY + (maxAgyid + 1) * 30;
-
-                    // 读取范围内的加速栅格信息
-                    AccelerateStruct.setAccGridRange(minAgxid, minAgyid, maxAgxid, maxAgyid);
-                    //AccelerateStruct.constructAccelerateStructAltitude();
-                    AccelerateStruct.constructGridTin();
-
-                    // 读取范围内的地形 TIN
-                    TINInfo.setBound(minx: minGX, miny: minGY, maxx: maxGX, maxy: maxGY);
-                    TINInfo.constructTINVertex();
-
-                    // 读取范围内的建筑物中心点
-                    //BuildingGrid3D.setGGridRange(mingxid, mingyid, maxgxid, maxgyid);
-                    //BuildingGrid3D.constructBuildingCenter();
-                    BuildingGrid3D.constructBuildingCenterByArea(minGx: minGX, minGy: minGY, maxGx: maxGX, maxGy: maxGY);
-
-                    // 计算建筑物底面中心的海拔
-                    Dictionary<int, double> altitude = new Dictionary<int, double>();
-                    foreach (var build in BuildingGrid3D.buildingCenter)
+                    int minAgyid = 0;
+                    int maxAgyid = Math.Min(maxAyid, minAgyid + pageSize);
+                    while (minAgyid <= maxAyid)
                     {
-                        int bid = build.Key;
+                        //根据均匀栅格网格id获得平面坐标范围(注意坐标代表的是左下角的id，所以求范围时，min用原始坐标id计算即可，而max就得在原始坐标的基础上+1计算才行)
+                        double minGX = minX + minAgxid * 30;
+                        double minGY = minY + minAgyid * 30;
+                        double maxGX = minX + (maxAgxid + 1) * 30;
+                        double maxGY = minY + (maxAgyid + 1) * 30;
 
-                        // 建筑物底面中心所在的 TIN
-                        Grid3D agridid = new Grid3D();
-                        Geometric.Point center = new Geometric.Point(BuildingGrid3D.buildingCenter[bid].X, BuildingGrid3D.buildingCenter[bid].Y, 0);
-                        bool ok = GridHelper.getInstance().PointXYZToAccGrid(center, ref agridid);  // 建筑物底面中心所在的均匀栅格
-                        if (!ok)
+                        // 读取范围内的加速栅格信息
+                        AccelerateStruct.setAccGridRange(minAgxid, minAgyid, maxAgxid, maxAgyid);
+                        //AccelerateStruct.constructAccelerateStructAltitude();
+                        AccelerateStruct.constructGridTin();
+
+                        // 读取范围内的地形 TIN
+                        TINInfo.setBound(minx: minGX, miny: minGY, maxx: maxGX, maxy: maxGY);
+                        TINInfo.constructTINVertex();
+
+                        // 读取范围内的建筑物中心点
+                        //BuildingGrid3D.setGGridRange(mingxid, mingyid, maxgxid, maxgyid);
+                        //BuildingGrid3D.constructBuildingCenter();
+                        BuildingGrid3D.constructBuildingCenterByArea(minGx: minGX, minGy: minGY, maxGx: maxGX, maxGy: maxGY);
+
+                        // 计算建筑物底面中心的海拔
+                        Dictionary<int, double> altitude = new Dictionary<int, double>();
+                        foreach (var build in BuildingGrid3D.buildingCenter)
                         {
-                            altitude[bid] = 0;
-                            continue;
-                        }
-                        string key = string.Format("{0},{1},{2}", agridid.gxid, agridid.gyid, agridid.gzid);
-                        List<int> TINs = AccelerateStruct.gridTIN[key];
+                            int bid = build.Key;
 
-                        // 建筑物底面中心的海拔
-                        for (int i = 0; i < TINs.Count; i++)
-                        {
-                            List<Geometric.Point> pts = TINInfo.getTINVertex(TINs[i]);
-
-                            if (pts.Count < 3)
-                                return new Result(false, "TIN 数据出错");
-
-
-                            bool inTIN = Geometric.PointHeight.isInside(pts[0], pts[1], pts[2],
-                                BuildingGrid3D.buildingCenter[bid].X, BuildingGrid3D.buildingCenter[bid].Y);
-
-                            if (inTIN) // 位于当前 TIN 三角形内
+                            // 建筑物底面中心所在的 TIN
+                            Grid3D agridid = new Grid3D();
+                            Geometric.Point center = new Geometric.Point(BuildingGrid3D.buildingCenter[bid].X, BuildingGrid3D.buildingCenter[bid].Y, 0);
+                            bool ok = GridHelper.getInstance().PointXYZToAccGrid(center, ref agridid);  // 建筑物底面中心所在的均匀栅格
+                            if (!ok)
                             {
-                                double alt = Geometric.PointHeight.getPointHeight(pts[0], pts[1], pts[2],
+                                altitude[bid] = 0;
+                                continue;
+                            }
+                            string key = string.Format("{0},{1},{2}", agridid.gxid, agridid.gyid, agridid.gzid);
+                            List<int> TINs = AccelerateStruct.gridTIN[key];
+
+                            // 建筑物底面中心的海拔
+                            for (int i = 0; i < TINs.Count; i++)
+                            {
+                                List<Geometric.Point> pts = TINInfo.getTINVertex(TINs[i]);
+
+                                if (pts.Count < 3)
+                                    return new Result(false, "TIN 数据出错");
+
+
+                                bool inTIN = Geometric.PointHeight.isInside(pts[0], pts[1], pts[2],
                                     BuildingGrid3D.buildingCenter[bid].X, BuildingGrid3D.buildingCenter[bid].Y);
-                                altitude[bid] = alt;
-                                break;
+
+                                if (inTIN) // 位于当前 TIN 三角形内
+                                {
+                                    double alt = Geometric.PointHeight.getPointHeight(pts[0], pts[1], pts[2],
+                                        BuildingGrid3D.buildingCenter[bid].X, BuildingGrid3D.buildingCenter[bid].Y);
+                                    altitude[bid] = alt;
+                                    break;
+                                }
                             }
                         }
-                    }
 
-                    // 更新数据库
-                    //TODO: 部分更新building数据表
-                    Hashtable ht = new Hashtable();
-                    ht["minGX"] = minGX;
-                    ht["maxGX"] = maxGX;
-                    ht["minGY"] = minGY;
-                    ht["maxGY"] = maxGY;
-                    System.Data.DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getBuildingByArea", ht);
-                    //System.Data.DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getBuilding", null);
-                    for (int i = 0; i < tb.Rows.Count; i++)
-                    {
-                        int bid = Convert.ToInt32(tb.Rows[i]["BuildingID"].ToString());
-                        if (!altitude.Keys.Contains(bid))
-                            continue;
-                        tb.Rows[i]["BAltitude"] = altitude[bid];
-                    }
-                    //IbatisHelper.ExecuteDelete("DeleteBuilding", null);  // 删除旧的
-                    IbatisHelper.ExecuteDelete("DeleteBuildingByArea", ht);
+                        // 更新数据库
+                        //TODO: 部分更新building数据表
+                        Hashtable ht = new Hashtable();
+                        ht["minGX"] = minGX;
+                        ht["maxGX"] = maxGX;
+                        ht["minGY"] = minGY;
+                        ht["maxGY"] = maxGY;
+                        System.Data.DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getBuildingByArea", ht);
+                        //System.Data.DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getBuilding", null);
+                        for (int i = 0; i < tb.Rows.Count; i++)
+                        {
+                            int bid = Convert.ToInt32(tb.Rows[i]["BuildingID"].ToString());
+                            if (!altitude.Keys.Contains(bid))
+                                continue;
+                            tb.Rows[i]["BAltitude"] = altitude[bid];
+                        }
+                        //IbatisHelper.ExecuteDelete("DeleteBuilding", null);  // 删除旧的
+                        IbatisHelper.ExecuteDelete("DeleteBuildingByArea", ht);
 
-                    using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))  // 写入新的
-                    {
-                        bcp.BatchSize = tb.Rows.Count;
-                        bcp.BulkCopyTimeout = 1000;
-                        bcp.DestinationTableName = "tbBuilding";
-                        bcp.WriteToServer(tb);
+                        using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))  // 写入新的
+                        {
+                            bcp.BatchSize = tb.Rows.Count;
+                            bcp.BulkCopyTimeout = 1000;
+                            bcp.DestinationTableName = "tbBuilding";
+                            bcp.WriteToServer(tb);
 
-                        bcp.Close();
+                            bcp.Close();
+                        }
+                        tb.Clear();
+                        //xsx 及时清理内存
+                        AccelerateStruct.clearAccelerateStruct();
+                        TINInfo.clear();
+                        BuildingGrid3D.clearBuildingData();
+                        minAgyid = maxAgyid + 1;
+                        maxAgyid = Math.Min(maxAgyid + pageSize, maxAyid);
                     }
-                    tb.Clear();
-                    //xsx 及时清理内存
-                    AccelerateStruct.clearAccelerateStruct();
-                    TINInfo.clear();
-                    BuildingGrid3D.clearBuildingData();
-                    minAgyid = maxAgyid + 1;
-                    maxAgyid = Math.Min(maxAgyid + pageSize, maxAyid);
+                    minAgxid = maxAgxid + 1;
+                    maxAgxid = Math.Min(maxAgxid + pageSize, maxAxid);
                 }
-                minAgxid = maxAgxid + 1;
-                maxAgxid = Math.Min(maxAgxid + pageSize, maxAxid);
+                return new Result(true);
             }
-            return new Result(true);
+            catch (Exception ex)
+            { return new Result(false, ex.ToString()); }
         }
 
         // 2019.5.28 记录每个均匀栅格内有哪些地形 TIN 三角形
@@ -448,145 +487,278 @@ namespace LTE.WebAPI.Models
         /// <returns></returns>
         Result calcTIN(double minX, double minY, double maxX, double maxY, double agridsize, int maxAxid, int maxAyid)
         {
-            Hashtable ht = new Hashtable();
-            ht["minX"] = minX;
-            ht["maxX"] = maxX;
-            ht["minY"] = minY;
-            ht["maxY"] = maxY;
-            // 从原始数据中读取区域范围内的地形 TIN 最低点
-            DataTable tbHeight = IbatisHelper.ExecuteQueryForDataTable("GetMinHeight", ht);
-            if (tbHeight.Rows.Count < 1)
+            try
             {
-                return new Result(false, "没有 TIN 数据");
-            }
-            double minHeight = Convert.ToDouble(tbHeight.Rows[0][0]);
-
-            //用于记录TIN加速栅格
-            System.Data.DataTable tb1 = new System.Data.DataTable();
-            tb1.Columns.Add("GXID");
-            tb1.Columns.Add("GYID");
-            tb1.Columns.Add("GZID");
-            tb1.Columns.Add("TINID");
-
-            //IbatisHelper.ExecuteDelete("DeleteTIN", null);
-            //IbatisHelper.ExecuteDelete("DeleteAccrelateTIN", null);
-            IbatisHelper.ExecuteDelete("TruncateTIN", null);
-            IbatisHelper.ExecuteDelete("TruncateAccelerateGridTIN", null);
-
-            //2019.07.24 xsx 通过sql实现tbtin数据的生成，不需要分批
-            ht["minHeight"] = minHeight;
-            IbatisHelper.ExecuteInsert("gennerateTin", ht);
-
-            //2019.07.20 分页操作，防止内存泄漏
-            int pageSize = 500;
-            int minAgxid = 0;
-            int maxAgxid = Math.Min(maxAxid, minAgxid + pageSize);
-            while (minAgxid <= maxAxid)
-            {
-                int minAgyid = 0;
-                int maxAgyid = Math.Min(maxAyid, minAgyid + pageSize);
-                while (minAgyid <= maxAyid)
+                Hashtable ht = new Hashtable();
+                ht["minX"] = minX;
+                ht["maxX"] = maxX;
+                ht["minY"] = minY;
+                ht["maxY"] = maxY;
+                // 从原始数据中读取区域范围内的地形 TIN 最低点
+                DataTable tbHeight = IbatisHelper.ExecuteQueryForDataTable("GetMinHeight", ht);
+                if (tbHeight.Rows.Count < 1)
                 {
-                    //根据均匀栅格网格id获得平面坐标范围（注意坐标代表的是左下角的id，所以求范围时，min用原始坐标id计算即可，而max就得在原始坐标的基础上+1计算才行）
-                    //double minX = minsX + minAgxid * 30;
-                    //double minY = minsY + minAgyid * 30;
-                    //double maxX = minsX + (maxAgxid + 1) * 30;
-                    //double maxY = minsY + (maxAgyid + 1) * 30;
-                    //ht["minX"] = minX;
-                    //ht["minY"] = minY;
-                    //ht["maxX"] = maxX;
-                    //ht["maxY"] = maxY;
+                    return new Result(false, "没有 TIN 数据");
+                }
+                double minHeight = Convert.ToDouble(tbHeight.Rows[0][0]);
 
-                    //int pageindex = 0;
-                    //int pagesize = 10000;
-                    //ht["pageindex"] = pageindex;
-                    //ht["pagesize"] = pagesize;
+                //用于记录TIN加速栅格
+                System.Data.DataTable tb1 = new System.Data.DataTable();
+                tb1.Columns.Add("GXID");
+                tb1.Columns.Add("GYID");
+                tb1.Columns.Add("GZID");
+                tb1.Columns.Add("TINID");
 
-                    // 从原始数据中读取区域范围内的地形 TIN，更新局部数据，以最低点高度为基准
-                    //DataTable tb = IbatisHelper.ExecuteQueryForDataTable("GetTINVertexOriginal", ht);
+                //IbatisHelper.ExecuteDelete("DeleteTIN", null);
+                //IbatisHelper.ExecuteDelete("DeleteAccrelateTIN", null);
+                IbatisHelper.ExecuteDelete("TruncateTIN", null);
+                IbatisHelper.ExecuteDelete("TruncateAccelerateGridTIN", null);
 
-                    //2019.07.25 xsx 通过矩形覆盖方式取，防止顶点在外面在内的特殊情况
-                    //DataTable tb = IbatisHelper.ExecuteQueryForDataTable("GetTINVertexByArea", ht);
-                    ht["minXGrid"] = minAgxid;
-                    ht["maxXGrid"] = maxAgxid;
-                    ht["minYGrid"] = minAgyid;
-                    ht["maxYGrid"] = maxAgyid;
-                    DataTable tb = IbatisHelper.ExecuteQueryForDataTable("GetTINVertexByGrid", ht);
+                //2019.07.24 xsx 通过sql实现tbtin数据的生成，不需要分批
+                ht["minHeight"] = minHeight;
+                IbatisHelper.ExecuteInsert("gennerateTin", ht);
 
-                    if (tb.Rows.Count < 1)
+                //2019.07.20 分页操作，防止内存泄漏
+                int pageSize = 500;
+                int minAgxid = 0;
+                int maxAgxid = Math.Min(maxAxid, minAgxid + pageSize);
+                while (minAgxid <= maxAxid)
+                {
+                    int minAgyid = 0;
+                    int maxAgyid = Math.Min(maxAyid, minAgyid + pageSize);
+                    while (minAgyid <= maxAyid)
                     {
-                        //continue;//说明在本区域的tin数据为空
-                        return new Result(false, "TIN 数据为空,该地区地形数据不完整，请重新规划范围");
-                    }
+                        //根据均匀栅格网格id获得平面坐标范围（注意坐标代表的是左下角的id，所以求范围时，min用原始坐标id计算即可，而max就得在原始坐标的基础上+1计算才行）
+                        //double minX = minsX + minAgxid * 30;
+                        //double minY = minsY + minAgyid * 30;
+                        //double maxX = minsX + (maxAgxid + 1) * 30;
+                        //double maxY = minsY + (maxAgyid + 1) * 30;
+                        //ht["minX"] = minX;
+                        //ht["minY"] = minY;
+                        //ht["maxX"] = maxX;
+                        //ht["maxY"] = maxY;
 
-                    //for (int i = 0; i < tb.Rows.Count; i++)
-                    //{
-                    //    tb.Rows[i]["VertexHeight"] = Convert.ToDouble(tb.Rows[i]["VertexHeight"]) - minHeight;
-                    //}
+                        //int pageindex = 0;
+                        //int pagesize = 10000;
+                        //ht["pageindex"] = pageindex;
+                        //ht["pagesize"] = pagesize;
 
-                    //using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
-                    //{
-                    //    bcp.BatchSize = tb.Rows.Count;
-                    //    bcp.BulkCopyTimeout = 1000;
-                    //    bcp.DestinationTableName = "tbTIN";
-                    //    bcp.WriteToServer(tb);
-                    //    bcp.Close();
-                    //}
+                        // 从原始数据中读取区域范围内的地形 TIN，更新局部数据，以最低点高度为基准
+                        //DataTable tb = IbatisHelper.ExecuteQueryForDataTable("GetTINVertexOriginal", ht);
 
-                    //HashSet<string> set = new HashSet<string>();
-                    int id = 0;
-                    //int lastid = 0;
+                        //2019.07.25 xsx 通过矩形覆盖方式取，防止顶点在外面在内的特殊情况
+                        //DataTable tb = IbatisHelper.ExecuteQueryForDataTable("GetTINVertexByArea", ht);
+                        ht["minXGrid"] = minAgxid;
+                        ht["maxXGrid"] = maxAgxid;
+                        ht["minYGrid"] = minAgyid;
+                        ht["maxYGrid"] = maxAgyid;
+                        DataTable tb = IbatisHelper.ExecuteQueryForDataTable("GetTINVertexByGrid", ht);
 
-                    for (int i = 0; i < tb.Rows.Count; i += 3)
-                    {
-                        // 得到 TIN 三角形的轴对齐包围盒
-                        double minTINx = double.MaxValue;
-                        double minTINy = double.MaxValue;
-                        double maxTINx = double.MinValue;
-                        double maxTINy = double.MinValue;
-                        double maxTINz = double.MinValue;
-
-                        for (int j = i; j < i + 3; j++)
+                        if (tb.Rows.Count < 1)
                         {
-                            id = Convert.ToInt32(tb.Rows[j]["TINID"].ToString());
-                            double x = Convert.ToDouble(tb.Rows[j]["VertexX"].ToString());
-                            double y = Convert.ToDouble(tb.Rows[j]["VertexY"].ToString());
-                            double z = Convert.ToDouble(tb.Rows[j]["VertexHeight"].ToString());
-
-                            if (x < minTINx) minTINx = x;
-                            if (y < minTINy) minTINy = y;
-                            if (x > maxTINx) maxTINx = x;
-                            if (y > maxTINy) maxTINy = y;
-                            if (z > maxTINz) maxTINz = z;
+                            //continue;//说明在本区域的tin数据为空
+                            return new Result(false, "TIN 数据为空,该地区地形数据不完整，请重新规划范围");
                         }
-                        ////2019.07.18 xsx 及时清理掉set中以前的数据，防止内存泄漏，因为数据是按照TINID顺序处理的，所以如果当前处理的ID和以前的ID不同的话，必然不会重复，也就是说set中只存当前TINID的数据
-                        //if (id != lastid)
+
+                        //for (int i = 0; i < tb.Rows.Count; i++)
                         //{
-                        //    set.Clear();
-                        //    lastid = id;
+                        //    tb.Rows[i]["VertexHeight"] = Convert.ToDouble(tb.Rows[i]["VertexHeight"]) - minHeight;
                         //}
 
-                        //以左下角作为网格id坐标
-                        //int minGxid = Convert.ToInt32(Math.Ceiling((minTINx - minX) / agridsize)) - 1;
-                        //int minGyid = Convert.ToInt32(Math.Ceiling((minTINy - minY) / agridsize)) - 1;
-                        //int maxGxid = Convert.ToInt32(Math.Ceiling((maxTINx - minX) / agridsize)) - 1;
-                        //int maxGyid = Convert.ToInt32(Math.Ceiling((maxTINy - minY) / agridsize)) - 1;
-                        //int maxGzid = Convert.ToInt32(Math.Ceiling(maxTINz / agridsize)) - 1;
+                        //using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+                        //{
+                        //    bcp.BatchSize = tb.Rows.Count;
+                        //    bcp.BulkCopyTimeout = 1000;
+                        //    bcp.DestinationTableName = "tbTIN";
+                        //    bcp.WriteToServer(tb);
+                        //    bcp.Close();
+                        //}
 
-                        //2019.07.25 xsx 修改为正确的向下取整方式，当x y 恰好在边界上，海拔z为0时，前者会造成负数
-                        int minGxid = (int)Math.Floor((minTINx - minX) / agridsize);
-                        int minGyid = (int)Math.Floor((minTINy - minY) / agridsize);
-                        int maxGxid = (int)Math.Floor((maxTINx - minX) / agridsize);
-                        int maxGyid = (int)Math.Floor((maxTINy - minY) / agridsize);
-                        int maxGzid = (int)Math.Floor(maxTINz / agridsize);
+                        //HashSet<string> set = new HashSet<string>();
+                        int id = 0;
+                        //int lastid = 0;
 
-                        // TIN 三角形跨越的均匀栅格
+                        for (int i = 0; i < tb.Rows.Count; i += 3)
+                        {
+                            // 得到 TIN 三角形的轴对齐包围盒
+                            double minTINx = double.MaxValue;
+                            double minTINy = double.MaxValue;
+                            double maxTINx = double.MinValue;
+                            double maxTINy = double.MinValue;
+                            double maxTINz = double.MinValue;
 
-                        //范围修正，舍去TIN超过给定栅格范围的数据
-                        minGxid = Math.Max(minGxid, minAgxid);
-                        minGyid = Math.Max(minGyid, minAgyid);
-                        maxGxid = Math.Min(maxGxid, maxAgxid);
-                        maxGyid = Math.Min(maxGyid, maxAgyid);
+                            for (int j = i; j < i + 3; j++)
+                            {
+                                id = Convert.ToInt32(tb.Rows[j]["TINID"].ToString());
+                                double x = Convert.ToDouble(tb.Rows[j]["VertexX"].ToString());
+                                double y = Convert.ToDouble(tb.Rows[j]["VertexY"].ToString());
+                                double z = Convert.ToDouble(tb.Rows[j]["VertexHeight"].ToString());
+
+                                if (x < minTINx) minTINx = x;
+                                if (y < minTINy) minTINy = y;
+                                if (x > maxTINx) maxTINx = x;
+                                if (y > maxTINy) maxTINy = y;
+                                if (z > maxTINz) maxTINz = z;
+                            }
+                            ////2019.07.18 xsx 及时清理掉set中以前的数据，防止内存泄漏，因为数据是按照TINID顺序处理的，所以如果当前处理的ID和以前的ID不同的话，必然不会重复，也就是说set中只存当前TINID的数据
+                            //if (id != lastid)
+                            //{
+                            //    set.Clear();
+                            //    lastid = id;
+                            //}
+
+                            //以左下角作为网格id坐标
+                            //int minGxid = Convert.ToInt32(Math.Ceiling((minTINx - minX) / agridsize)) - 1;
+                            //int minGyid = Convert.ToInt32(Math.Ceiling((minTINy - minY) / agridsize)) - 1;
+                            //int maxGxid = Convert.ToInt32(Math.Ceiling((maxTINx - minX) / agridsize)) - 1;
+                            //int maxGyid = Convert.ToInt32(Math.Ceiling((maxTINy - minY) / agridsize)) - 1;
+                            //int maxGzid = Convert.ToInt32(Math.Ceiling(maxTINz / agridsize)) - 1;
+
+                            //2019.07.25 xsx 修改为正确的向下取整方式，当x y 恰好在边界上，海拔z为0时，前者会造成负数
+                            int minGxid = (int)Math.Floor((minTINx - minX) / agridsize);
+                            int minGyid = (int)Math.Floor((minTINy - minY) / agridsize);
+                            int maxGxid = (int)Math.Floor((maxTINx - minX) / agridsize);
+                            int maxGyid = (int)Math.Floor((maxTINy - minY) / agridsize);
+                            int maxGzid = (int)Math.Floor(maxTINz / agridsize);
+
+                            // TIN 三角形跨越的均匀栅格
+
+                            //范围修正，舍去TIN超过给定栅格范围的数据
+                            minGxid = Math.Max(minGxid, minAgxid);
+                            minGyid = Math.Max(minGyid, minAgyid);
+                            maxGxid = Math.Min(maxGxid, maxAgxid);
+                            maxGyid = Math.Min(maxGyid, maxAgyid);
+
+                            for (int j = minGxid; j <= maxGxid; j++)
+                            {
+                                for (int k = minGyid; k <= maxGyid; k++)
+                                {
+                                    for (int h = 0; h <= maxGzid; h++)
+                                    {
+                                        //string key = string.Format("{0},{1},{2},{3}", j, k, h + 1, id);
+                                        //if (set.Contains(key))
+                                        //    continue;
+                                        //set.Add(key);
+
+                                        System.Data.DataRow thisrow = tb1.NewRow();
+                                        thisrow["GXID"] = j;
+                                        thisrow["GYID"] = k;
+                                        thisrow["GZID"] = h + 1;
+                                        thisrow["TINID"] = id;
+                                        tb1.Rows.Add(thisrow);
+                                    }
+                                }
+                            }
+
+                            if (tb1.Rows.Count > 5000)
+                            {
+                                using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+                                {
+                                    bcp.BatchSize = tb1.Rows.Count;
+                                    bcp.BulkCopyTimeout = 1000;
+                                    bcp.DestinationTableName = "tbAccelerateGridTIN";
+                                    bcp.WriteToServer(tb1);
+                                    bcp.Close();
+                                    tb1.Rows.Clear();
+                                }
+                            }
+                        }
+
+                        // 最后一批
+                        using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+                        {
+                            bcp.BatchSize = tb1.Rows.Count;
+                            bcp.BulkCopyTimeout = 1000;
+                            bcp.DestinationTableName = "tbAccelerateGridTIN";
+                            bcp.WriteToServer(tb1);
+                            bcp.Close();
+                            tb1.Rows.Clear();
+                        }
+                        minAgyid = maxAgyid + 1;
+                        maxAgyid = Math.Min(maxAgyid + pageSize, maxAyid);
+                    }
+                    minAgxid = maxAgxid + 1;
+                    maxAgxid = Math.Min(maxAgxid + pageSize, maxAxid);
+                }
+                return new Result(true);
+            }
+            catch (Exception ex)
+            { return new Result(false, ex.ToString()); }
+        }
+
+        // 计算建筑物所在的加速网格  2019.6.13 改
+        Result calcAcclerateBuilding(double minX, double minY, double maxX, double maxY, double agridsize, int maxAgxid, int maxAgyid)
+        {
+            try
+            {
+                DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getBuildingVertexSmooth1", null);
+
+                if (tb.Rows.Count < 1)
+                {
+                    return new Result(false, "无建筑物顶点数据");
+                }
+                else
+                {
+                    IbatisHelper.ExecuteDelete("DeleteBuildingAccrelate1", null);
+
+                    HashSet<string> set = new HashSet<string>();
+                    System.Data.DataTable tb1 = new System.Data.DataTable();
+                    tb1.Columns.Add("GXID");
+                    tb1.Columns.Add("GYID");
+                    tb1.Columns.Add("GZID");
+                    tb1.Columns.Add("BuildingID");
+
+                    for (int i = 0; i < tb.Rows.Count; i++)
+                    {
+                        // 得到建筑物底面的轴对齐包围盒
+                        int id = Convert.ToInt32(tb.Rows[i]["BuildingID"].ToString());
+                        double height = Convert.ToDouble(tb.Rows[i]["Bheight"].ToString());
+                        double altitude = Convert.ToDouble(tb.Rows[i]["BAltitude"].ToString());  // 基于地形
+                        double x = Convert.ToDouble(tb.Rows[i]["minX"].ToString());
+                        double y = Convert.ToDouble(tb.Rows[i]["minY"].ToString());
+                        double x1 = Convert.ToDouble(tb.Rows[i]["maxX"].ToString());
+                        double y1 = Convert.ToDouble(tb.Rows[i]["maxY"].ToString());
+
+                        // 建筑物底面跨越的均匀栅格
+                        int minGxid = (int)Math.Floor((x - minX) / agridsize);
+                        int minGyid = (int)Math.Floor((y - minY) / agridsize);
+                        int maxGxid = (int)Math.Floor((x1 - minX) / agridsize);
+                        int maxGyid = (int)Math.Floor((y1 - minY) / agridsize);
+                        int maxGzid = (int)Math.Floor((height + altitude) / agridsize);
+
+                        bool ok = (x >= minX || x1 <= maxX || y >= minY || y1 <= maxY);
+
+                        if (minGxid < 0)
+                        {
+                            if (ok)
+                                minGxid = 0;
+                            else
+                                continue;
+                        }
+                        if (minGyid < 0)
+                        {
+                            if (ok)
+                                minGyid = 0;
+                            else
+                                continue;
+                        }
+                        if (maxGxid > maxAgxid)
+                        {
+                            if (ok)
+                                maxGxid = maxAgxid;
+                            else
+                                continue;
+                        }
+                        if (maxGyid > maxAgyid)
+                        {
+                            if (ok)
+                                maxGyid = maxAgyid;
+                            else
+                                continue;
+                        }
+
+                        if (maxGzid > 2)
+                            maxGzid = 2;
 
                         for (int j = minGxid; j <= maxGxid; j++)
                         {
@@ -594,16 +766,16 @@ namespace LTE.WebAPI.Models
                             {
                                 for (int h = 0; h <= maxGzid; h++)
                                 {
-                                    //string key = string.Format("{0},{1},{2},{3}", j, k, h + 1, id);
-                                    //if (set.Contains(key))
-                                    //    continue;
-                                    //set.Add(key);
+                                    string key = string.Format("{0},{1},{2},{3}", j, k, h + 1, id);
+                                    if (set.Contains(key))
+                                        continue;
+                                    set.Add(key);
 
                                     System.Data.DataRow thisrow = tb1.NewRow();
                                     thisrow["GXID"] = j;
                                     thisrow["GYID"] = k;
                                     thisrow["GZID"] = h + 1;
-                                    thisrow["TINID"] = id;
+                                    thisrow["BuildingID"] = id;
                                     tb1.Rows.Add(thisrow);
                                 }
                             }
@@ -615,154 +787,30 @@ namespace LTE.WebAPI.Models
                             {
                                 bcp.BatchSize = tb1.Rows.Count;
                                 bcp.BulkCopyTimeout = 1000;
-                                bcp.DestinationTableName = "tbAccelerateGridTIN";
+                                bcp.DestinationTableName = "tbAccelerateGridBuilding";
                                 bcp.WriteToServer(tb1);
                                 bcp.Close();
-                                tb1.Rows.Clear();
+                                tb1.Clear();
                             }
                         }
                     }
 
-                    // 最后一批
+                    // 写入数据库
                     using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
                     {
                         bcp.BatchSize = tb1.Rows.Count;
                         bcp.BulkCopyTimeout = 1000;
-                        bcp.DestinationTableName = "tbAccelerateGridTIN";
+                        bcp.DestinationTableName = "tbAccelerateGridBuilding";
                         bcp.WriteToServer(tb1);
                         bcp.Close();
-                        tb1.Rows.Clear();
+                        tb1.Clear();
                     }
-                    minAgyid = maxAgyid + 1;
-                    maxAgyid = Math.Min(maxAgyid + pageSize, maxAyid);
+
+                    return new Result(true);
                 }
-                minAgxid = maxAgxid + 1;
-                maxAgxid = Math.Min(maxAgxid + pageSize, maxAxid);
             }
-            return new Result(true);
-
-        }
-
-        // 计算建筑物所在的加速网格  2019.6.13 改
-        Result calcAcclerateBuilding(double minX, double minY, double maxX, double maxY, double agridsize, int maxAgxid, int maxAgyid)
-        {
-            DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getBuildingVertexSmooth1", null);
-
-            if (tb.Rows.Count < 1)
-            {
-                return new Result(false, "无建筑物顶点数据");
-            }
-            else
-            {
-                IbatisHelper.ExecuteDelete("DeleteBuildingAccrelate1", null);
-
-                HashSet<string> set = new HashSet<string>();
-                System.Data.DataTable tb1 = new System.Data.DataTable();
-                tb1.Columns.Add("GXID");
-                tb1.Columns.Add("GYID");
-                tb1.Columns.Add("GZID");
-                tb1.Columns.Add("BuildingID");
-
-                for (int i = 0; i < tb.Rows.Count; i++)
-                {
-                    // 得到建筑物底面的轴对齐包围盒
-                    int id = Convert.ToInt32(tb.Rows[i]["BuildingID"].ToString());
-                    double height = Convert.ToDouble(tb.Rows[i]["Bheight"].ToString());
-                    double altitude = Convert.ToDouble(tb.Rows[i]["BAltitude"].ToString());  // 基于地形
-                    double x = Convert.ToDouble(tb.Rows[i]["minX"].ToString());
-                    double y = Convert.ToDouble(tb.Rows[i]["minY"].ToString());
-                    double x1 = Convert.ToDouble(tb.Rows[i]["maxX"].ToString());
-                    double y1 = Convert.ToDouble(tb.Rows[i]["maxY"].ToString());
-
-                    // 建筑物底面跨越的均匀栅格
-                    int minGxid = (int)Math.Floor((x - minX) / agridsize);
-                    int minGyid = (int)Math.Floor((y - minY) / agridsize);
-                    int maxGxid = (int)Math.Floor((x1 - minX) / agridsize);
-                    int maxGyid = (int)Math.Floor((y1 - minY) / agridsize);
-                    int maxGzid = (int)Math.Floor((height + altitude) / agridsize);
-
-                    bool ok = (x >= minX || x1 <= maxX || y >= minY || y1 <= maxY);
-
-                    if (minGxid < 0)
-                    {
-                        if (ok)
-                            minGxid = 0;
-                        else
-                            continue;
-                    }
-                    if (minGyid < 0)
-                    {
-                        if (ok)
-                            minGyid = 0;
-                        else
-                            continue;
-                    }
-                    if (maxGxid > maxAgxid)
-                    {
-                        if (ok)
-                            maxGxid = maxAgxid;
-                        else
-                            continue;
-                    }
-                    if (maxGyid > maxAgyid)
-                    {
-                        if (ok)
-                            maxGyid = maxAgyid;
-                        else
-                            continue;
-                    }
-
-                    if (maxGzid > 2)
-                        maxGzid = 2;
-
-                    for (int j = minGxid; j <= maxGxid; j++)
-                    {
-                        for (int k = minGyid; k <= maxGyid; k++)
-                        {
-                            for (int h = 0; h <= maxGzid; h++)
-                            {
-                                string key = string.Format("{0},{1},{2},{3}", j, k, h + 1, id);
-                                if (set.Contains(key))
-                                    continue;
-                                set.Add(key);
-
-                                System.Data.DataRow thisrow = tb1.NewRow();
-                                thisrow["GXID"] = j;
-                                thisrow["GYID"] = k;
-                                thisrow["GZID"] = h + 1;
-                                thisrow["BuildingID"] = id;
-                                tb1.Rows.Add(thisrow);
-                            }
-                        }
-                    }
-
-                    if (tb1.Rows.Count > 5000)
-                    {
-                        using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
-                        {
-                            bcp.BatchSize = tb1.Rows.Count;
-                            bcp.BulkCopyTimeout = 1000;
-                            bcp.DestinationTableName = "tbAccelerateGridBuilding";
-                            bcp.WriteToServer(tb1);
-                            bcp.Close();
-                            tb1.Clear();
-                        }
-                    }
-                }
-
-                // 写入数据库
-                using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
-                {
-                    bcp.BatchSize = tb1.Rows.Count;
-                    bcp.BulkCopyTimeout = 1000;
-                    bcp.DestinationTableName = "tbAccelerateGridBuilding";
-                    bcp.WriteToServer(tb1);
-                    bcp.Close();
-                    tb1.Clear();
-                }
-
-                return new Result(true);
-            }
+            catch (Exception ex)
+            { return new Result(false, ex.ToString()); }
         }
 
         class keyCompare : IComparer<gridKey>
@@ -795,298 +843,303 @@ namespace LTE.WebAPI.Models
         /// <returns></returns>
         Result updateCell(int maxAxid, int maxAyid, int agridsize=30, int batchSize=300,int k=5)
         {
-            Hashtable ht = new Hashtable();
-            DataTable cells = IbatisHelper.ExecuteQueryForDataTable("getAllCellProjPos", null);
-
-            List<CELL> res = new List<CELL>();
-            List<tbAccelerateGridTIN> cellGrids = new List<tbAccelerateGridTIN>();
-            //List<gridKey> cellGrids = new List<gridKey>();
-            //Dictionary<string, List<CELL>> grid2cell = new Dictionary<string, List<CELL>>();
-            SortedDictionary<gridKey, List<CELL>> grid2cell = new SortedDictionary<gridKey, List<CELL>>(new keyCompare());
-            
-            foreach (DataRow cell in cells.Rows)
+            try
             {
-                int gxid = 0;
-                int gyid = 0;
-                int gzid = 0;
-                LTE.Geometric.Point p = new LTE.Geometric.Point();
-                p.X = Convert.ToDouble(cell["Longitude"]);
-                p.Y = Convert.ToDouble(cell["Latitude"]);
-                p = LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(p);
-                if (GridHelper.getInstance().XYZToAccGrid(p.X,p.Y,0,ref gxid,ref gyid,ref gzid))
+                Hashtable ht = new Hashtable();
+                DataTable cells = IbatisHelper.ExecuteQueryForDataTable("getAllCellProjPos", null);
+
+                List<CELL> res = new List<CELL>();
+                List<tbAccelerateGridTIN> cellGrids = new List<tbAccelerateGridTIN>();
+                //List<gridKey> cellGrids = new List<gridKey>();
+                //Dictionary<string, List<CELL>> grid2cell = new Dictionary<string, List<CELL>>();
+                SortedDictionary<gridKey, List<CELL>> grid2cell = new SortedDictionary<gridKey, List<CELL>>(new keyCompare());
+
+                foreach (DataRow cell in cells.Rows)
                 {
-                    //string key = string.Format("{0},{1}", gxid,gyid);
-                    gridKey key = new gridKey(gxid, gyid);
-                    CELL cELL = new CELL { ID=Convert.ToInt32(cell["ID"]),x = (decimal)p.X, y = (decimal)p.Y };
-
-                    if (grid2cell.ContainsKey(key))
+                    int gxid = 0;
+                    int gyid = 0;
+                    int gzid = 0;
+                    LTE.Geometric.Point p = new LTE.Geometric.Point();
+                    p.X = Convert.ToDouble(cell["Longitude"]);
+                    p.Y = Convert.ToDouble(cell["Latitude"]);
+                    p = LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(p);
+                    if (GridHelper.getInstance().XYZToAccGrid(p.X, p.Y, 0, ref gxid, ref gyid, ref gzid))
                     {
-                        grid2cell[key].Add(cELL);
-                    }
-                    else
-                    {
-                        List<CELL> ls = new List<CELL>();
-                        ls.Add(cELL);
-                        grid2cell[key] = ls;
-                        tbAccelerateGridTIN gd = new tbAccelerateGridTIN { GXID = gxid, GYID = gyid };
-                        cellGrids.Add(gd);
-                    }
-                }
-            }
+                        //string key = string.Format("{0},{1}", gxid,gyid);
+                        gridKey key = new gridKey(gxid, gyid);
+                        CELL cELL = new CELL { ID = Convert.ToInt32(cell["ID"]), x = (decimal)p.X, y = (decimal)p.Y };
 
-            Dictionary<CELL, List<double>> cDis = new Dictionary<CELL, List<double>>();
-            foreach (var item in grid2cell)
-            {
-
-                int cnt = 0;
-                int dx = 0;
-                int dy = 0;
-                while (cnt<k)
-                {
-                    //不满足条件时，清空当前网格内所有小区的dis
-                    foreach (var oc in item.Value)
-                    {
-                        if (cDis.ContainsKey(oc))
+                        if (grid2cell.ContainsKey(key))
                         {
-                            cDis[oc].Clear();
+                            grid2cell[key].Add(cELL);
+                        }
+                        else
+                        {
+                            List<CELL> ls = new List<CELL>();
+                            ls.Add(cELL);
+                            grid2cell[key] = ls;
+                            tbAccelerateGridTIN gd = new tbAccelerateGridTIN { GXID = gxid, GYID = gyid };
+                            cellGrids.Add(gd);
                         }
                     }
-                    //扩大范围重新寻找
-                    dx += 50;
-                    dy += 50;
-                    cnt = 0;
-                    int mindx = Math.Max(item.Key.x_id - dx, 0);
-                    int mindy = Math.Max(item.Key.y_id - dy, 0);
-                    int maxdx = item.Key.x_id + dx;
-                    int maxdy = item.Key.y_id + dy;
-                    var tmp = grid2cell.Where(kv => kv.Key.x_id >= mindx && kv.Key.x_id <= maxdx
-                    && kv.Key.y_id >= mindy && kv.Key.y_id <= maxdy);
-                    foreach (var kv in tmp)
+                }
+
+                Dictionary<CELL, List<double>> cDis = new Dictionary<CELL, List<double>>();
+                foreach (var item in grid2cell)
+                {
+
+                    int cnt = 0;
+                    int dx = 0;
+                    int dy = 0;
+                    while (cnt < k)
                     {
-                        foreach (var cELL in kv.Value)
+                        //不满足条件时，清空当前网格内所有小区的dis
+                        foreach (var oc in item.Value)
                         {
-                            int all = 0;
-                            foreach (var oc in item.Value)
+                            if (cDis.ContainsKey(oc))
                             {
-                                var dis = Math.Sqrt(Math.Pow(Convert.ToDouble((cELL.x - oc.x)), 2) + Math.Pow(Convert.ToDouble((cELL.y - oc.y)), 2));
-                                //过滤掉距离太近的基站
-                                if (dis < 100)
+                                cDis[oc].Clear();
+                            }
+                        }
+                        //扩大范围重新寻找
+                        dx += 50;
+                        dy += 50;
+                        cnt = 0;
+                        int mindx = Math.Max(item.Key.x_id - dx, 0);
+                        int mindy = Math.Max(item.Key.y_id - dy, 0);
+                        int maxdx = item.Key.x_id + dx;
+                        int maxdy = item.Key.y_id + dy;
+                        var tmp = grid2cell.Where(kv => kv.Key.x_id >= mindx && kv.Key.x_id <= maxdx
+                        && kv.Key.y_id >= mindy && kv.Key.y_id <= maxdy);
+                        foreach (var kv in tmp)
+                        {
+                            foreach (var cELL in kv.Value)
+                            {
+                                int all = 0;
+                                foreach (var oc in item.Value)
                                 {
-                                    continue;
-                                }
-                                else
-                                {
-                                    if (cDis.ContainsKey(oc))
+                                    var dis = Math.Sqrt(Math.Pow(Convert.ToDouble((cELL.x - oc.x)), 2) + Math.Pow(Convert.ToDouble((cELL.y - oc.y)), 2));
+                                    //过滤掉距离太近的基站
+                                    if (dis < 100)
                                     {
-                                        cDis[oc].Add(dis);
+                                        continue;
                                     }
                                     else
                                     {
-                                        List<double> tmpOc = new List<double>();
-                                        tmpOc.Add(dis);
-                                        cDis[oc] = tmpOc;
+                                        if (cDis.ContainsKey(oc))
+                                        {
+                                            cDis[oc].Add(dis);
+                                        }
+                                        else
+                                        {
+                                            List<double> tmpOc = new List<double>();
+                                            tmpOc.Add(dis);
+                                            cDis[oc] = tmpOc;
+                                        }
+                                        all++;
                                     }
-                                    all++;
                                 }
+                                if (all == item.Value.Count) { cnt++; }
                             }
-                            if (all == item.Value.Count) { cnt++; }
+                        }
+                    }
+                    #region
+                    //foreach (var cELL in item.Value)
+                    //{
+                    //    var ox = cELL.x;
+                    //    var oy = cELL.y;
+                    //    List<double> vs = new List<Double>();
+                    //    foreach (var otherCell in cs)
+                    //    {
+                    //        if (otherCell.Equals(cELL)){
+                    //            continue;
+                    //        }
+                    //        var dis = Math.Sqrt(Math.Pow(Convert.ToDouble((otherCell.x-ox)),2)+ Math.Pow(Convert.ToDouble((otherCell.y - oy)), 2));
+                    //        //过滤掉距离太近的基站
+                    //        if (dis < 100)
+                    //        {
+                    //            continue;
+                    //        }
+                    //        vs.Add(dis);
+                    //    }
+                    //    vs.Sort();
+                    //    double KDis = 0;
+                    //    for (int i = 0; i < k; i++)
+                    //    {
+                    //        KDis += vs[i];
+                    //    }
+                    //    cELL.KDis = KDis;
+                    //    cELL.MaxDis = vs[k - 1];
+                    //    cELL.MinDis = vs[0];
+                    //    res.Add(cELL);
+                    //}
+                    #endregion
+                }
+
+                //HashSet<int> hs1 = new HashSet<int>();
+                //foreach (DataRow cell in cells.Rows)
+                //{
+                //    hs1.Add((int)cell["ID"]);
+                //}
+                //HashSet<int> hs2 = new HashSet<int>();
+                //foreach (var item in cDis.Keys)
+                //{
+                //    hs2.Add(item.ID.Value);
+                //}
+                //hs1.ExceptWith(hs2);
+
+                foreach (var cs in cDis)
+                {
+                    CELL cELL = cs.Key;
+                    List<double> vs = cs.Value;
+                    vs.Sort();
+                    double KDis = 0;
+                    for (int i = 0; i < k; i++)
+                    {
+                        KDis += vs[i];
+                    }
+                    cELL.KDis = KDis / k;
+                    cELL.MaxDis = vs[k - 1];
+                    cELL.MinDis = vs[0];
+                    res.Add(cELL);
+                }
+
+                int rows1 = IbatisHelper.ExecuteUpdate("CELLBatchUpdateKDis", res);
+
+                //update alititude
+                res.Clear();
+                DataTable grid2Tin = IbatisHelper.ExecuteQueryForDataTable("getTinByGrids", cellGrids);
+                Dictionary<gridKey, List<Geometric.Point[]>> grid2vertx = new Dictionary<gridKey, List<Geometric.Point[]>>();
+                for (int i = 0; i < grid2Tin.Rows.Count; i += 3)
+                {
+                    Geometric.Point[] ps = new Geometric.Point[3];
+                    int cnt = 0;
+                    //string key = string.Format("{0},{1}", grid2Tin.Rows[i]["gxid"], grid2Tin.Rows[i]["gyid"]);
+                    gridKey key = new gridKey((int)grid2Tin.Rows[i]["gxid"], (int)grid2Tin.Rows[i]["gyid"]);
+                    object tinid = grid2Tin.Rows[i]["tinid"];
+                    for (int j = i; j < i + 3; j++)
+                    {
+                        if (!tinid.Equals(grid2Tin.Rows[j]["tinid"]))
+                        {
+                            return new Result(false, tinid.ToString() + " tin数据不完整");
+                        }
+                        double x = Convert.ToDouble(grid2Tin.Rows[j]["vertexX"]);
+                        double y = Convert.ToDouble(grid2Tin.Rows[j]["vertexY"]);
+                        double z = Convert.ToDouble(grid2Tin.Rows[j]["vertexHeight"]);
+                        ps[cnt] = new Geometric.Point(x, y, z);
+                        cnt++;
+                    }
+                    if (grid2vertx.ContainsKey(key))
+                    {
+                        grid2vertx[key].Add(ps);
+                    }
+                    else
+                    {
+                        List<Geometric.Point[]> points = new List<Geometric.Point[]>();
+                        points.Add(ps);
+                        grid2vertx[key] = points;
+                    }
+                }
+
+                foreach (gridKey key in grid2vertx.Keys)
+                {
+                    List<Geometric.Point[]> points = grid2vertx[key];
+                    List<CELL> cELLs = grid2cell[key];
+                    foreach (CELL cell in cELLs)
+                    {
+                        double x = Convert.ToDouble(cell.x);
+                        double y = Convert.ToDouble(cell.y);
+                        foreach (Geometric.Point[] point in points)
+                        {
+                            bool inTIN = Geometric.PointHeight.isInside(point[0], point[1], point[2], x, y);
+                            if (inTIN)
+                            {
+                                double alt = Geometric.PointHeight.getPointHeight(point[0], point[1], point[2], x, y);
+                                cell.Altitude = Convert.ToDecimal(alt);
+                                res.Add(cell);
+                            }
                         }
                     }
                 }
-                #region
-                //foreach (var cELL in item.Value)
+                int rows2 = IbatisHelper.ExecuteUpdate("CELLBatchUpdateAltitude", res);
+                #region batch operate
+                //int minAgxid = minGxid;
+                //int maxAgxid = Math.Min(maxGxid, minGxid + batchSize);
+                //while (minAgxid <= maxGxid)
                 //{
-                //    var ox = cELL.x;
-                //    var oy = cELL.y;
-                //    List<double> vs = new List<Double>();
-                //    foreach (var otherCell in cs)
+                //    int minAgyid = minGyid;
+                //    int maxAgyid = Math.Min(maxGyid, minAgyid + batchSize);
+                //    while (minAgyid <= maxGyid)
                 //    {
-                //        if (otherCell.Equals(cELL)){
-                //            continue;
-                //        }
-                //        var dis = Math.Sqrt(Math.Pow(Convert.ToDouble((otherCell.x-ox)),2)+ Math.Pow(Convert.ToDouble((otherCell.y - oy)), 2));
-                //        //过滤掉距离太近的基站
-                //        if (dis < 100)
+                //        ht["minXGrid"] = minAgxid;
+                //        ht["maxXGrid"] = maxAgxid;
+                //        ht["minYGrid"] = minAgyid;
+                //        ht["maxYGrid"] = maxAgyid;
+                //        DataTable grid2Tin = IbatisHelper.ExecuteQueryForDataTable("getGridTinvertex", ht);
+                //        Dictionary<string, List<Geometric.Point[]>> grid2vertx = new Dictionary<string, List<Geometric.Point[]>>();
+
+                //        //保证从数据库中得到的grid2Tin中的数据是有序的
+                //        for (int i = 0;i< grid2Tin.Rows.Count; i += 3)
                 //        {
-                //            continue;
+                //            Geometric.Point[] ps = new Geometric.Point[3];
+                //            int cnt = 0;
+                //            string key = string.Format("{0},{1}", grid2Tin.Rows[i]["gxid"], grid2Tin.Rows[i]["gyid"]);
+                //            for (int j = i; j < i + 3; j++)
+                //            {
+                //                double x = Convert.ToDouble(grid2Tin.Rows[i]["vertexX"]);
+                //                double y = Convert.ToDouble(grid2Tin.Rows[i]["vertexY"]);
+                //                ps[cnt] = new Geometric.Point(x,y);
+                //                cnt++;
+                //            }
+                //            if (cnt < 3)
+                //            {
+                //                continue;
+                //            }
+                //            if (!grid2vertx.ContainsKey(key))
+                //            {
+                //                grid2vertx[key].Add(ps);
+                //            }
+                //            else
+                //            {
+                //                List<Geometric.Point[]> points = new List<Geometric.Point[]>();
+                //                points.Add(ps);
+                //                grid2vertx[key] = points;
+                //            }
                 //        }
-                //        vs.Add(dis);
+
+                //        foreach(string key in grid2vertx.Keys)
+                //        {
+                //            List<Geometric.Point[]> points = grid2vertx[key];
+                //            List<CELL> cELLs = grid2cell[key];
+                //            foreach(CELL cell in cELLs)
+                //            {
+                //                double x = Convert.ToDouble(cell.x);
+                //                double y = Convert.ToDouble(cell.y);
+                //                foreach (Geometric.Point[] point in points)
+                //                {
+                //                    bool inTIN = Geometric.PointHeight.isInside(point[0], point[1], point[2], x, y);
+                //                    if (inTIN)
+                //                    {
+                //                        double alt = Geometric.PointHeight.getPointHeight(point[0], point[1], point[2], x, y);
+                //                        cell.Altitude = Convert.ToDecimal(alt);
+                //                        res.Add(cell);
+                //                    }
+                //                }
+                //            }
+                //        }
+
+                //        minAgyid = maxAgyid + 1;
+                //        maxAgyid = Math.Min(maxAgyid + batchSize, maxGyid);
                 //    }
-                //    vs.Sort();
-                //    double KDis = 0;
-                //    for (int i = 0; i < k; i++)
-                //    {
-                //        KDis += vs[i];
-                //    }
-                //    cELL.KDis = KDis;
-                //    cELL.MaxDis = vs[k - 1];
-                //    cELL.MinDis = vs[0];
-                //    res.Add(cELL);
+                //    minAgxid = maxAgxid + 1;
+                //    maxAgxid = Math.Min(maxAgxid + batchSize, maxGxid);
                 //}
                 #endregion
+
+                return new Result(true);
             }
-
-            //HashSet<int> hs1 = new HashSet<int>();
-            //foreach (DataRow cell in cells.Rows)
-            //{
-            //    hs1.Add((int)cell["ID"]);
-            //}
-            //HashSet<int> hs2 = new HashSet<int>();
-            //foreach (var item in cDis.Keys)
-            //{
-            //    hs2.Add(item.ID.Value);
-            //}
-            //hs1.ExceptWith(hs2);
-
-            foreach (var cs in cDis)
-            {
-                CELL cELL = cs.Key;
-                List<double> vs = cs.Value;
-                vs.Sort();
-                double KDis = 0;
-                for (int i = 0; i < k; i++)
-                {
-                    KDis += vs[i];
-                }
-                cELL.KDis = KDis/k;
-                cELL.MaxDis = vs[k - 1];
-                cELL.MinDis = vs[0];
-                res.Add(cELL);
-            }
-
-            int rows1 = IbatisHelper.ExecuteUpdate("CELLBatchUpdateKDis", res);
-
-            //update alititude
-            res.Clear();
-            DataTable grid2Tin = IbatisHelper.ExecuteQueryForDataTable("getTinByGrids", cellGrids);
-            Dictionary<gridKey, List<Geometric.Point[]>> grid2vertx = new Dictionary<gridKey, List<Geometric.Point[]>>();
-            for (int i = 0; i < grid2Tin.Rows.Count; i += 3)
-            {
-                Geometric.Point[] ps = new Geometric.Point[3];
-                int cnt = 0;
-                //string key = string.Format("{0},{1}", grid2Tin.Rows[i]["gxid"], grid2Tin.Rows[i]["gyid"]);
-                gridKey key = new gridKey((int)grid2Tin.Rows[i]["gxid"], (int)grid2Tin.Rows[i]["gyid"]);
-                object tinid = grid2Tin.Rows[i]["tinid"];
-                for (int j = i; j < i + 3; j++)
-                {
-                    if (!tinid.Equals(grid2Tin.Rows[j]["tinid"]))
-                    {
-                        return new Result(false, tinid.ToString()+" tin数据不完整");
-                    }
-                    double x = Convert.ToDouble(grid2Tin.Rows[j]["vertexX"]);
-                    double y = Convert.ToDouble(grid2Tin.Rows[j]["vertexY"]);
-                    double z = Convert.ToDouble(grid2Tin.Rows[j]["vertexHeight"]);
-                    ps[cnt] = new Geometric.Point(x, y, z);
-                    cnt++;
-                }
-                if (grid2vertx.ContainsKey(key))
-                {
-                    grid2vertx[key].Add(ps);
-                }
-                else
-                {
-                    List<Geometric.Point[]> points = new List<Geometric.Point[]>();
-                    points.Add(ps);
-                    grid2vertx[key] = points;
-                }
-            }
-
-            foreach (gridKey key in grid2vertx.Keys)
-            {
-                List<Geometric.Point[]> points = grid2vertx[key];
-                List<CELL> cELLs = grid2cell[key];
-                foreach (CELL cell in cELLs)
-                {
-                    double x = Convert.ToDouble(cell.x);
-                    double y = Convert.ToDouble(cell.y);
-                    foreach (Geometric.Point[] point in points)
-                    {
-                        bool inTIN = Geometric.PointHeight.isInside(point[0], point[1], point[2], x, y);
-                        if (inTIN)
-                        {
-                            double alt = Geometric.PointHeight.getPointHeight(point[0], point[1], point[2], x, y);
-                            cell.Altitude = Convert.ToDecimal(alt);
-                            res.Add(cell);
-                        }
-                    }
-                }
-            }
-            int rows2 = IbatisHelper.ExecuteUpdate("CELLBatchUpdateAltitude", res);
-            #region batch operate
-            //int minAgxid = minGxid;
-            //int maxAgxid = Math.Min(maxGxid, minGxid + batchSize);
-            //while (minAgxid <= maxGxid)
-            //{
-            //    int minAgyid = minGyid;
-            //    int maxAgyid = Math.Min(maxGyid, minAgyid + batchSize);
-            //    while (minAgyid <= maxGyid)
-            //    {
-            //        ht["minXGrid"] = minAgxid;
-            //        ht["maxXGrid"] = maxAgxid;
-            //        ht["minYGrid"] = minAgyid;
-            //        ht["maxYGrid"] = maxAgyid;
-            //        DataTable grid2Tin = IbatisHelper.ExecuteQueryForDataTable("getGridTinvertex", ht);
-            //        Dictionary<string, List<Geometric.Point[]>> grid2vertx = new Dictionary<string, List<Geometric.Point[]>>();
-
-            //        //保证从数据库中得到的grid2Tin中的数据是有序的
-            //        for (int i = 0;i< grid2Tin.Rows.Count; i += 3)
-            //        {
-            //            Geometric.Point[] ps = new Geometric.Point[3];
-            //            int cnt = 0;
-            //            string key = string.Format("{0},{1}", grid2Tin.Rows[i]["gxid"], grid2Tin.Rows[i]["gyid"]);
-            //            for (int j = i; j < i + 3; j++)
-            //            {
-            //                double x = Convert.ToDouble(grid2Tin.Rows[i]["vertexX"]);
-            //                double y = Convert.ToDouble(grid2Tin.Rows[i]["vertexY"]);
-            //                ps[cnt] = new Geometric.Point(x,y);
-            //                cnt++;
-            //            }
-            //            if (cnt < 3)
-            //            {
-            //                continue;
-            //            }
-            //            if (!grid2vertx.ContainsKey(key))
-            //            {
-            //                grid2vertx[key].Add(ps);
-            //            }
-            //            else
-            //            {
-            //                List<Geometric.Point[]> points = new List<Geometric.Point[]>();
-            //                points.Add(ps);
-            //                grid2vertx[key] = points;
-            //            }
-            //        }
-
-            //        foreach(string key in grid2vertx.Keys)
-            //        {
-            //            List<Geometric.Point[]> points = grid2vertx[key];
-            //            List<CELL> cELLs = grid2cell[key];
-            //            foreach(CELL cell in cELLs)
-            //            {
-            //                double x = Convert.ToDouble(cell.x);
-            //                double y = Convert.ToDouble(cell.y);
-            //                foreach (Geometric.Point[] point in points)
-            //                {
-            //                    bool inTIN = Geometric.PointHeight.isInside(point[0], point[1], point[2], x, y);
-            //                    if (inTIN)
-            //                    {
-            //                        double alt = Geometric.PointHeight.getPointHeight(point[0], point[1], point[2], x, y);
-            //                        cell.Altitude = Convert.ToDecimal(alt);
-            //                        res.Add(cell);
-            //                    }
-            //                }
-            //            }
-            //        }
-
-            //        minAgyid = maxAgyid + 1;
-            //        maxAgyid = Math.Min(maxAgyid + batchSize, maxGyid);
-            //    }
-            //    minAgxid = maxAgxid + 1;
-            //    maxAgxid = Math.Min(maxAgxid + batchSize, maxGxid);
-            //}
-            #endregion
-
-            return new Result(true);
+            catch (Exception ex)
+            { return new Result(false, ex.ToString()); }
         }
         // 地图范围
         Result calcRange(double minlng, double minlat, double maxlng, double maxlat,
@@ -1123,139 +1176,149 @@ namespace LTE.WebAPI.Models
             ht["MinAGXID"] = 0;
             ht["MinAGYID"] = 0;
 
-            //增加tin数据的最高点和最低点高度值(m)，by JinHJ
-            DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getMaxTinHeight", null);
-            double maxTinHeight = Convert.ToDouble(tb.Rows[0][0].ToString());
+            try
+            {
+                //增加tin数据的最高点和最低点高度值(m)，by JinHJ
+                DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getMaxTinHeight", null);
+                double maxTinHeight = Convert.ToDouble(tb.Rows[0][0].ToString());
 
-            tb = IbatisHelper.ExecuteQueryForDataTable("getMinTinHeight", null);
-            double minTinHeight = Convert.ToDouble(tb.Rows[0][0].ToString());
+                tb = IbatisHelper.ExecuteQueryForDataTable("getMinTinHeight", null);
+                double minTinHeight = Convert.ToDouble(tb.Rows[0][0].ToString());
 
-            ht["MaxTinHeight"] = maxTinHeight;
-            ht["MinTinHeight"] = minTinHeight;
+                ht["MaxTinHeight"] = maxTinHeight;
+                ht["MinTinHeight"] = minTinHeight;
 
-            IbatisHelper.ExecuteInsert("insertGridRange", ht);
+                IbatisHelper.ExecuteInsert("insertGridRange", ht);
 
-            return new Result(true);
+                return new Result(true);
+            }
+            catch (Exception ex)
+            { return new Result(false, ex.ToString()); }
         }
 
         // 地面网格
         Result calcGroundGrid(double minX, double minY, int maxgxid, int maxgyid, double gridlength)
         {
-            //IbatisHelper.ExecuteDelete("DeleteGroundGrids", null);
-            IbatisHelper.ExecuteDelete("TruncateGroundGrids");
-
-            System.Data.DataTable dtable = new System.Data.DataTable();
-            dtable.Columns.Add("GXID");
-            dtable.Columns.Add("GYID");
-            dtable.Columns.Add("CLong");
-            dtable.Columns.Add("CLat");
-            dtable.Columns.Add("MinLong");
-            dtable.Columns.Add("MinLat");
-            dtable.Columns.Add("MaxLong");
-            dtable.Columns.Add("MaxLat");
-            dtable.Columns.Add("CX");
-            dtable.Columns.Add("CY");
-            dtable.Columns.Add("MinX");
-            dtable.Columns.Add("MinY");
-            dtable.Columns.Add("MaxX");
-            dtable.Columns.Add("MaxY");
-            dtable.Columns.Add("Dem");
-
-            double gminX, gminY, gmaxX, gmaxY, gcX, gcY;
-            gminX = minX;
-            gminY = minY;
-
-            //为后面使用proj.net库转换坐标做准备,点类型更改为LTE.Geometric.Point类型,by JinHaijia
-            LTE.Geometric.Point p1 = new LTE.Geometric.Point();
-            LTE.Geometric.Point p2 = new LTE.Geometric.Point();
-            LTE.Geometric.Point p3 = new LTE.Geometric.Point();
-
-            //旧版使用arcgis接口转换坐标
-            //ESRI.ArcGIS.Geometry.IPoint p1 = new ESRI.ArcGIS.Geometry.PointClass();
-            //ESRI.ArcGIS.Geometry.IPoint p2 = new ESRI.ArcGIS.Geometry.PointClass();
-            //ESRI.ArcGIS.Geometry.IPoint p3 = new ESRI.ArcGIS.Geometry.PointClass();
-
-            p1.Z = 0;
-            p2.Z = 0;
-            p3.Z = 0;
-
-            //  地面栅格
-            for (int x = 0; x < maxgxid; x++)
+            try
             {
+                //IbatisHelper.ExecuteDelete("DeleteGroundGrids", null);
+                IbatisHelper.ExecuteDelete("TruncateGroundGrids");
+
+                System.Data.DataTable dtable = new System.Data.DataTable();
+                dtable.Columns.Add("GXID");
+                dtable.Columns.Add("GYID");
+                dtable.Columns.Add("CLong");
+                dtable.Columns.Add("CLat");
+                dtable.Columns.Add("MinLong");
+                dtable.Columns.Add("MinLat");
+                dtable.Columns.Add("MaxLong");
+                dtable.Columns.Add("MaxLat");
+                dtable.Columns.Add("CX");
+                dtable.Columns.Add("CY");
+                dtable.Columns.Add("MinX");
+                dtable.Columns.Add("MinY");
+                dtable.Columns.Add("MaxX");
+                dtable.Columns.Add("MaxY");
+                dtable.Columns.Add("Dem");
+
+                double gminX, gminY, gmaxX, gmaxY, gcX, gcY;
+                gminX = minX;
                 gminY = minY;
-                gmaxX = gminX + gridlength;
-                gcX = (gminX + gmaxX) / 2.0;
-                p1.X = gminX;
-                p2.X = gmaxX;
-                p3.X = gcX;
 
-                for (int y = 0; y < maxgyid; y++)
+                //为后面使用proj.net库转换坐标做准备,点类型更改为LTE.Geometric.Point类型,by JinHaijia
+                LTE.Geometric.Point p1 = new LTE.Geometric.Point();
+                LTE.Geometric.Point p2 = new LTE.Geometric.Point();
+                LTE.Geometric.Point p3 = new LTE.Geometric.Point();
+
+                //旧版使用arcgis接口转换坐标
+                //ESRI.ArcGIS.Geometry.IPoint p1 = new ESRI.ArcGIS.Geometry.PointClass();
+                //ESRI.ArcGIS.Geometry.IPoint p2 = new ESRI.ArcGIS.Geometry.PointClass();
+                //ESRI.ArcGIS.Geometry.IPoint p3 = new ESRI.ArcGIS.Geometry.PointClass();
+
+                p1.Z = 0;
+                p2.Z = 0;
+                p3.Z = 0;
+
+                //  地面栅格
+                for (int x = 0; x < maxgxid; x++)
                 {
-                    gmaxY = gminY + gridlength;
-                    gcY = (gminY + gmaxY) / 2.0;
-
+                    gminY = minY;
+                    gmaxX = gminX + gridlength;
+                    gcX = (gminX + gmaxX) / 2.0;
                     p1.X = gminX;
                     p2.X = gmaxX;
                     p3.X = gcX;
-                    p1.Y = gminY;
-                    p2.Y = gmaxY;
-                    p3.Y = gcY;
-                    //PointConvert.Instance.GetGeoPoint(p1);
-                    //PointConvert.Instance.GetGeoPoint(p2);
-                    //PointConvert.Instance.GetGeoPoint(p3);
-                    p1 = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p1);
-                    p2 = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p2);
-                    p3 = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p3);
 
-
-                    System.Data.DataRow thisrow = dtable.NewRow();
-                    thisrow["GXID"] = x;
-                    thisrow["GYID"] = y;
-                    thisrow["CLong"] = p3.X;
-                    thisrow["CLat"] = p3.Y;
-                    thisrow["MinLong"] = p1.X;
-                    thisrow["MinLat"] = p1.Y;
-                    thisrow["MaxLong"] = p2.X;
-                    thisrow["MaxLat"] = p2.Y;
-                    thisrow["CX"] = gcX;
-                    thisrow["CY"] = gcY;
-                    thisrow["MinX"] = gminX;
-                    thisrow["MinY"] = gminY;
-                    thisrow["MaxX"] = gmaxX;
-                    thisrow["MaxY"] = gmaxY;
-                    thisrow["Dem"] = 0;
-                    dtable.Rows.Add(thisrow);
-                    gminY = gmaxY;
-                }
-                gminX = gmaxX;
-                // 将地面栅格分批写入数据库
-                if (dtable.Rows.Count > 5000)
-                {
-                    using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+                    for (int y = 0; y < maxgyid; y++)
                     {
-                        bcp.BatchSize = dtable.Rows.Count;
-                        bcp.BulkCopyTimeout = 1000;
-                        bcp.DestinationTableName = "tbGridDem";
-                        bcp.WriteToServer(dtable);
-                        bcp.Close();
+                        gmaxY = gminY + gridlength;
+                        gcY = (gminY + gmaxY) / 2.0;
+
+                        p1.X = gminX;
+                        p2.X = gmaxX;
+                        p3.X = gcX;
+                        p1.Y = gminY;
+                        p2.Y = gmaxY;
+                        p3.Y = gcY;
+                        //PointConvert.Instance.GetGeoPoint(p1);
+                        //PointConvert.Instance.GetGeoPoint(p2);
+                        //PointConvert.Instance.GetGeoPoint(p3);
+                        p1 = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p1);
+                        p2 = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p2);
+                        p3 = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p3);
+
+
+                        System.Data.DataRow thisrow = dtable.NewRow();
+                        thisrow["GXID"] = x;
+                        thisrow["GYID"] = y;
+                        thisrow["CLong"] = p3.X;
+                        thisrow["CLat"] = p3.Y;
+                        thisrow["MinLong"] = p1.X;
+                        thisrow["MinLat"] = p1.Y;
+                        thisrow["MaxLong"] = p2.X;
+                        thisrow["MaxLat"] = p2.Y;
+                        thisrow["CX"] = gcX;
+                        thisrow["CY"] = gcY;
+                        thisrow["MinX"] = gminX;
+                        thisrow["MinY"] = gminY;
+                        thisrow["MaxX"] = gmaxX;
+                        thisrow["MaxY"] = gmaxY;
+                        thisrow["Dem"] = 0;
+                        dtable.Rows.Add(thisrow);
+                        gminY = gmaxY;
                     }
-                    dtable.Clear();
+                    gminX = gmaxX;
+                    // 将地面栅格分批写入数据库
+                    if (dtable.Rows.Count > 5000)
+                    {
+                        using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+                        {
+                            bcp.BatchSize = dtable.Rows.Count;
+                            bcp.BulkCopyTimeout = 1000;
+                            bcp.DestinationTableName = "tbGridDem";
+                            bcp.WriteToServer(dtable);
+                            bcp.Close();
+                        }
+                        dtable.Clear();
+                    }
                 }
-            }
-            // 最后一批地面栅格
-            using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
-            {
-                bcp.BatchSize = dtable.Rows.Count;
-                bcp.BulkCopyTimeout = 1000;
-                bcp.DestinationTableName = "tbGridDem";
-                bcp.WriteToServer(dtable);
-                bcp.Close();
-            }
-            dtable.Clear();
+                // 最后一批地面栅格
+                using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+                {
+                    bcp.BatchSize = dtable.Rows.Count;
+                    bcp.BulkCopyTimeout = 1000;
+                    bcp.DestinationTableName = "tbGridDem";
+                    bcp.WriteToServer(dtable);
+                    bcp.Close();
+                }
+                dtable.Clear();
 
-            System.Diagnostics.Debug.WriteLine("地面栅格划分结束时间:"+DateTime.Now.ToString());
+                System.Diagnostics.Debug.WriteLine("地面栅格划分结束时间:" + DateTime.Now.ToString());
 
-            return new Result(true);
+                return new Result(true);
+            }
+            catch (Exception ex)
+            { return new Result(false, ex.ToString()); }
         }
 
         class BuildingVertex

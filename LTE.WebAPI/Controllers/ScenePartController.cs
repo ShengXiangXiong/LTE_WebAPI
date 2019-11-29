@@ -17,7 +17,19 @@ namespace LTE.WebAPI.Controllers
         [HttpPost]
         public Result PostScenePart()
         {
-            return ScenePartModel.part();
+            return new ScenePartModel().part();
+            //之前的调用
+            //  return ScenePartModel.part();
+        }
+
+        /// <summary>
+        /// 聚类图层生成
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        public Result PostClusterShp()
+        {
+            return new ClusterShpModel().cluster();
         }
     }
 }

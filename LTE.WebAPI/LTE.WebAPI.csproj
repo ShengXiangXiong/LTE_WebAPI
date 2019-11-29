@@ -213,6 +213,7 @@
     <Compile Include="Controllers\DebugController.cs" />
     <Compile Include="Controllers\DTdataController.cs" />
     <Compile Include="Controllers\ExternalInfLocateController.cs" />
+    <Compile Include="Controllers\FishnetController.cs" />
     <Compile Include="Controllers\Grid3DStrengthQueryController.cs" />
     <Compile Include="Controllers\GridController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -220,6 +221,7 @@
     <Compile Include="Controllers\LoadingController.cs" />
     <Compile Include="Controllers\LoadShpLayerController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\OverlayController.cs" />
     <Compile Include="Controllers\PointsSelectController.cs" />
     <Compile Include="Controllers\RayRecordController.cs" />
     <Compile Include="Controllers\RefreshLayerController.cs" />
@@ -232,10 +234,14 @@
     <Compile Include="Models\Area.cs" />
     <Compile Include="Models\AreaCoverDefectModel.cs" />
     <Compile Include="Models\AuthInfo.cs" />
+    <Compile Include="Models\BuildingOverlayModel.cs" />
     <Compile Include="Models\CalibrationModel.cs" />
     <Compile Include="Models\CellRadiusModel.cs" />
+    <Compile Include="Models\ClusterShpModel.cs" />
     <Compile Include="Models\DebugModel.cs" />
     <Compile Include="Models\ExternalInfLocateModel.cs" />
+    <Compile Include="Models\FishnetModel.cs" />
+    <Compile Include="Models\GrassOverlayModel.cs" />
     <Compile Include="Models\Grid3DStrengthQueryModel.cs" />
     <Compile Include="Models\PointsSelectModel.cs" />
     <Compile Include="Models\RayRecordModel.cs" />
@@ -249,6 +255,7 @@
     <Compile Include="Models\ScenePartModel.cs" />
     <Compile Include="Models\SingleRayTracingModel.cs" />
     <Compile Include="Models\SmoothBuildingVertexModel.cs" />
+    <Compile Include="Models\WaterOverlayModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\CgAlgorithm.cs" />
     <Compile Include="Utils\JwtHelper.cs" />
@@ -432,6 +439,8 @@
     </Content>
     <Content Include="Views\Home\ExternalInfLocate.cshtml" />
     <Content Include="Views\Home\PointsSelect.cshtml" />
+    <Content Include="Views\Home\Fishnet.cshtml" />
+    <Content Include="Views\Home\Overlay.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Logs\" />
