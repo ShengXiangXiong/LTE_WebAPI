@@ -481,6 +481,13 @@
             </summary>
             <param name="documentPath">The physical path to XML document.</param>
         </member>
+        <member name="M:LTE.WebAPI.Attributes.TaskLoadInfoAttribute.GetResponseValues(System.Web.Http.Filters.HttpActionExecutedContext)">
+            <summary>
+            读取action返回的result
+            </summary>
+            <param name="actionExecutedContext"></param>
+            <returns></returns>
+        </member>
         <member name="M:LTE.WebAPI.Controllers.AreaCoverDefectController.PostAreaCoverDefect(LTE.WebAPI.Models.AreaCoverDefectModel)">
             <summary>
             网内干扰分析：分析给定区域中的网内干扰点，如过覆盖点、重叠覆盖点等
@@ -1029,6 +1036,86 @@
             </summary>
             <param name="rt">栅格二维坐标</param>
             <returns></returns>
+        </member>
+        <member name="T:LTE.WebAPI.Models.LayerNames">
+            <summary>
+            图层名称，用常量表示
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.GSM900BTS">
+            <summary>
+            GSM900基站
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.GSM900Cell">
+            <summary>
+            GSM900小区
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.GSM1800BTS">
+            <summary>
+            GSM1800基站
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.GSM1800Cell">
+            <summary>
+            GSM1800小区
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.RoadTest">
+            <summary>
+            扫频
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.Projecton">
+            <summary>
+            底面
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.Buildings">
+            <summary>
+            建筑物
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.CoverGrids">
+            <summary>
+            覆盖
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.CoverGrid3Ds">
+            <summary>
+            立体覆盖
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.AreaCoverGrids">
+            <summary>
+            区域覆盖
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.AreaCoverGrid3Ds">
+            <summary>
+            区域立体覆盖
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.InterferenceGrids">
+            <summary>
+            干扰
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.GroundGrids">
+            <summary>
+            地面网格
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.Rays">
+            <summary>
+            射线
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.TDDriverTest">
+            <summary>
+            TD路测
+            </summary>
         </member>
         <member name="M:LTE.WebAPI.Models.PointsSelectModel.Init">
             <summary>

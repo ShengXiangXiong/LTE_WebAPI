@@ -19,6 +19,7 @@ namespace GisClient
 {
   public partial class OpreateGisLayer {
     public interface ISync {
+      Result setLoadInfo(int userId, string taskName);
       Result RefreshCell();
       Result refreshGroundCover(string cellName);
       Result refresh3DCover(string cellName);
@@ -38,6 +39,10 @@ namespace GisClient
     }
 
     public interface Iface : ISync {
+      #if SILVERLIGHT
+      IAsyncResult Begin_setLoadInfo(AsyncCallback callback, object state, int userId, string taskName);
+      Result End_setLoadInfo(IAsyncResult asyncResult);
+      #endif
       #if SILVERLIGHT
       IAsyncResult Begin_RefreshCell(AsyncCallback callback, object state);
       Result End_RefreshCell(IAsyncResult asyncResult);
@@ -159,6 +164,77 @@ namespace GisClient
       }
       #endregion
 
+
+      
+      #if SILVERLIGHT
+      
+      public IAsyncResult Begin_setLoadInfo(AsyncCallback callback, object state, int userId, string taskName)
+      {
+        return send_setLoadInfo(callback, state, userId, taskName);
+      }
+
+      public Result End_setLoadInfo(IAsyncResult asyncResult)
+      {
+        oprot_.Transport.EndFlush(asyncResult);
+        return recv_setLoadInfo();
+      }
+
+      #endif
+
+      public Result setLoadInfo(int userId, string taskName)
+      {
+        #if SILVERLIGHT
+        var asyncResult = Begin_setLoadInfo(null, null, userId, taskName);
+        return End_setLoadInfo(asyncResult);
+
+        #else
+        send_setLoadInfo(userId, taskName);
+        return recv_setLoadInfo();
+
+        #endif
+      }
+      #if SILVERLIGHT
+      public IAsyncResult send_setLoadInfo(AsyncCallback callback, object state, int userId, string taskName)
+      {
+        oprot_.WriteMessageBegin(new TMessage("setLoadInfo", TMessageType.Call, seqid_));
+        setLoadInfo_args args = new setLoadInfo_args();
+        args.UserId = userId;
+        args.TaskName = taskName;
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        return oprot_.Transport.BeginFlush(callback, state);
+      }
+
+      #else
+
+      public void send_setLoadInfo(int userId, string taskName)
+      {
+        oprot_.WriteMessageBegin(new TMessage("setLoadInfo", TMessageType.Call, seqid_));
+        setLoadInfo_args args = new setLoadInfo_args();
+        args.UserId = userId;
+        args.TaskName = taskName;
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        oprot_.Transport.Flush();
+      }
+      #endif
+
+      public Result recv_setLoadInfo()
+      {
+        TMessage msg = iprot_.ReadMessageBegin();
+        if (msg.Type == TMessageType.Exception) {
+          TApplicationException x = TApplicationException.Read(iprot_);
+          iprot_.ReadMessageEnd();
+          throw x;
+        }
+        setLoadInfo_result result = new setLoadInfo_result();
+        result.Read(iprot_);
+        iprot_.ReadMessageEnd();
+        if (result.__isset.success) {
+          return result.Success;
+        }
+        throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "setLoadInfo failed: unknown result");
+      }
 
       
       #if SILVERLIGHT
@@ -1279,6 +1355,7 @@ namespace GisClient
       public Processor(ISync iface)
       {
         iface_ = iface;
+        processMap_["setLoadInfo"] = setLoadInfo_Process;
         processMap_["RefreshCell"] = RefreshCell_Process;
         processMap_["refreshGroundCover"] = refreshGroundCover_Process;
         processMap_["refresh3DCover"] = refresh3DCover_Process;
@@ -1325,6 +1402,34 @@ namespace GisClient
           return false;
         }
         return true;
+      }
+
+      public void setLoadInfo_Process(int seqid, TProtocol iprot, TProtocol oprot)
+      {
+        setLoadInfo_args args = new setLoadInfo_args();
+        args.Read(iprot);
+        iprot.ReadMessageEnd();
+        setLoadInfo_result result = new setLoadInfo_result();
+        try
+        {
+          result.Success = iface_.setLoadInfo(args.UserId, args.TaskName);
+          oprot.WriteMessageBegin(new TMessage("setLoadInfo", TMessageType.Reply, seqid)); 
+          result.Write(oprot);
+        }
+        catch (TTransportException)
+        {
+          throw;
+        }
+        catch (Exception ex)
+        {
+          Console.Error.WriteLine("Error occurred in processor:");
+          Console.Error.WriteLine(ex.ToString());
+          TApplicationException x = new TApplicationException        (TApplicationException.ExceptionType.InternalError," Internal error.");
+          oprot.WriteMessageBegin(new TMessage("setLoadInfo", TMessageType.Exception, seqid));
+          x.Write(oprot);
+        }
+        oprot.WriteMessageEnd();
+        oprot.Transport.Flush();
       }
 
       public void RefreshCell_Process(int seqid, TProtocol iprot, TProtocol oprot)
@@ -1773,6 +1878,262 @@ namespace GisClient
         }
         oprot.WriteMessageEnd();
         oprot.Transport.Flush();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class setLoadInfo_args : TBase
+    {
+      private int _userId;
+      private string _taskName;
+
+      public int UserId
+      {
+        get
+        {
+          return _userId;
+        }
+        set
+        {
+          __isset.userId = true;
+          this._userId = value;
+        }
+      }
+
+      public string TaskName
+      {
+        get
+        {
+          return _taskName;
+        }
+        set
+        {
+          __isset.taskName = true;
+          this._taskName = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool userId;
+        public bool taskName;
+      }
+
+      public setLoadInfo_args() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 1:
+                if (field.Type == TType.I32) {
+                  UserId = iprot.ReadI32();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 2:
+                if (field.Type == TType.String) {
+                  TaskName = iprot.ReadString();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("setLoadInfo_args");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+          if (__isset.userId) {
+            field.Name = "userId";
+            field.Type = TType.I32;
+            field.ID = 1;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI32(UserId);
+            oprot.WriteFieldEnd();
+          }
+          if (TaskName != null && __isset.taskName) {
+            field.Name = "taskName";
+            field.Type = TType.String;
+            field.ID = 2;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteString(TaskName);
+            oprot.WriteFieldEnd();
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("setLoadInfo_args(");
+        bool __first = true;
+        if (__isset.userId) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("UserId: ");
+          __sb.Append(UserId);
+        }
+        if (TaskName != null && __isset.taskName) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("TaskName: ");
+          __sb.Append(TaskName);
+        }
+        __sb.Append(")");
+        return __sb.ToString();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class setLoadInfo_result : TBase
+    {
+      private Result _success;
+
+      public Result Success
+      {
+        get
+        {
+          return _success;
+        }
+        set
+        {
+          __isset.success = true;
+          this._success = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool success;
+      }
+
+      public setLoadInfo_result() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 0:
+                if (field.Type == TType.Struct) {
+                  Success = new Result();
+                  Success.Read(iprot);
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("setLoadInfo_result");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+
+          if (this.__isset.success) {
+            if (Success != null) {
+              field.Name = "Success";
+              field.Type = TType.Struct;
+              field.ID = 0;
+              oprot.WriteFieldBegin(field);
+              Success.Write(oprot);
+              oprot.WriteFieldEnd();
+            }
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("setLoadInfo_result(");
+        bool __first = true;
+        if (Success != null && __isset.success) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Success: ");
+          __sb.Append(Success== null ? "<null>" : Success.ToString());
+        }
+        __sb.Append(")");
+        return __sb.ToString();
       }
 
     }

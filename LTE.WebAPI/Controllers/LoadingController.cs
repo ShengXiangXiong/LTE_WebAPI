@@ -11,31 +11,24 @@ namespace LTE.WebAPI.Controllers
 {
     public class LoadingController : ApiController
     {
-        private Loading loading = Loading.getInstance();
+        LoadInfo loadInfo = new LoadInfo();
         [HttpPost]
-        public Result getLoadingInfo(int UserId)
+        public Result getLoadingInfo()
         {
-            if (loading.getLoadInfo().ContainsKey(UserId))
-            {
-                return new Result(true, "", loading.getLoadInfo()[UserId]);
-            }
-            else
-            {
-                return new Result(false, "任务不存在");
-            }
+            return new Result(true, "", loadInfo.GetLoadInfos());
         }
-        [HttpPost]
-        [AllowAnonymous]
-        public void updateLoadingInfo(LoadInfo loadInfo)
-        {
-            loading.updateLoading(loadInfo);
-        }
-        [HttpPost]
-        [AllowAnonymous]
-        public void addCountByMulti(LoadInfo loadInfo)
-        {
-            loading.addCount(loadInfo);
-        }
+        //[HttpPost]
+        //[AllowAnonymous]
+        //public void updateLoadingInfo(LoadInfo loadInfo)
+        //{
+        //    loading.updateLoading(loadInfo);
+        //}
+        //[HttpPost]
+        //[AllowAnonymous]
+        //public void addCountByMulti(LoadInfo loadInfo)
+        //{
+        //    loading.addCount(loadInfo);
+        //}
 
     }
 }

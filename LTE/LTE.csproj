@@ -82,6 +82,7 @@
     <Reference Include="IBatisNet.DataMapper">
       <HintPath>..\LTE.WebAPI\IBatisNet.DataMapper.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <EmbedInteropTypes>True</EmbedInteropTypes>
@@ -92,12 +93,16 @@
     <Reference Include="ProjNet, Version=1.2.4636.15762, Culture=neutral, PublicKeyToken=a1f5bdcd9c6f5740, processorArchitecture=MSIL">
       <HintPath>..\packages\Proj.NET.1.2\lib\net20\ProjNet.dll</HintPath>
     </Reference>
+    <Reference Include="StackExchange.Redis, Version=1.2.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StackExchange.Redis.1.2.6\lib\net45\StackExchange.Redis.dll</HintPath>
+    </Reference>
     <Reference Include="stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Management" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
@@ -190,6 +195,7 @@
     <Compile Include="AsyncUI\AsyncService.cs" />
     <Compile Include="Utils\DT\PTHandler.cs" />
     <Compile Include="Utils\PointConvertByProj.cs" />
+    <Compile Include="Utils\RedisHelper.cs" />
     <Compile Include="Win32Lib\ConsoleShow.cs" />
     <Compile Include="Win32Lib\IPC.cs" />
     <Compile Include="Win32Lib\MMF.cs" />

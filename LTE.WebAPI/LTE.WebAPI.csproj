@@ -70,10 +70,14 @@
     <Reference Include="ProjNet, Version=1.2.4636.15762, Culture=neutral, PublicKeyToken=a1f5bdcd9c6f5740, processorArchitecture=MSIL">
       <HintPath>..\packages\Proj.NET.1.2\lib\net20\ProjNet.dll</HintPath>
     </Reference>
+    <Reference Include="StackExchange.Redis, Version=1.2.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StackExchange.Redis.1.2.6\lib\net45\StackExchange.Redis.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Entity" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Management" />
     <Reference Include="System.Net.Http.Formatting, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -204,6 +208,7 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Attributes\ApiAuthorizeAttribute.cs" />
+    <Compile Include="Attributes\TaskLoadInfoAttribute.cs" />
     <Compile Include="Attributes\ParamsCheckAttribute.cs" />
     <Compile Include="Controllers\AreaCoverAnalysisController.cs" />
     <Compile Include="Controllers\AreaCoverDefectController.cs" />
@@ -243,6 +248,7 @@
     <Compile Include="Models\FishnetModel.cs" />
     <Compile Include="Models\GrassOverlayModel.cs" />
     <Compile Include="Models\Grid3DStrengthQueryModel.cs" />
+    <Compile Include="Models\LayerNames.cs" />
     <Compile Include="Models\PointsSelectModel.cs" />
     <Compile Include="Models\RayRecordModel.cs" />
     <Compile Include="Models\CellRayTracingModel.cs" />
@@ -255,6 +261,7 @@
     <Compile Include="Models\ScenePartModel.cs" />
     <Compile Include="Models\SingleRayTracingModel.cs" />
     <Compile Include="Models\SmoothBuildingVertexModel.cs" />
+    <Compile Include="Models\TaskType.cs" />
     <Compile Include="Models\WaterOverlayModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\CgAlgorithm.cs" />
@@ -358,6 +365,7 @@
     <Content Include="Properties\settings.json" />
     <Content Include="providers.config" />
     <None Include="Scripts\jquery-1.8.2.intellisense.js" />
+    <Content Include="range.xml" />
     <Content Include="Scripts\jquery-1.8.2.js" />
     <Content Include="Scripts\jquery-1.8.2.min.js" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />

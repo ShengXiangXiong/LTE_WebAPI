@@ -9,6 +9,9 @@ using System.Data;
 using LTE.WebAPI.Utils;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
+using StackExchange.Redis;
+using LTE.Utils;
+using System.Web.Http.Controllers;
 
 namespace LTE.WebAPI.Models
 {
@@ -70,6 +73,7 @@ namespace LTE.WebAPI.Models
             //判断用户名密码是否匹配
             try
             {
+                IDatabase db = RedisHelper.getInstance().db;
                 Hashtable ht = new Hashtable();
                 ht["name"] = name;
                 ht["pwd"] = pwd;
@@ -93,8 +97,13 @@ namespace LTE.WebAPI.Models
                         userId = (int)userInfoDt["ID"],
                         userRole = (string)userInfoDt["Role"]
                     };
+
                     AuthInfo auth = new AuthInfo {userInfo=userInfo};
                     string token = JwtHelper.SetJwtEncode(auth);
+
+                    db.StringSet("login"+token, JsonConvert.SerializeObject(userInfo));
+                    db.KeyExpire("login" + token, DateTime.Now.AddDays(7));
+
                     return new Result { ok = true, code = "1", obj = userInfo, msg = "登陆成功", token = token };
                 }
             }

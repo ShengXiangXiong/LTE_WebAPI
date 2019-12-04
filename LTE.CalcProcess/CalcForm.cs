@@ -155,8 +155,8 @@ namespace LTE.CalcProcess
             {
                 System.Environment.Exit(0);
             }
-            loadInfo.UserId = userId;
-            loadInfo.taskName = taskName;
+            LoadInfo.UserId.Value = userId;
+            LoadInfo.taskName.Value = taskName;
         }
 
         private bool dealParams(string[] args)
@@ -528,11 +528,11 @@ namespace LTE.CalcProcess
             //init load
             int count = gray + bray + vray;
 
-            loadInfo.cnt = 0;
             loadInfo.count = count;
-            loadInfo.UserId = userId;
-            loadInfo.taskName = taskName;
-            doPostLoading(loadInfo, "addCountByMulti");
+            LoadInfo.UserId.Value = userId;
+            LoadInfo.taskName.Value = taskName;
+            loadInfo.loadCountAdd();
+            //doPostLoading(loadInfo, "addCountByMulti");
 
 
             t2 = DateTime.Now;
@@ -2231,7 +2231,8 @@ namespace LTE.CalcProcess
         private void updateProgress(int val)
         {
             loadInfo.cnt = (int)this.interAnalysis.rayCount;
-            doPostLoading(loadInfo, "updateLoadingInfo");
+            //doPostLoading(loadInfo, "updateLoadingInfo");
+            loadInfo.loadUpdate();
             //loading.updateLoading(userId, taskName, (int)this.interAnalysis.rayCount);
 
             this.label1.Text = string.Format("已经计算{0}/{1}条射线", val, this.totalRay);

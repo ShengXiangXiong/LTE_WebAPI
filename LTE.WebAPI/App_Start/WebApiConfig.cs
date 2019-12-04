@@ -26,6 +26,7 @@ namespace LTE.WebAPI
             //config.EnableSystemDiagnosticsTracing();
 
             config.Filters.Add(new WebAPI.Attributes.ParamsCheckAttribute());
+            config.Filters.Add(new WebAPI.Attributes.ApiAuthorizeAttribute());
         }
     }
 }

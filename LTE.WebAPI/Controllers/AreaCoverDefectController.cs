@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using LTE.WebAPI.Attributes;
 using LTE.WebAPI.Models;
 
 namespace LTE.WebAPI.Controllers
@@ -16,6 +17,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="defect">网内干扰分析范围</param>
         /// <returns>各种网内干扰点比例</returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "网内干扰分析", type = TaskType.AreaInterference)]
         public Result PostAreaCoverDefect([FromBody]AreaCoverDefectModel defect)
         {
             return defect.defectAnalysis();

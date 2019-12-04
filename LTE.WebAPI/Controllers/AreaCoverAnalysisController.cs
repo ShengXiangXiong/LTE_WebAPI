@@ -13,6 +13,7 @@ namespace LTE.WebAPI.Controllers
     {
 
         [HttpPost]
+        [TaskLoadInfo(taskName = "区域覆盖分析", type = TaskType.AreaCoverCompu)]
         //[ApiAuthorize(Roles = "admin")]
         public Result Post([FromBody]Area area)
         {

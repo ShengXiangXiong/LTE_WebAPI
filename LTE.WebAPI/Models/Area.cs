@@ -163,13 +163,8 @@ namespace LTE.WebAPI.Models
             }
 
             LoadInfo loadInfo = new LoadInfo();
-            loadInfo.cnt = 0;
             loadInfo.count = cells.Count;
-            loadInfo.taskName = "区域覆盖计算";
-            loadInfo.UserId = this.userId;
-            loadInfo.breakdown = false;
 
-            Loading loading = Loading.getInstance();
             string fail = "";
             foreach (var item in cells)
             {
@@ -178,7 +173,7 @@ namespace LTE.WebAPI.Models
                     if (item.calc().ok)
                     {
                         loadInfo.cnt++;
-                        loading.updateLoading(loadInfo);
+                        loadInfo.loadUpdate();
                     }
                     else
                     {
@@ -188,17 +183,17 @@ namespace LTE.WebAPI.Models
                 catch (Exception)
                 {
                     loadInfo.breakdown = true;
-                    loading.updateLoading(loadInfo);
+                    loadInfo.loadBreakDown();
                     return new Result(false, "区域覆盖计算失败");
                 }
             }
             if (loadInfo.cnt < loadInfo.count)
             {
                 loadInfo.breakdown = true;
-                loading.updateLoading(loadInfo);
+                loadInfo.loadBreakDown();
                 return new Result(false, fail+"覆盖计算计算失败");
             }
-
+            loadInfo.loadFinish();
             return new Result(true, "区域覆盖计算完成");
         }
     }

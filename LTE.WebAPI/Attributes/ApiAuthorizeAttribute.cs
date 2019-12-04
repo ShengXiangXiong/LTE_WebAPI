@@ -1,5 +1,6 @@
 ﻿using JWT;
 using JWT.Serializers;
+using LTE.Model;
 using LTE.WebAPI.Models;
 using Newtonsoft.Json;
 using System;
@@ -38,20 +39,25 @@ namespace LTE.WebAPI.Attributes
                         IJwtDecoder decoder = new JwtDecoder(serializer, validator, urlEncoder);
 
                         var json = decoder.DecodeToObject<AuthInfo>(token, secret, verify: true);
+                        LoginModel user = (LoginModel)json.userInfo;
+                        LoadInfo.UserId.Value = user.userId;
                         if (json != null)
                         {
-                            //role check
-                            LoginModel user = (LoginModel)json.userInfo;
-                            string[] vs = Roles.Trim().Split(new char[] { ',', ' ', '/', ';', '\\' });
-                            foreach (var item in vs)
+                            if (Roles.Length != 0)
                             {
-                                if (item.Equals(user.userRole.Trim()))
+                                //role check
+                                string[] vs = Roles.Trim().Split(new char[] { ',', ' ', '/', ';', '\\' });
+                                foreach (var item in vs)
                                 {
-                                    actionContext.RequestContext.RouteData.Values.Add("auth", json);
-                                    return true;
+                                    if (item.Equals(user.userRole.Trim()))
+                                    {
+                                        actionContext.RequestContext.RouteData.Values.Add("auth", json);
+                                        return true;
+                                    }
                                 }
+                                return false;
                             }
-                            return false;
+                            return true;
                         }
                         return false;
                     }
@@ -61,6 +67,8 @@ namespace LTE.WebAPI.Attributes
                     }
                 }
             }
+            //清空描述字段
+            Roles = "";
             return false;
         }
 
