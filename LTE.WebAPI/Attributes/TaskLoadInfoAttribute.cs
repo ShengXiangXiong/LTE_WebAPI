@@ -51,6 +51,16 @@ namespace LTE.WebAPI.Attributes
                     layer = false;
                     taskName += String.Format("%_%_%_%", obj4.minLongitude, obj4.minLatitude, obj4.maxLongitude, obj4.maxLatitude);
                     break;
+                case TaskType.RayRecordAdj:
+                    var obj5 = (RayRecordAdjModel)actionContext.ActionArguments["ray"];
+                    layer = false;
+                    taskName += obj5.cellName;
+                    break;
+                case TaskType.RayRecordLoc:
+                    var obj6 = (RayLocRecordModel)actionContext.ActionArguments["ray"];
+                    layer = false;
+                    taskName += obj6.virsource;
+                    break;
                 default:
                     break;
             }

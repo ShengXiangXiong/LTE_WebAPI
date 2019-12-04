@@ -785,11 +785,6 @@
             最大纬度
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.Area.userId">
-            <summary>
-            执行当前覆盖分析的用户ID
-            </summary>
-        </member>
         <member name="P:LTE.WebAPI.Models.Area.incrementAngle">
             <summary>
             以方位角为中心，两边扩展的角度
@@ -1229,11 +1224,6 @@
             计算射线
             </summary>
             <returns></returns>
-        </member>
-        <member name="P:LTE.WebAPI.Models.CellRayTracing.userId">
-            <summary>
-            执行当前覆盖分析的用户ID
-            </summary>
         </member>
         <member name="P:LTE.WebAPI.Models.CellRayTracing.cellName">
             <summary>

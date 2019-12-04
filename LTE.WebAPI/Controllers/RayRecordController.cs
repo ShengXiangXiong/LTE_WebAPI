@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using LTE.WebAPI.Attributes;
 using LTE.WebAPI.Models;
 
 namespace LTE.WebAPI.Controllers
@@ -16,6 +17,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="ray">界面输入参数</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "射线记录Loc", type = TaskType.RayRecordLoc)]
         public Result PostRayRecordLoc([FromBody]RayLocRecordModel ray)
         {
             return ray.RecordRayLoc();
@@ -27,6 +29,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="ray">界面输入参数</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "射线记录Adj", type = TaskType.RayRecordAdj)]
         public Result PostRayRecordAdj([FromBody]RayRecordAdjModel ray)
         {
             return ray.rayRecord();

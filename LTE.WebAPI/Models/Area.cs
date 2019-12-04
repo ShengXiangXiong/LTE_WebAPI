@@ -31,11 +31,6 @@ namespace LTE.WebAPI.Models
         public double maxLatitude { get; set; }
 
         /// <summary>
-        /// 执行当前覆盖分析的用户ID
-        /// </summary>
-        public int userId { get; set; }
-
-        /// <summary>
         /// 以方位角为中心，两边扩展的角度
         /// </summary>
         public double incrementAngle { get; set; }
@@ -157,7 +152,6 @@ namespace LTE.WebAPI.Models
                     c.reflectCoeff = this.reflectCoeff;
                     c.reflectionNum = this.reflectionNum;
                     c.threadNum = this.threadNum;
-                    c.userId = this.userId;
                     cells.Add(c);
                 }
             }

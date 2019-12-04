@@ -19,7 +19,7 @@
             用于进度条显示
             </summary>
         </member>
-        <member name="M:LTE.CalcProcess.CalcForm.doPostLoading(LTE.Model.LoadInfo,System.String)">
+        <member name="M:LTE.CalcProcess.CalcForm.#ctor">
             <summary>
             HttpClient实现Post请求
             </summary>

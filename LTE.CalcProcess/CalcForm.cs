@@ -50,7 +50,7 @@ namespace LTE.CalcProcess
         private LoadInfo loadInfo = new LoadInfo();
 
         //Http
-        private HttpClient httpClient = new HttpClient();
+        //private HttpClient httpClient = new HttpClient();
 
         private double fromAngle;
         private double toAngle;
@@ -78,32 +78,30 @@ namespace LTE.CalcProcess
 
         private ConsoleShow cs;
 
-        public void LoadApi() { }
-
 
         /// <summary>
         /// HttpClient实现Post请求
         /// </summary>
-        public async void doPostLoading(LoadInfo loadInfo,string action)
-        {
-            string url = "http://localhost:3298/api/Loading/"+action;
+        //public async void doPostLoading(LoadInfo loadInfo,string action)
+        //{
+        //    string url = "http://localhost:3298/api/Loading/"+action;
 
-            HttpContent httpContent = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(loadInfo));
-            httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            httpContent.Headers.ContentType.CharSet = "utf-8";
-            try
-            {
-                //httpClient = new HttpClient();
-                //AuthenticationHeaderValue authValue = new AuthenticationHeaderValue("Basic", token);
-                //httpClient.DefaultRequestHeaders.Authorization = authValue;
-                HttpResponseMessage response = await httpClient.PostAsync(url, httpContent);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+        //    HttpContent httpContent = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(loadInfo));
+        //    httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        //    httpContent.Headers.ContentType.CharSet = "utf-8";
+        //    try
+        //    {
+        //        httpClient = new HttpClient();
+        //        AuthenticationHeaderValue authValue = new AuthenticationHeaderValue("Basic", token);
+        //        httpClient.DefaultRequestHeaders.Authorization = authValue;
+        //        HttpResponseMessage response = await httpClient.PostAsync(url, httpContent);
+        //    }
+        //    catch (Exception)
+        //    {
+        //        throw;
+        //    }
 
-        }
+        //}
 
 
 

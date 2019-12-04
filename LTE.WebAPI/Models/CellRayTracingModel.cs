@@ -11,17 +11,13 @@ using LTE.InternalInterference.Grid;
 using LTE.DB;
 using System.Data;
 using System.Diagnostics;
-
+using LTE.Model;
 
 namespace LTE.WebAPI.Models
 {
     // 射线跟踪公共部分
     public class CellRayTracing
     {
-        /// <summary>
-        /// 执行当前覆盖分析的用户ID
-        /// </summary>
-        public int userId { get; set; }
         /// <summary>
         /// 小区名称
         /// </summary>
@@ -203,8 +199,6 @@ namespace LTE.WebAPI.Models
         /// <returns></returns>
         public Result calc()
         {
-            string taskName = "coverAnlysis";
-
             int eNodeB = 0, CI = 0;
             string cellType = "";
 
@@ -241,7 +235,7 @@ namespace LTE.WebAPI.Models
                 bool recordReRay = false;  // 是否需要记录当前批的出界射线
 
                 // 小区覆盖计算
-                return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false,userId,taskName);
+                return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false, LoadInfo.UserId.Value, LoadInfo.taskName.Value);
             }
             // 需要分批计算
             else  
@@ -273,7 +267,7 @@ namespace LTE.WebAPI.Models
                             recordReRay = true;
 
                         // 小区覆盖计算
-                        Result result = parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false,userId, taskName);
+                        Result result = parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false, LoadInfo.UserId.Value, LoadInfo.taskName.Value);
                         if (!result.ok)
                             return result;
 
@@ -294,7 +288,7 @@ namespace LTE.WebAPI.Models
                     bool reRay = false;  // 是否需要进行二次投射，即读取前一批覆盖计算中出界的射线，并对其进行射线跟踪
                     bool recordReRay = false;  // 是否需要记录当前批的出界射线
 
-                    return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false,userId,taskName);
+                    return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false, LoadInfo.UserId.Value, LoadInfo.taskName.Value);
                 }
             }
         }

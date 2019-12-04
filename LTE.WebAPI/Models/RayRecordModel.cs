@@ -8,6 +8,8 @@ using System.Data;
 using System.Data.SqlClient;
 using LTE.DB;
 using System.Diagnostics;
+using LTE.Model;
+
 namespace LTE.WebAPI.Models
 {
     // 记录用于系数校正的射线
@@ -29,7 +31,7 @@ namespace LTE.WebAPI.Models
             double fromAngle = cellInfo.Azimuth - this.incrementAngle;
             double toAngle = cellInfo.Azimuth + this.incrementAngle;
 
-            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, false, true,userId,"射线记录Adj");
+            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, false, true, LoadInfo.UserId.Value, LoadInfo.taskName.Value);
         }
     }
 
@@ -39,7 +41,6 @@ namespace LTE.WebAPI.Models
         //
         // GET: /RayLocRecordModel/
         #region 变量定义
-        public int userId { get; set; }
         /// <summary>
         /// 干扰源点
         /// </summary>
@@ -171,7 +172,7 @@ namespace LTE.WebAPI.Models
                 cellInfo.Azimuth, cellInfo.Inclination, cellInfo.cellType, cellInfo.frequncy, cellInfo.EIRP,
                 cellInfo.directCoefficient, cellInfo.reflectCoefficient, cellInfo.diffracteCoefficient, cellInfo.diffracteCoefficient,
                 fromAngle, toAngle, this.distance, this.reflectionNum, this.diffractionNum, this.computeIndoor,
-                this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false, userId,"射线记录Loc");
+                this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false, LoadInfo.UserId.Value, LoadInfo.taskName.Value);
 
             try
             {

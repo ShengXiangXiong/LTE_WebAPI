@@ -18,6 +18,7 @@ namespace LTE.WebAPI.Controllers
         /// <returns></returns>
         [HttpPost]
         [ApiAuthorize(Roles = "admin")]
+        [TaskLoadInfo(taskName = "小区覆盖分析", type = TaskType.CellCoverCompu)]
         public Result PostRayTracing([FromBody]CellRayTracingModel rt)
         {
             return rt.calc();
