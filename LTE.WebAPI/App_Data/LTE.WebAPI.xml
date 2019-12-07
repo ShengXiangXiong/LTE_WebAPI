@@ -633,6 +633,7 @@
             <param name="ray">界面输入参数</param>
             <returns></returns>
         </member>
+        <!-- 对于成员“M:LTE.WebAPI.Controllers.RayRecordController.PostRayRecordAdjBatchMode(LTE.WebAPI.Models.RayRecordAdjModel)”忽略有格式错误的 XML 注释 -->
         <member name="M:LTE.WebAPI.Controllers.RefreshLayerController.PostRefreshCell">
             <summary>
             刷新小区图层
@@ -901,6 +902,15 @@
             多场景系数校正
             </summary>
             <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Models.CalibrationModel.filter(System.Data.DataTable@,System.Data.DataTable@,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.Double}}@,System.Collections.Generic.Dictionary{System.String,LTE.InternalInterference.TrajInfo}@)">
+            <summary>
+                    选择射线跟踪计算结果和真实路测的公共部分
+            </summary>
+            <param name="rayAdjTb">计算值的轨迹数据表（经内存控制）</param>
+            <param name="DTTb">路测数据表（经内存控制）</param>
+            <param name="meaPwr">路测数据字典</param>
+            <param name="rayDic">计算值字典</param>
         </member>
         <member name="M:LTE.WebAPI.Models.CalibrationModel.MemoryInfo">
             <summary>

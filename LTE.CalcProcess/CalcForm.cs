@@ -1386,10 +1386,13 @@ namespace LTE.CalcProcess
             Console.WriteLine("扇区内建筑物顶面栅格数量 = {0}", topPoints.Count);
             Console.WriteLine("扇区内建筑物立面栅格数量 = {0}", vmPoints.Count);
             Console.WriteLine("扇区内建筑物棱边栅格数量 = {0}", diffPoints.Count);
-            Console.WriteLine("扇区内<6m建筑物数量 = {0}, 占比 = {1} ", h1, h1 / this.bids.Count);
-            Console.WriteLine("扇区内6~20m建筑物数量 = {0}, 占比 = {1} ", h2, h2 / this.bids.Count);
-            Console.WriteLine("扇区内>20m建筑物数量 = {0}, 占比 = {1} ", h3, h3 / this.bids.Count);
-            Console.WriteLine("扇区内建筑物占比 = {0}", topPoints.Count / gfPoints.Count);
+            if (this.bids.Count != 0 && gfPoints.Count!=0) {
+                Console.WriteLine("扇区内<6m建筑物数量 = {0}, 占比 = {1} ", h1, h1 / this.bids.Count);
+                Console.WriteLine("扇区内6~20m建筑物数量 = {0}, 占比 = {1} ", h2, h2 / this.bids.Count);
+                Console.WriteLine("扇区内>20m建筑物数量 = {0}, 占比 = {1} ", h3, h3 / this.bids.Count);
+                Console.WriteLine("扇区内建筑物占比 = {0}", topPoints.Count / gfPoints.Count);
+            }
+
             Console.WriteLine("射线数量 = {0}", this.rayLocate.rayCount);
             Console.WriteLine("直射线数量 = {0}", this.rayLocate.rayCountDir);
             Console.WriteLine("绕射线数量 = {0}", this.rayLocate.rayCountDif);
@@ -1404,8 +1407,8 @@ namespace LTE.CalcProcess
 
             this.afterCalc();
 
-            //Console.ReadKey();
             //this.cs.free();
+            this.Close();
         }
         #endregion
 
@@ -1997,6 +2000,7 @@ namespace LTE.CalcProcess
             else if (this.isRayAdj)
             {
                 writeRayAdj();
+                RayHelper.clearInstance();
                 IPC.PostMessage(this.parentHandle, IPC.WM_POST_CALCDONE, this.Handle, 0);
             }
             else

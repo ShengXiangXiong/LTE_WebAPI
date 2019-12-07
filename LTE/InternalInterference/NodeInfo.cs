@@ -36,6 +36,12 @@ namespace LTE.InternalInterference
         /// 射线与侧面交点
         /// </summary>
         public Point CrossPoint { get; set; }
+        
+        /// <summary>
+        /// 射线与上一条射线的转角[0,PAI]
+        /// </summary>
+        public double DefAngle { get; set; }
+
         /// <summary>
         /// 底边起点
         /// </summary>
@@ -130,6 +136,7 @@ namespace LTE.InternalInterference
             this.Angle = angle;
         }
 
+        //用于系数校正的 射线段构造函数
         public NodeInfo(int cellID, int gxid, int gyid, int trajID, RayType rayType, double dis, double angle, double attenuation, double recePwr)
         {
             this.cellID = cellID;
@@ -141,6 +148,21 @@ namespace LTE.InternalInterference
             this.Angle = angle;
             this.attenuation = attenuation;
             this.recePwr = recePwr;
+        }
+
+        //用于系数校正的 射线段构造函数，参数包含射线段的起点和终点
+        public NodeInfo(int cellID, int gxid, int gyid, int trajID, RayType rayType, double dis, double angle, double attenuation, double recePwr,Point pointOfIncidence, Point crossPoint) {
+            this.cellID = cellID;
+            this.gxid = gxid;
+            this.gyid = gyid;
+            this.trajID = trajID;
+            this.rayType = rayType;
+            this.distance = dis;
+            this.Angle = angle;
+            this.attenuation = attenuation;
+            this.recePwr = recePwr;
+            this.PointOfIncidence = pointOfIncidence;
+            this.CrossPoint = crossPoint;
         }
     }
 

@@ -29,6 +29,7 @@ namespace LTE.InternalInterference.Grid
             MaxGyid = maxgyid;
         }
 
+        //获取范围内的地面栅格中心点
         public static int constructGGrids()
         {
             //Console.WriteLine("{0}", 1);
@@ -43,7 +44,7 @@ namespace LTE.InternalInterference.Grid
 
             DataTable grids = IbatisHelper.ExecuteQueryForDataTable("getGroundGridsCenterPre", ht);
             //Console.WriteLine("{0}", grids.Rows.Count);
-            double x, y;
+            double x, y ,z;
             int gxid, gyid;
             string key;
             for (int i = 0, cnt = grids.Rows.Count; i < cnt; i++)
@@ -52,11 +53,47 @@ namespace LTE.InternalInterference.Grid
                 gyid = Convert.ToInt32(grids.Rows[i]["GYID"]);
                 x = Convert.ToDouble(grids.Rows[i]["CX"]);
                 y = Convert.ToDouble(grids.Rows[i]["CY"]);
+                z = Convert.ToDouble(grids.Rows[i]["Dem"]);
                 key = string.Format("{0},{1}", gxid, gyid);
-                ggrids.Add(key, new Point(x, y, 0));
+                ggrids.Add(key, new Point(x, y, z));
             }
             return ggrids.Count;
         }
+
+        //获取[参数]范围内的地面栅格中心点
+        public static int constructGGridsByArea(double minGx, double maxGx, double minGy, double maxGy)
+        {
+            //Console.WriteLine("{0}", 1);
+            if (ggrids != null) {
+                ggrids.Clear();
+            }
+            ggrids = new Dictionary<string, Point>();
+
+            Hashtable ht = new Hashtable();
+            ht["minGXID"] = minGx;
+            ht["maxGXID"] = maxGx;
+            ht["minGYID"] = minGy;
+            ht["maxGYID"] = maxGy;
+            //Console.WriteLine("{0}", MinGxid);
+
+            DataTable grids = IbatisHelper.ExecuteQueryForDataTable("getGroundGridsCenterByArea", ht);
+            //Console.WriteLine("{0}", grids.Rows.Count);
+            double x, y,z;
+            int gxid, gyid;
+            string key;
+            for (int i = 0, cnt = grids.Rows.Count; i < cnt; i++)
+            {
+                gxid = Convert.ToInt32(grids.Rows[i]["GXID"]);
+                gyid = Convert.ToInt32(grids.Rows[i]["GYID"]);
+                x = Convert.ToDouble(grids.Rows[i]["CX"]);
+                y = Convert.ToDouble(grids.Rows[i]["CY"]);
+                z = Convert.ToDouble(grids.Rows[i]["Dem"]);
+                key = string.Format("{0},{1}", gxid, gyid);
+                ggrids.Add(key, new Point(x, y, z));
+            }
+            return ggrids.Count;
+        }
+
         /// <summary>
         /// 获取中心点在范围内的地面栅格中心点
         /// </summary> 
@@ -90,7 +127,7 @@ namespace LTE.InternalInterference.Grid
             ht["y4"] = gid4.gyid;
             DataTable grids = IbatisHelper.ExecuteQueryForDataTable("getGroundGridsCenter", ht);
             //Console.WriteLine("{0}", grids.Rows.Count);
-            double x, y;
+            double x, y, z;
             int gxid, gyid;
             string key;
             for (int i = 0, cnt = grids.Rows.Count; i < cnt; i++)
@@ -99,8 +136,9 @@ namespace LTE.InternalInterference.Grid
                 gyid = Convert.ToInt32(grids.Rows[i]["GYID"]);
                 x = Convert.ToDouble(grids.Rows[i]["CX"]);
                 y = Convert.ToDouble(grids.Rows[i]["CY"]);
+                z = Convert.ToDouble(grids.Rows[i]["Dem"]);
                 key = string.Format("{0},{1}", gxid, gyid);
-                ggrids.Add(key, new Point(x, y, 0));
+                ggrids.Add(key, new Point(x, y, z));
             }
             return ggrids.Count;
         }
@@ -234,8 +272,8 @@ namespace LTE.InternalInterference.Grid
                 {
                     pr = GeometricUtilities.getPolarCoord(source, p);
 
-                    // 将位于扇区覆盖范围内，且不在建筑物内的地面栅格加进来   
-                    if (pr.r < distance && isInRange(pr.theta, from, to))//&& !isInBuilding(p, ref DisAngle))
+                    // 将位于扇区覆盖范围内，且不在建筑物内的地面栅格加进来 ;接收点加入海拔高度后，同时判断地面高度低于小区高度 ，jinhj 
+                    if (pr.r < distance && isInRange(pr.theta, from, to) && p.Z<source.Z)//&& !isInBuilding(p, ref DisAngle))
                     //if (pr.r < distance && isInRange(pr.theta, from, to) && !isInRange(pr, p, source, ref DisAngle))
                     {
                         ret.Add(p);
@@ -320,6 +358,15 @@ namespace LTE.InternalInterference.Grid
         private static bool isInRange(double angle, double from, double to)
         {
             return from < to ? (angle > from && angle < to) : (angle < to || angle > from);
+        }
+
+        /// <summary>
+        /// 清空地面栅格相关数据
+        /// </summary>
+        public static void clearGroundGridData() {
+            if (ggrids != null) {
+                ggrids.Clear();
+            }
         }
     }
 }

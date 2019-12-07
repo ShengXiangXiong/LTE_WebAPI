@@ -124,6 +124,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		<select id="GetGSMCellInfo" parameterClass="Hashtable">
 			select  Azimuth, Tilt, EIRP, x, y, AntHeight, Altitude, NetType, EARFCN from CELL where cellName = '$cellName$'
 		</select>
+		<!--获取GSM小区信息,构造CellInfo-->
+		<select id="GetGSMCellInfoByLongLat" parameterClass="Hashtable">
+			select  Azimuth, Tilt, EIRP, Longitude, Latitude, AntHeight, Altitude, NetType, EARFCN from CELL where cellName = '$cellName$'
+		</select>
 		<!--获取TD小区信息,构造CellInfo-->
 		<select id="GetTDCellInfo" parameterClass="string">
 		</select>
@@ -500,7 +504,18 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 	select gxid, gyid from tbdt
     </select>
 
-    <select id="getAllCells" parameterClass="">  
+	<select id="GetDTGridsOfACell" parameterClass="HashTable">
+		select x,y from tbdt
+		where eNodeBID=$eNodeBID$
+		and SCell_Dist between 0 and $radius$
+	</select>
+
+	<select id="GetAllDTGridsOfACell" parameterClass="HashTable">
+		select x,y from tbdt
+		where cellIndex=$cellIndex$
+	</select>
+
+	<select id="getAllCells" parameterClass="">  
 	select * from cell order by id
     </select>
     
@@ -568,11 +583,11 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     	</select>
 
 	<select id="getGroundGridsCenter" parameterClass="Hashtable">
-	select GXID, GYID, CX, CY from tbGridDem b
-	where ($x1$-b.GXID)*($y2$-b.GYID)-($x2$ - b.GXID)*($y1$-b.GYID) > 0
-	and ($x2$-b.GXID)*($y3$-b.GYID)-($x3$ - b.GXID)*($y2$-b.GYID) > 0
-	and ($x3$-b.GXID)*($y4$-b.GYID)-($x4$ - b.GXID)*($y3$-b.GYID) > 0
-	and ($x4$-b.GXID)*($y1$-b.GYID)-($x1$ - b.GXID)*($y4$-b.GYID) > 0
+		select GXID, GYID, CX, CY, Dem from tbGridDem b
+		where ($x1$-b.GXID)*($y2$-b.GYID)-($x2$ - b.GXID)*($y1$-b.GYID) > 0
+		and ($x2$-b.GXID)*($y3$-b.GYID)-($x3$ - b.GXID)*($y2$-b.GYID) > 0
+		and ($x3$-b.GXID)*($y4$-b.GYID)-($x4$ - b.GXID)*($y3$-b.GYID) > 0
+		and ($x4$-b.GXID)*($y1$-b.GYID)-($x1$ - b.GXID)*($y4$-b.GYID) > 0
 	</select>
 
 	<select id="GetBuildingGrid3DPre" parameterClass="HashTable">
@@ -625,8 +640,8 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     	</select>
 
 	<select id="getGroundGridsCenterPre" parameterClass="Hashtable">
-	    select GXID, GYID, CX, CY from tbGridDem 
-	    where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$'
+		select GXID, GYID, CX, CY, Dem from tbGridDem
+		where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$'
 	</select>
 
 	<select id="getPwrGround" parameterClass="Hashtable">
@@ -667,25 +682,67 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		and tbDefect.GYID = b.GYID 
 	</select>
 
-	<!-- 参数校正计算路径 -->
+	<!-- 用于系数矫正的轨迹信息 -->
 	<select id="getRays" parameterClass=""> 
 		select *
 		from tbRayAdj
 		order by trajID,rayLevel 
 	</select>
 
-  <!-- 参数校正计算路径 -->
-  <select id="getRays1" parameterClass="Hashtable">
+	<!-- 用于系数校正的部分轨迹信息 -->
+	<select id="getSomeRaysByMod" parameterClass="Hashtable">
     select *
     from tbRayAdj
     where gxid % $mod$ = 0
     order by trajID,rayLevel
   </select>
 
-  <select id="getGridsNum" parameterClass="Hashtable">
-    select count(*) from tbDT
-    where dateTime between '$startDateTime$' and '$endDateTime$'
-  </select>
+	<!--获得轨迹对应的小区集合-->
+	<select id="getRayAdjCells" >
+		SELECT distinct cellID
+		FROM tbRayAdj
+	</select>
+
+	<select id="getRayAdjNum" parameterClass="">
+		select count(*) from tbRayAdj
+	</select>
+
+	<!--获得所有路测xy坐标及信号强度-->
+	<select id="getCellDT" parameterClass="">
+		select *
+		from tbDT
+	</select>
+
+	<select id="getCellDTTest" parameterClass="">
+		select *
+		from tbDT
+		where RSRP>-100
+	</select>
+
+	<select id="getDTNum" parameterClass="">
+		select count(*) from tbDT
+	</select>
+
+	<!--获得所选区域内所有有路测点的主小区名，jin-->
+	<select id="getAreaDTMainCellName" parameterClass="">
+		select CellName
+		from Cell
+		where cellName in(
+		select distinct CellName
+		from tbDT
+		where Lon between (select MinLon from tbRayAdjRange) and (select MaxLon from tbRayAdjRange)
+		and Lat between (select MinLat from tbRayAdjRange) and (select MaxLat from tbRayAdjRange)
+		)
+		order by CellName
+	</select>
+
+	<!--获得每个小区路测数据条数-->
+	<select id="getDtCntOfCell" parameterClass="">
+		SELECT cellName,count(*) as cnt
+		FROM tbDT
+		group by cellName
+		order by cnt
+	</select>
 
 	<!-- 路测数据 -->
 	<select id="getAtuData" parameterClass=""> 
@@ -726,6 +783,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   <select id="GetAgridScene" parameterClass="HashTable">
     select GXID,GYID,GZID,Scene from tbAccelerateGridScene where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$' order by GXID, GYID, GZID
   </select>
+
+	<select id="GetAllGridScene">
+		select GXID,GYID,GZID,Scene from tbAccelerateGridScene order by GXID, GYID, GZID
+	</select>
 
   <delete id="DeleteAdjCoefficient">
     delete from tbAdjCoefficient
@@ -841,6 +902,24 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     where tbBuilding.BuildingID = tbBuildingVertexOriginal.BuildingID
     order by tbBuilding.BuildingID, tbBuildingVertexOriginal.VIndex
   </select>
+
+	<!--地面栅格相关 ，by JinHJ-->
+	<select id="getGroundGridsCenterByArea" parameterClass="HashTable">
+		select GXID, GYID, CX, CY, Dem
+		from tbGridDem
+		where CX between $minGXID$ and $maxGXID$
+		and CY between $minGYID$ and $maxGYID$
+	</select>
+
+	<select id="getGroudGridsByArea" parameterClass="HashTable">
+		select * from tbGridDem where CX between $minGX$ and $maxGX$
+		and CY between $minGY$ and $maxGY$
+	</select>
+
+	<delete id="DeleteGroudGridsByArea" parameterClass="HashTable" timeout="600">
+		delete from tbGridDem where CX between $minGX$ and $maxGX$
+		and CY between $minGY$ and $maxGY$
+	</delete>
 
   <select id="getAdjCoeff1" parameterClass="">
     select max(Scene) from tbAccelerateGridScene
@@ -1252,6 +1331,23 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
                   where item in ('ClusterShp')
     </update>
 
+	<!--地面栅格相关 ，by JinHJ-->
+	<select id="getGroundGridsCenterByArea" parameterClass="HashTable">
+		select GXID, GYID, CX, CY, Dem
+		from tbGridDem
+		where CX between $minGXID$ and $maxGXID$
+		and CY between $minGYID$ and $maxGYID$
+	</select>
+
+	<select id="getGroudGridsByArea" parameterClass="HashTable">
+		select * from tbGridDem where CX between $minGX$ and $maxGX$
+		and CY between $minGY$ and $maxGY$
+	</select>
+
+	<delete id="DeleteGroudGridsByArea" parameterClass="HashTable" timeout="600">
+		delete from tbGridDem where CX between $minGX$ and $maxGX$
+		and CY between $minGY$ and $maxGY$
+	</delete>
 
   </statements>
 </sqlMap>

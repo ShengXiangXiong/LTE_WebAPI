@@ -72,13 +72,15 @@ namespace LTE.InternalInterference
         /// <returns>接收功率，路径长度</returns>
         public double[] calcRayStrength(double rayAzimuth, double rayInclination, ref List<NodeInfo> rays)
         {
-            // 使用多场景校正系数 2019.3.26
-            if (this.scenNum > 0)
-            {
-                return calcRayStrengthAdj(rayAzimuth, rayInclination, ref rays);
-            }
-            else  // 使用界面输入的校正系数
-            {
+            //// 使用多场景校正系数 2019.3.26
+            //if (this.scenNum > 0)
+            //{
+            //    return calcRayStrengthAdj(rayAzimuth, rayInclination, ref rays);
+            //}
+            //else  // 使用界面输入的校正系数
+            //{
+
+            //只使用界面输入的校正系数 2019.11.6 Jin
                 //计算dbmPt
                 double[] ret = new double[3];
 
@@ -126,7 +128,8 @@ namespace LTE.InternalInterference
                     }
                     else if (ray.rayType == RayType.HDiffraction || ray.rayType == RayType.VDiffraction) //绕射
                     {
-                        ray.attenuation = diffractCoefficient(ray.Angle) * amendCoeDif; // 用于系数校正
+                        ray.attenuation = reflectCoefficient(ray.Angle) * amendCoeDif;// 暂时使用计算反射系数的函数 代替计算绕射系数的函数
+                        //ray.attenuation = diffractCoefficient(ray.Angle) * amendCoeDif; // 用于系数校正
                         diffrctedR *= ray.attenuation;
                     }
                     else
@@ -140,7 +143,7 @@ namespace LTE.InternalInterference
                 ret[1] = distance;
                 ret[2] = wPt;
                 return ret;
-            }
+            //}
         }
 
         // 多场景校正系数
@@ -197,7 +200,8 @@ namespace LTE.InternalInterference
                 }
                 else if (ray.rayType == RayType.HDiffraction || ray.rayType == RayType.VDiffraction) //绕射
                 {
-                    ray.attenuation = diffractCoefficient(ray.Angle) * coef[ray.endPointScen, 2]; // 用于系数校正
+                    ray.attenuation = reflectCoefficient(ray.Angle) * coef[ray.endPointScen, 2];//用反射系数暂时代替
+                    //ray.attenuation = diffractCoefficient(ray.Angle) * coef[ray.endPointScen, 2]; // 用于系数校正
                     diffrctedR *= ray.attenuation;
                 }
                 else
@@ -268,7 +272,8 @@ namespace LTE.InternalInterference
                 }
                 else if (ray.rayType == RayType.HDiffraction || ray.rayType == RayType.VDiffraction) //绕射
                 {
-                    ray.attenuation = diffractCoefficient(ray.Angle) * amendCoeDif; // 用于系数校正
+                    ray.attenuation = reflectCoefficient(ray.Angle) * amendCoeDif;//暂时用反射系数代替
+                    //ray.attenuation = diffractCoefficient(ray.Angle) * amendCoeDif; // 用于系数校正
                     diffrctedR *= ray.attenuation;
                 }
                 else
@@ -300,7 +305,7 @@ namespace LTE.InternalInterference
             double dbmPt1 = dbmPt(EIRP, 0, Math.Abs(rayInclination));
             //double dbmPt1 = EIRP;
             double wPt = convertdbm2w(dbmPt1);
-            nata = 300.0 / (1085 + 0.2 * (nata - 511));
+            nata = 300.0 / (1805 + 0.2 * (nata - 511));
             double receivePwr = Math.Pow(nata / (4 * Math.PI), 2) * (wPt / Math.Pow(distance, (2 + amendCoeDis)));
             double ReceivedPower_dbm = convertw2dbm(receivePwr);
 
@@ -797,16 +802,38 @@ namespace LTE.InternalInterference
 
         public double dbmPt(double EIRP, double mjDir, double mjTilt)
         {
+            //夹角度数为小数时，按比例取大于它和小于它的整度数对应的损耗
             //dbmPt = EiRP－ HLoss(Dir,θ) － VLoss(Tilt, Φ)
             Hashtable paramTable = new Hashtable();
             paramTable["gainType"] = "KRE738819_902";
             paramTable["direction"] = 0; // 0对应HLoss
-            paramTable["degree"] = (int)Math.Round(mjDir) % 360;
-            double HLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            paramTable["degree"] = (int)Math.Floor(mjDir) % 360;
+            double HLoss1 = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            paramTable["degree"] = (int)Math.Ceiling(mjDir) % 360;
+            double HLoss2= Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            double w1 = Math.Abs(mjDir - Math.Floor(mjDir) % 360);
+            double HLoss = HLoss1 * w1 + HLoss2 * (1 - w1);
 
             paramTable["direction"] = 1; // 1对应VLoss.
-            paramTable["degree"] = (int)Math.Round(mjTilt) % 360;
-            double VLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            paramTable["degree"] = (int)Math.Floor(mjTilt) % 360;
+            double VLoss1 = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            paramTable["degree"] = (int)Math.Ceiling(mjTilt) % 360;
+            double VLoss2 = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            double w2 =Math.Abs(mjTilt-Math.Floor(mjTilt)%360);
+            double VLoss = VLoss1 * w2 + VLoss2 * (1 - w2);
+
+
+            //旧版代码，夹角度数为小数时采用随机取整
+            ////dbmPt = EiRP－ HLoss(Dir,θ) － VLoss(Tilt, Φ)
+            //Hashtable paramTable = new Hashtable();
+            //paramTable["gainType"] = "KRE738819_902";
+            //paramTable["direction"] = 0; // 0对应HLoss
+            //paramTable["degree"] = (int)Math.Round(mjDir) % 360;
+            //double HLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+
+            //paramTable["direction"] = 1; // 1对应VLoss.
+            //paramTable["degree"] = (int)Math.Round(mjTilt) % 360;
+            //double VLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
 
             //旧版代码，从内存读取
             //AbstrGain abstrGain = GainFactory.GetabstractGain("KRE738819_902");
@@ -816,6 +843,7 @@ namespace LTE.InternalInterference
             //double VLoss = VAGain[(int)Math.Round(mjTilt) % 360];
 
             double dbmPt = EIRP - HLoss - VLoss - 2;
+
             return dbmPt;
         }
 

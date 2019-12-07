@@ -273,7 +273,7 @@ namespace LTE.MultiProcessController
                     if (this.rayLoc || this.rayAdj)
                     {
                         Console.WriteLine("完成！");
-                        if(this.rayLoc && ++procDoneNum== this.processNum)
+                        if(++procDoneNum== this.processNum)
                         {
                             this.Close();
                         }

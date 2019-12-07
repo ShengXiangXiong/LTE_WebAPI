@@ -74,7 +74,9 @@ namespace LTE.Calibration
 
             for (int i = 0; i < BigObj.Length; i++)
             {
-                BigObj[i] = ran.Next(850, 1250) * 0.01;
+                //BigObj[i] = ran.Next(850, 1250) * 0.01;
+                //BigObj[i] = ran.Next(-3250, 3250) * 0.01;
+                BigObj[i] = 0;
             }
             //调用Ave方法、Var方法求得随机数均值和方差
             double BigAvenum = Ave(BigObj);
@@ -89,7 +91,7 @@ namespace LTE.Calibration
 
             //写入文件
             //将100个随机数，均值，方差保存到文件“SourceData.txt”中
-            string Datapath = (@"BigSourceData.txt");
+            string Datapath = EA.basePath + @"BigSourceData.txt";
 
             FileStream fs = new FileStream(Datapath, FileMode.Create);
             StreamWriter sw = new StreamWriter(fs);
@@ -103,7 +105,7 @@ namespace LTE.Calibration
             sw.Write("大目标的随机数均值和方差分别是{0}和{1}", BigAvenum, BigVarnum);
             sw.Close();
 
-            string DatapathSma = (@"SmaSourceData.txt");
+            string DatapathSma = EA.basePath+@"SmaSourceData.txt";
 
 
             FileStream fsSmal = new FileStream(DatapathSma, FileMode.Create);

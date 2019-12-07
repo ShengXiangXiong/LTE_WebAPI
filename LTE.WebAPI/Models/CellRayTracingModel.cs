@@ -157,7 +157,7 @@ namespace LTE.WebAPI.Models
                 {
                     pa.pro = Process.Start(psi);
                     paList.Add(pa);
-                    pa.pro.WaitForExit();
+                    pa.pro.WaitForExit();  //----- 子进程入口
                     //子进程异常处理，防止父进程无限阻塞，Controller不能及时返回消息
                     if (pa.pro.ExitCode != 0)
                     {
