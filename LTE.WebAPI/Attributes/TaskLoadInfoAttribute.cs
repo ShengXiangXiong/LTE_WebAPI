@@ -22,57 +22,58 @@ namespace LTE.WebAPI.Attributes
         {
             bool layer = true;
             //string taskName = typeof(TaskType).GetEnumName(type);
-            taskName += "_";
+            string taskName1 = taskName;
+            taskName1 += "_";
             switch (type)
             {
                 case TaskType.CellCoverLayer:
                     var obj = (RefreshCellCoverLayerModel)actionContext.ActionArguments["layer"];
-                    taskName += obj.cellName;
+                    taskName1 += obj.cellName;
                     break;
                 case TaskType.AreaCoverLayer:
                     var obj1 = (RefreshAreaCoverLayerModel)actionContext.ActionArguments["layer"];
-                    taskName += String.Format("%_%_%_%", obj1.minLongitude, obj1.minLatitude, obj1.maxLongitude, obj1.maxLatitude);
+                    taskName1 += String.Format("%_%_%_%", obj1.minLongitude, obj1.minLatitude, obj1.maxLongitude, obj1.maxLatitude);
                     break;
                 case TaskType.AreaGSMLayer:
-                    taskName += "南京";
+                    taskName1 += "南京";
                     break;
                 case TaskType.CellCoverCompu:
                     var obj2 = (CellRayTracingModel)actionContext.ActionArguments["rt"];
-                    taskName += obj2.cellName;
+                    taskName1 += obj2.cellName;
                     layer = false;
                     break;
                 case TaskType.AreaCoverCompu:
                     var obj3 = (Area)actionContext.ActionArguments["area"];
                     layer = false;
-                    taskName += String.Format("%_%_%_%", obj3.minLongitude, obj3.minLatitude, obj3.maxLongitude, obj3.maxLatitude);
+                    taskName1 += String.Format("%_%_%_%", obj3.minLongitude, obj3.minLatitude, obj3.maxLongitude, obj3.maxLatitude);
                     break;
                 case TaskType.AreaInterference:
                     var obj4 = (AreaCoverDefectModel)actionContext.ActionArguments["defect"];
                     layer = false;
-                    taskName += String.Format("%_%_%_%", obj4.minLongitude, obj4.minLatitude, obj4.maxLongitude, obj4.maxLatitude);
+                    taskName1 += String.Format("%_%_%_%", obj4.minLongitude, obj4.minLatitude, obj4.maxLongitude, obj4.maxLatitude);
                     break;
                 case TaskType.RayRecordAdj:
                     var obj5 = (RayRecordAdjModel)actionContext.ActionArguments["ray"];
                     layer = false;
-                    taskName += obj5.cellName;
+                    taskName1 += obj5.cellName;
                     break;
                 case TaskType.RayRecordLoc:
                     var obj6 = (RayLocRecordModel)actionContext.ActionArguments["ray"];
                     layer = false;
-                    taskName += obj6.virsource;
+                    taskName1 += obj6.virsource;
                     break;
                 default:
                     break;
             }
-            LoadInfo.taskName.Value = taskName;
+            LoadInfo.taskName.Value = taskName1;
             //提前通知远程系统的初始化进度信息
             if (layer)
             {
-                GisClient.Result res = GisClient.ServiceApi.getGisLayerService().setLoadInfo(LoadInfo.UserId.Value, taskName);
+                GisClient.Result res = GisClient.ServiceApi.getGisLayerService().setLoadInfo(LoadInfo.UserId.Value, taskName1);
             }
             loadInfo.loadCreate();
-            //清空AOP的描述型字段值，否则它会一直保持，导致下一次请求带有上一次的描述值
-            taskName = "";
+            ////清空AOP的描述型字段值，否则它会一直保持，导致下一次请求带有上一次的描述值
+            //taskName = null;
         }
         public override void OnActionExecuted(HttpActionExecutedContext actionExecutedContext)
         {

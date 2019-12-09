@@ -166,8 +166,7 @@ namespace LTE.WebAPI.Models
                 {
                     if (item.calc().ok)
                     {
-                        loadInfo.cnt++;
-                        loadInfo.loadUpdate();
+                        loadInfo.loadHashAdd(1);
                     }
                     else
                     {

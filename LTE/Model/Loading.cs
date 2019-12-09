@@ -23,6 +23,11 @@ namespace LTE.Model
 
         private static IDatabase db = RedisHelper.getInstance().db;
 
+        public int getCnt()
+        {
+            return (int)db.HashGet(UserId.Value.ToString() + ":" + taskName.Value, "cnt");
+        }
+
         public void loadCreate()
         {
             db.SetAdd("Task:" + UserId.Value, taskName.Value);
@@ -40,10 +45,16 @@ namespace LTE.Model
         {
             db.HashSet(UserId.Value.ToString() + ":" + taskName.Value, "cnt", this.cnt);
         }
-        public void loadCountAdd()
+        public void loadHashAdd(int cnt)
         {
-            int tmp = (int)db.HashGet(UserId.Value.ToString() + ":" + taskName.Value, "count");
-            db.HashSet(UserId.Value.ToString() + ":" + taskName.Value, "count", this.count+tmp);
+            //db.HashSet(UserId.Value.ToString() + ":" + taskName.Value, "cnt", this.cnt);
+            db.HashIncrement(UserId.Value.ToString() + ":" + taskName.Value, "cnt", cnt);
+        }
+        public void loadCountAdd(int count)
+        {
+            //int tmp = (int)db.HashGet(UserId.Value.ToString() + ":" + taskName.Value, "count");
+            //db.HashSet(UserId.Value.ToString() + ":" + taskName.Value, "count", this.count+tmp);
+            db.HashIncrement(UserId.Value.ToString() + ":" + taskName.Value, "count", count);
         }
         public void loadFinish()
         {

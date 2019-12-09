@@ -161,7 +161,7 @@ namespace LTE.WebAPI.Models
                     //子进程异常处理，防止父进程无限阻塞，Controller不能及时返回消息
                     if (pa.pro.ExitCode != 0)
                     {
-                        return new Result(false, "多进程计算失败，请重试，错误代码：{0}",pa.pro.ExitCode );
+                        return new Result(false, "多进程计算失败，请重试，错误代码："+pa.pro.ExitCode );
                     }
                 }
                 catch (InvalidOperationException exception)
