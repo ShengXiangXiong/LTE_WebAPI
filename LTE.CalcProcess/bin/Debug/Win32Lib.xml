@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Win32Lib</name>
+    </assembly>
+    <members>
+        <member name="M:Win32Lib.MMF.CreateOrOpenMMF(System.String,System.Int32)">
+            <summary>
+            生成文件映射，失败返回IntPtr.Zero
+            </summary>
+            <param name="shareName"></param>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Win32Lib.ConsoleShow.AllocConsole">
+            <summary>
+            启动控制台
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Win32Lib.ConsoleShow.FreeConsole">
+            <summary>
+            释放控制台
+            </summary>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

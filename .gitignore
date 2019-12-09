@@ -25,12 +25,11 @@ LTE.WebAPI.xml
 x64/
 x86/
 bld/
-[Bb]in/
+[Bb]in/!*.dll
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
 
-!*.dll
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
