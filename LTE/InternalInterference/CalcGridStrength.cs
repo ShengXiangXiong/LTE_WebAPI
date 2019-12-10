@@ -72,151 +72,97 @@ namespace LTE.InternalInterference
         /// <returns>接收功率，路径长度</returns>
         public double[] calcRayStrength(double rayAzimuth, double rayInclination, ref List<NodeInfo> rays)
         {
-            //// 使用多场景校正系数 2019.3.26
             //if (this.scenNum > 0)
             //{
-            //    return calcRayStrengthAdj(rayAzimuth, rayInclination, ref rays);
+                // 直接使用多场景校正系数 
+                return calcRayStrengthAdj(rayAzimuth, rayInclination, ref rays);
             //}
             //else  // 使用界面输入的校正系数
             //{
+            //    //计算dbmPt
+            //    double[] ret = new double[3];
 
-            //只使用界面输入的校正系数 2019.11.6 Jin
-                //计算dbmPt
-                double[] ret = new double[3];
+            //    double distance = 0;
+            //    double reflectedR = 1;//反射系数
+            //    double diffrctedR = 1;//绕射系数
 
-                double distance = 0;
-                double reflectedR = 1;//反射系数
-                double diffrctedR = 1;//绕射系数
+            //    double amendCoeDis = cellInfo.directCoefficient;//直射校正系数 大东裕DB 0.341712610980973  公安局2 0.606110707653544
+            //    double amendCoeRef = cellInfo.reflectCoefficient;//反射校正系数
+            //    double amendCoeDif = cellInfo.diffracteCoefficient;//绕射校正系数
 
-                double amendCoeDis = cellInfo.directCoefficient;//直射校正系数 大东裕DB 0.341712610980973  公安局2 0.606110707653544
-                double amendCoeRef = cellInfo.reflectCoefficient;//反射校正系数
-                double amendCoeDif = cellInfo.diffracteCoefficient;//绕射校正系数
+            //    double nata = 0;
+            //    if (cellInfo.cellType == CellType.GSM1800)
+            //    {
+            //        //f(n) = 1805 + 0.2*(n－511) MHz
+            //        nata = 300.0 / (1805 + 0.2 * (cellInfo.frequncy - 511));
+            //    }
+            //    else
+            //    {
+            //        //f(n) = 935 + 0.2n MHz
+            //        nata = 300.0 / (935 + 0.2 * cellInfo.frequncy);
+            //    }
 
-                double nata = 0;
-                if (cellInfo.cellType == CellType.GSM1800)
-                {
-                    //f(n) = 1805 + 0.2*(n－511) MHz
-                    nata = 300.0 / (1805 + 0.2 * (cellInfo.frequncy - 511));
-                }
-                else
-                {
-                    //f(n) = 935 + 0.2n MHz
-                    nata = 300.0 / (935 + 0.2 * cellInfo.frequncy);
-                }
+            //    double dbmPt = calcDbmPt(rayAzimuth, rayInclination);  //定向
+            //    if (rays.Count > 0 && cellInfo.SourcePoint.Z < 1.1)
+            //        dbmPt = cellInfo.EIRP;
+            //    //double dbmPt = calcDbmPt(cellInfo.Azimuth, rayInclination);    //全向
 
-                double dbmPt = calcDbmPt(rayAzimuth, rayInclination);  //定向
-                if (rays.Count > 0 && cellInfo.SourcePoint.Z < 1.1)
-                    dbmPt = cellInfo.EIRP;
-                //double dbmPt = calcDbmPt(cellInfo.Azimuth, rayInclination);    //全向
+            //    double wPt = convertdbm2w(dbmPt);
 
-                double wPt = convertdbm2w(dbmPt);
+            //    int length = rays.Count;
+            //    NodeInfo ray;
 
-                int length = rays.Count;
-                NodeInfo ray;
+            //    for (int i = 0; i < length; i++)
+            //    {
+            //        ray = rays[i];
+            //        distance += ray.Distance;
+            //        if (ray.rayType == RayType.HReflection || ray.rayType == RayType.VReflection) //反射
+            //        {
+            //            //反射系数是平方后的结果？todo
+            //            // 弧度
+            //            ray.attenuation = reflectCoefficient(ray.Angle) * amendCoeRef; // 用于系数校正
+            //            reflectedR *= ray.attenuation;
 
-                for (int i = 0; i < length; i++)
-                {
-                    ray = rays[i];
-                    distance += ray.Distance;
-                    if (ray.rayType == RayType.HReflection || ray.rayType == RayType.VReflection) //反射
-                    {
-                        //反射系数是平方后的结果？todo
-                        // 弧度
-                        ray.attenuation = reflectCoefficient(ray.Angle) * amendCoeRef; // 用于系数校正
-                        reflectedR *= ray.attenuation;
+            //        }
+            //        else if (ray.rayType == RayType.HDiffraction || ray.rayType == RayType.VDiffraction) //绕射
+            //        {
+            //            ray.attenuation = reflectCoefficient(ray.Angle) * amendCoeDif;// 暂时使用计算反射系数的函数 代替计算绕射系数的函数
+            //            //ray.attenuation = diffractCoefficient(ray.Angle) * amendCoeDif; // 用于系数校正
+            //            diffrctedR *= ray.attenuation;
+            //        }
+            //        else
+            //            ray.attenuation = 1;
+            //        //透射另行计算
+            //    }
 
-                    }
-                    else if (ray.rayType == RayType.HDiffraction || ray.rayType == RayType.VDiffraction) //绕射
-                    {
-                        ray.attenuation = reflectCoefficient(ray.Angle) * amendCoeDif;// 暂时使用计算反射系数的函数 代替计算绕射系数的函数
-                        //ray.attenuation = diffractCoefficient(ray.Angle) * amendCoeDif; // 用于系数校正
-                        diffrctedR *= ray.attenuation;
-                    }
-                    else
-                        ray.attenuation = 1;
-                    //透射另行计算
-                }
-
-                double receivePwr = 0;
-                receivePwr = Math.Pow(nata / (4 * Math.PI), 2) * (wPt / Math.Pow(distance, (2 + amendCoeDis))) * Math.Pow(reflectedR, 2) * Math.Pow(diffrctedR, 2);
-                ret[0] = receivePwr;
-                ret[1] = distance;
-                ret[2] = wPt;
-                return ret;
+            //    double receivePwr = 0;
+            //    receivePwr = Math.Pow(nata / (4 * Math.PI), 2) * (wPt / Math.Pow(distance, (2 + amendCoeDis))) * Math.Pow(reflectedR, 2) * Math.Pow(diffrctedR, 2);
+            //    ret[0] = receivePwr;
+            //    ret[1] = distance;
+            //    ret[2] = wPt;
+            //    return ret;
             //}
         }
 
         // 多场景校正系数
         public double[] calcRayStrengthAdj(double rayAzimuth, double rayInclination, ref List<NodeInfo> rays)
         {
-            //计算dbmPt
-            double[] ret = new double[3];
-
-            double distance = 0;
-            double reflectedR = 1;//反射系数
-            double diffrctedR = 1;//绕射系数
-
-            double[,] coef = AdjCoeffHelper.getInstance().getCoeff(); 
-
-            double nata = 0;
-            if (cellInfo.cellType == CellType.GSM1800)
-            {
-                //f(n) = 1805 + 0.2*(n－511) MHz
-                nata = 300.0 / (1805 + 0.2 * (cellInfo.frequncy - 511));
-            }
-            else
-            {
-                //f(n) = 935 + 0.2n MHz
-                nata = 300.0 / (935 + 0.2 * cellInfo.frequncy);
-            }
-
+            //计算发射功率p0
             double dbmPt = calcDbmPt(rayAzimuth, rayInclination);  //定向
             if (rays.Count > 0 && cellInfo.SourcePoint.Z < 1.1)
                 dbmPt = cellInfo.EIRP;
-
             double wPt = convertdbm2w(dbmPt);
 
-            int length = rays.Count;
-            NodeInfo ray;
-            double[] scenDistance = new double[this.scenNum];
+            //获得校正系数矩阵
+            double[,] coef = AdjCoeffHelper.getInstance().getCoeff();
+            
+            //计算接收功率
+            RayInfo rayInfo = new RayInfo(rays, wPt);
+            rayInfo.calcRecePwrW(ref coef, this.scenNum, cellInfo.frequncy);
 
-            for (int i = 0; i < length; i++)
-            {
-                ray = rays[i];
-
-                // 当前射线经过每个场景的距离
-                string[] scenArr = ray.proportion.Split(';');
-                for (int j = 0; j < this.scenNum; j++)
-                    scenDistance[j] += Convert.ToDouble(scenArr[j]) * ray.Distance;
-
-                distance += ray.Distance;
-                if (ray.rayType == RayType.HReflection || ray.rayType == RayType.VReflection) //反射
-                {
-                    //反射系数是平方后的结果？todo
-                    // 弧度
-                    ray.attenuation = reflectCoefficient(ray.Angle) * coef[ray.endPointScen,1]; // 用于系数校正
-                    reflectedR *= ray.attenuation;
-
-                }
-                else if (ray.rayType == RayType.HDiffraction || ray.rayType == RayType.VDiffraction) //绕射
-                {
-                    ray.attenuation = reflectCoefficient(ray.Angle) * coef[ray.endPointScen, 2];//用反射系数暂时代替
-                    //ray.attenuation = diffractCoefficient(ray.Angle) * coef[ray.endPointScen, 2]; // 用于系数校正
-                    diffrctedR *= ray.attenuation;
-                }
-                else
-                    ray.attenuation = 1;
-                //透射另行计算
-            }
-
-            double amendDirSum = 0;
-            for (int j = 0; j < scenNum; j++)
-                amendDirSum += coef[j, 0] * (scenDistance[j] / distance);
-
-            double receivePwr = 0;
-            receivePwr = Math.Pow(nata / (4 * Math.PI), 2) * (wPt / Math.Pow(distance, (2 + amendDirSum))) * Math.Pow(reflectedR, 2) * Math.Pow(diffrctedR, 2);
-            ret[0] = receivePwr;
-            ret[1] = distance;
+            double[] ret = new double[3];
+            ret[0] = rayInfo.recePwrW;
+            ret[1] = rayInfo.distance;
             ret[2] = wPt;
             return ret;
         }

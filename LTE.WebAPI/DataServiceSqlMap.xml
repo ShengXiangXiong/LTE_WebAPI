@@ -903,24 +903,6 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     order by tbBuilding.BuildingID, tbBuildingVertexOriginal.VIndex
   </select>
 
-	<!--地面栅格相关 ，by JinHJ-->
-	<select id="getGroundGridsCenterByArea" parameterClass="HashTable">
-		select GXID, GYID, CX, CY, Dem
-		from tbGridDem
-		where CX between $minGXID$ and $maxGXID$
-		and CY between $minGYID$ and $maxGYID$
-	</select>
-
-	<select id="getGroudGridsByArea" parameterClass="HashTable">
-		select * from tbGridDem where CX between $minGX$ and $maxGX$
-		and CY between $minGY$ and $maxGY$
-	</select>
-
-	<delete id="DeleteGroudGridsByArea" parameterClass="HashTable" timeout="600">
-		delete from tbGridDem where CX between $minGX$ and $maxGX$
-		and CY between $minGY$ and $maxGY$
-	</delete>
-
   <select id="getAdjCoeff1" parameterClass="">
     select max(Scene) from tbAccelerateGridScene
   </select>
@@ -1348,6 +1330,18 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		delete from tbGridDem where CX between $minGX$ and $maxGX$
 		and CY between $minGY$ and $maxGY$
 	</delete>
+
+	<!--获得RRU经纬度在最大范围内的小区名称-->
+	<select id="getCellsInMaxArea" parameterClass="">
+		SELECT CellName
+		FROM CELL
+		where Longitude between (select AreaMinLong from tbGridRange) and (select AreaMaxLong from tbGridRange) and Latitude between (select AreaMinLat from tbGridRange) and (select AreaMaxLat from tbGridRange)
+	</select>
+
+	<select id="getmaxRange" parameterClass="">
+		SELECT TOP (1) *
+		FROM tbGridRange
+	</select>
 
   </statements>
 </sqlMap>

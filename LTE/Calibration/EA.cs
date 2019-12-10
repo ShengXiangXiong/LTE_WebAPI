@@ -1567,16 +1567,24 @@ namespace LTE.Calibration
             System.Data.DataTable dtable = new System.Data.DataTable();
             dtable.Columns.Add("Scene");
             dtable.Columns.Add("DirectCoefficient");
-            dtable.Columns.Add("ReflectCoefficient");
-            dtable.Columns.Add("DiffracteCoefficient");
+            dtable.Columns.Add("ReflectCoefficientA");
+            dtable.Columns.Add("ReflectCoefficientB");
+            dtable.Columns.Add("ReflectCoefficientC");
+            dtable.Columns.Add("DiffracteCoefficientA");
+            dtable.Columns.Add("DiffracteCoefficientB");
+            dtable.Columns.Add("DiffracteCoefficientC");
 
             for (int j = 0; j < scenNum; j++)
             {
                 System.Data.DataRow thisrow = dtable.NewRow();
                 thisrow["Scene"] = j;
                 thisrow["DirectCoefficient"] = Best.gen[j, 0];
-                thisrow["ReflectCoefficient"] = Best.gen[j, 1];
-                thisrow["DiffracteCoefficient"] = Best.gen[j, 2];
+                thisrow["ReflectCoefficientA"] = Best.gen[j, 1];
+                thisrow["ReflectCoefficientB"] = Best.gen[j, 2];
+                thisrow["ReflectCoefficientC"] = Best.gen[j, 3];
+                thisrow["DiffracteCoefficientA"] = Best.gen[j, 4];
+                thisrow["DiffracteCoefficientB"] = Best.gen[j, 5];
+                thisrow["DiffracteCoefficientC"] = Best.gen[j, 6];
                 dtable.Rows.Add(thisrow);
             }
 

@@ -121,34 +121,6 @@ namespace LTE.InternalInterference
 
                 double p0 = traj[key].emitPwrW;
 
-                ////规则库,不具有通用性，不能总改善
-                //if (guijiLeixingTongJi[0] == 0 && guijiLeixingTongJi[1] == 1 && guijiLeixingTongJi[2] == 1 && p0 > 100)
-                //{
-                //    p0 = p0 / 10;
-                //}
-                //else if (guijiLeixingTongJi[0] == 0 && guijiLeixingTongJi[1] == 1 && guijiLeixingTongJi[2] == 1 && p0 < 1)
-                //{
-                //    p0 = p0 * 10;
-
-                //}
-                //else if (guijiLeixingTongJi[0] == 0 && guijiLeixingTongJi[1] == 1 && guijiLeixingTongJi[2] == 0 && p0 > 100)
-                //{
-                //    p0 = p0 / 10;
-                //}
-                //else if (guijiLeixingTongJi[0] == 0 && guijiLeixingTongJi[1] == 0 && guijiLeixingTongJi[2] == 1 && p0 > 100)
-                //{
-                //    p0 = p0 / 100;
-                //}
-                //else if (guijiLeixingTongJi[0] == 1 && guijiLeixingTongJi[1] == 0 && guijiLeixingTongJi[2] == 0 && p0 < 1)
-                //{
-                //    p0 = p0 * 10;
-                //}
-                //else
-                //{
-                //    p0 = p0 * 1;
-                //}
-
-
                 double receivePwr = Math.Pow(nata / (4 * Math.PI), 2) * (p0 / Math.Pow(distance, (2 + amendDirSum))) * Math.Pow(reflectedR, 2) * Math.Pow(diffrctedR, 2);
 
                 double tmpDBM = convertw2dbm(receivePwr);
