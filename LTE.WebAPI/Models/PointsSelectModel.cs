@@ -33,12 +33,50 @@ namespace LTE.WebAPI.Models
             tb.Columns.Add("y");
             tb.Columns.Add("ReceivePW");
             tb.Columns.Add("Azimuth");
+            tb.Columns.Add("Distance");
             reset.Columns.Add("CI");
             reset.Columns.Add("x");
             reset.Columns.Add("y");
             reset.Columns.Add("ReceivePW");
         }
 
+        private bool TestDis(DataTable dtinfo, ref double minD, ref double maxD, ref double avgD, ref double areax, ref double areay)
+        {
+            if (dtinfo == null || dtinfo.Rows.Count < 1)
+            {
+                Debug.WriteLine("传入参数不正确");
+                return false;
+            }
+            Hashtable ht = new Hashtable();
+            ht["BtsName"] = this.virname;
+            DataTable tbcell = IbatisHelper.ExecuteQueryForDataTable("GettbSource", ht);
+            if (tbcell.Rows[0]["x"] == DBNull.Value || tbcell.Rows[0]["y"] == DBNull.Value)
+            {
+                Debug.WriteLine("未找到对应的小区地理信息");
+                return false;
+            }
+            double endx = Convert.ToDouble(tbcell.Rows[0]["x"]);
+            double endy = Convert.ToDouble(tbcell.Rows[0]["y"]);
+            double sum = 0;
+            double minx = double.MaxValue, miny = double.MaxValue, maxx = double.MinValue, maxy = double.MinValue;
+            for (int i = 0; i < dtinfo.Rows.Count; i++)
+            {
+                double x = Convert.ToInt32(dtinfo.Rows[i]["x"]);
+                double y = Convert.ToInt32(dtinfo.Rows[i]["y"]);
+                if (x < minx) minx = x;
+                if (x > maxx) maxx = x;
+                if (y < miny) miny = y;
+                if (y > maxy) maxy = y;
+                double dis = distanceXY(x, y, endx, endy);
+                if (dis < minD) minD = dis;
+                if (dis > maxD) maxD = dis;
+                sum += dis;
+            }
+            areax = (maxx - minx);
+            areay = (maxy - miny);
+            avgD = sum / dtinfo.Rows.Count;
+            return true;
+        }
 
         /// <summary>
         /// 选点程序
@@ -63,9 +101,15 @@ namespace LTE.WebAPI.Models
                 {
                     Debug.WriteLine("进入信息填写阶段》》》");
                     //暂时试试用干扰源计算方位角的结果，如果用干扰源计算方位角不行，则说明不行
-                    if (CompleteAzimuthVir(secRet) && tb.Rows.Count == this.pointNum)
+                    if (CompleteAzimuth(secRet) && tb.Rows.Count == this.pointNum)
                     {
-                        //
+
+                        double minD = double.MaxValue, maxD = double.MinValue, avgD = 0, areax = 0, areay = 0;
+                        if (TestDis(tb, ref minD, ref maxD, ref avgD, ref areax, ref areay))
+                        {
+                            Debug.WriteLine("干扰源的距离平均：" + avgD + "  与干扰源的最远距离" + maxD + "  与干扰源的最近距离" + minD + "  包围盒长" + areax + "  包围盒宽" + areay);
+                        }
+
                         WriteDataToBase(100);
                         return new Result { ok = true, msg = "成功写入数据库", code = "1" };;
                     }
@@ -129,7 +173,6 @@ namespace LTE.WebAPI.Models
             double endx = Convert.ToDouble(tbcell.Rows[0]["x"]);
             double endy = Convert.ToDouble(tbcell.Rows[0]["y"]);
             Point end = new Point(endx, endy, 0);
-
             tb.Clear();
             for (int i = 0; i < dtinfo.Rows.Count; i++)
             {
@@ -146,6 +189,44 @@ namespace LTE.WebAPI.Models
                 thisrow["ReceivePW"] = dtinfo.Rows[i]["ReceivePW"];
                 thisrow["CI"] = dtinfo.Rows[i]["CI"];
                 thisrow["Azimuth"] = azimuth;
+                tb.Rows.Add(thisrow);
+            }
+            return true;
+        }
+
+
+        private Boolean CompleteAzimuth(DataTable dtinfo)
+        {
+            tb.Clear();
+            double avgx = 0, avgy = 0;
+            for (int i = 0; i < dtinfo.Rows.Count; i++)
+            {
+                double x = Convert.ToInt32(dtinfo.Rows[i]["x"]);
+                double y = Convert.ToInt32(dtinfo.Rows[i]["y"]);
+                avgx += x;
+                avgy += y;
+            }
+            avgx /= dtinfo.Rows.Count;
+            avgy /= dtinfo.Rows.Count;
+            Geometric.Point endavg = new Geometric.Point(avgx, avgy, 0);
+            for (int i = 0; i < dtinfo.Rows.Count; i++)
+            {
+                //Debug.WriteLine(i);
+                double x = Convert.ToInt32(dtinfo.Rows[i]["x"]);
+                double y = Convert.ToInt32(dtinfo.Rows[i]["y"]);
+                Geometric.Point start = new Geometric.Point(x, y, 0);
+                
+                double aziavg = LTE.Geometric.GeometricUtilities.getPolarCoord(start, endavg).theta / Math.PI * 180;
+                aziavg = GeometricUtilities.ConvertGeometricArithmeticAngle(aziavg + 1);
+                Debug.WriteLine("路测中点计算角度:" + aziavg);
+                DataRow thisrow = tb.NewRow();
+                thisrow["fromName"] = this.virname;
+                thisrow["x"] = x;
+                thisrow["y"] = y;
+                thisrow["ReceivePW"] = dtinfo.Rows[i]["ReceivePW"];
+                thisrow["CI"] = dtinfo.Rows[i]["CI"];
+                thisrow["Azimuth"] = aziavg;
+                thisrow["Distance"] = distanceXY(start.X, start.Y, endavg.X, endavg.Y) + 300;
                 tb.Rows.Add(thisrow);
             }
             return true;

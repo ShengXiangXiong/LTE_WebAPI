@@ -18,9 +18,10 @@ namespace LTE.WebAPI.Controllers
         /// <returns></returns>
         [HttpPost]
         [ApiAuthorize(Roles = "admin")]
-        public Result GetSeletePoints([FromBody]PointsSelectModel rt)
+        public Result SelectPoints([FromBody]PointsSelectModel rt)
         {
-            return rt.GetPoints();
+            Result res = rt.GetPoints();
+            return res;
         }
         // GET api/<controller>
         public IEnumerable<string> Get()

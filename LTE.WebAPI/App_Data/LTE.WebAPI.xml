@@ -581,7 +581,7 @@
             <param name="user">用户信息</param>
             <returns>失败时返回错误提示</returns>
         </member>
-        <member name="M:LTE.WebAPI.Controllers.PointsSelectController.GetSeletePoints(LTE.WebAPI.Models.PointsSelectModel)">
+        <member name="M:LTE.WebAPI.Controllers.PointsSelectController.SelectPoints(LTE.WebAPI.Models.PointsSelectModel)">
             <summary>
             
             </summary>
@@ -1033,7 +1033,7 @@
             菲涅尔绕射校正系数
             </summary>
         </member>
-        <member name="M:LTE.WebAPI.Models.RayLocRecordModel.RecordRayLoc">
+        <member name="M:LTE.WebAPI.Models.RayLocRecordModel.RecordRayLoc(System.Int32)">
             <summary>
             计算射线
             </summary>

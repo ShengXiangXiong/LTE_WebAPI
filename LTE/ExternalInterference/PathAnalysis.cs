@@ -10,6 +10,7 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using LTE.ExternalInterference.Struct;
+using LTE.Utils;
 namespace LTE.ExternalInterference
 {
     public class PathAnalysis
@@ -23,10 +24,15 @@ namespace LTE.ExternalInterference
         /// 存储栅格-路径起点CI信息
         /// </summary>
         private Dictionary<string, HashSet<String>> grid_from;
+        private int max_from;//栅格覆盖的最大起点数
         private const int ggridsize = 30;//射线映射栅格设置的栅格长宽大小
-        private const int ggridVsize = 3;
+        private const int ggridVsize = 30;
 
-        private DataTable tbsourceInfo;
+       
+        private double nata = 300.0 / (1805 + 0.2 * (63 - 511));
+        private int kCons = 3;
+        private Dictionary<string, double> cellPwr = new Dictionary<string, double>();//记录接收功率从大到小的路测点信息
+        List<string> VitalMP;//接收功率从大到小的路测点cellid
 
         /// <summary>
         /// 构造函数
@@ -41,62 +47,68 @@ namespace LTE.ExternalInterference
             grid_pwr = new Dictionary<string, double>();
             grid_pathloss = new Dictionary<string, double>();
             grid_from = new Dictionary<string, HashSet<string>>();
+            max_from = int.MinValue;
+
             Hashtable ht = new Hashtable();
             ht["fromName"] = this.virname;
-            tbsourceInfo = IbatisHelper.ExecuteQueryForDataTable("GetSelectedPoint", ht);
+            DataTable tbsourceInfo = IbatisHelper.ExecuteQueryForDataTable("GetSelectedPoint", ht);
+            Dictionary<string, double> cellPwrtmp = new Dictionary<string, double>();
+            double curMax = double.MinValue, nextMax = double.MinValue;
+            //Debug.WriteLine("源点信息");
+            foreach (DataRow tb in tbsourceInfo.Rows)
+            {
+                string cellid = Convert.ToString(tb["CI"]);
+                double pwr = Convert.ToDouble(tb["ReceivePW"]);//单位是w
+                cellPwrtmp.Add(cellid, pwr);
+                if (curMax < pwr)
+                {
+                    curMax = pwr;
+                }
+            }
+            VitalMP = new List<string>();
+            for (int i = 0; i < cellPwrtmp.Count; i++)
+            {
+                nextMax = double.MinValue;
+                bool isfind = false;
+                foreach (KeyValuePair<string, double> kvp in cellPwrtmp)
+                {
+                    if (!isfind && kvp.Value == curMax)
+                    {
+                        VitalMP.Add(kvp.Key);
+                        cellPwr.Add(kvp.Key, kvp.Value);
+                    }
+                    else if (isfind && kvp.Value == curMax)
+                    {
+                        if (++i < cellPwr.Count)//重复的情况
+                        {
+                            VitalMP.Add(kvp.Key);
+                            cellPwr.Add(kvp.Key, kvp.Value);
+                        }
+                    }
+                    else if (kvp.Value < curMax && kvp.Value > nextMax)
+                    {
+                        nextMax = kvp.Value;
+                    }
+                }
+                curMax = nextMax;
+            }
         }
 
 
         public ResultRecord StartAnalysis(double ratioAP, double ratioP, double ratioAPW)
         {
+            
             Clear();
             DateTime t1, t2, t3, t4;
             t1 = DateTime.Now;
 
-            //DataHandler();
-            List<PathInfo> paths = this.GetPathByD();
-
-            if (paths == null || paths.Count == 0)
-            {
-                Debug.WriteLine("tbRayLoc表中没有数据");
-                return new ResultRecord(false,"","",0, "没有路径数据");
-            }
-
-            //Debug.WriteLine(paths.Count);
-            t2 = DateTime.Now;
-            //映射栅格
-            int mod = 10000;
-            int alllen = paths.Count;
-
-            for (int i = 0; i < alllen; i += mod)
-            {
-                try
-                {
-                    if (i + mod > alllen)
-                    {
-                        this.NewUpdatPathToGridXY(paths, i, alllen);
-                    }
-                    else
-                    {
-                        this.NewUpdatPathToGridXY(paths, i, i + mod);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine("已执行：" + i + "   发生错误：" + e.Message);
-                }
-                //GC.Collect();
-
-            }
-
-            //this.PathToGrid3D();
+            DataHandler(3);
+           
             t3 = DateTime.Now;
 
             Debug.WriteLine("y原始栅格大小" + this.togrid.Count);
-            FiltrateGrid();//过滤不合理的togrid栅格
-            Debug.WriteLine("删除发射源周围栅格后栅格大小 " + this.togrid.Count);
 
-            this.GetGrid_From(togrid);
+            this.GetGrid_From(togrid,10);
 
             // this.BalanceFiltPara(1000, 500, 80, 0.8, 0.80, 200);
 
@@ -105,9 +117,9 @@ namespace LTE.ExternalInterference
             AverageGridPathloss(600);
             this.MergeGridPwr(this.togrid);
 
-            CompareWithAim();
+            //CompareWithAim();
             Debug.WriteLine("过滤发射源周围栅格后栅格大小 " + this.togrid.Count);
-            string aimGrid = EvaluateCombineAll(togrid, ratioAP, ratioP, ratioAPW);
+            string aimGrid = EvaluateCombineAll(togrid, ratioAP, ratioP, ratioAPW,10);
             //string aimGrid = EvaluateCombineALL(togrid, ratioAP, ratioP, ratioAPW);//得到当前占比最大的栅格
             if (aimGrid == null || aimGrid == "")
             {
@@ -116,10 +128,9 @@ namespace LTE.ExternalInterference
             }
             //TestPre();
             Debug.WriteLine("AimGrid: " + aimGrid);
+            t4 = DateTime.Now;
+            Debug.WriteLine("计算时长: " + (t4-t1));
             
-            //presentRacing(togrid[aimGrid], 1000);
-            // Debug.WriteLine("");
-            //Clear();
             return showResult(aimGrid);
         }
 
@@ -169,6 +180,7 @@ namespace LTE.ExternalInterference
         }
 
         /*-----------------------------------------------获取原始路径数据--------------------------------------------------------------------*/
+        #region 三维射线路径映射
         public List<PathInfo> GetPathByD()
         {
             DateTime t1, t2, t3;
@@ -184,7 +196,7 @@ namespace LTE.ExternalInterference
             t2 = DateTime.Now;
 
             Debug.WriteLine(pathTemp.Rows.Count);
-            double nata = 300.0 / (1805 + 0.2 * (893 - 511));
+            
 
             double reflectedR = 1;//反射系数
             double diffrctedR = 1;//绕射系数
@@ -192,13 +204,7 @@ namespace LTE.ExternalInterference
             //获取tbsource 数据,存到字典 cellPwr 中
 
             //DataTable tbsourcePwr = IbatisHelper.ExecuteQueryForDataTable("GetSelectedPoint", ht);
-            Dictionary<string, double> cellPwr = new Dictionary<string, double>();
-            foreach (DataRow tb in tbsourceInfo.Rows)
-            {
-                string cellid = Convert.ToString(tb["CI"]);
-                double pwr = Convert.ToDouble(tb["ReceivePW"]);//单位是w
-                cellPwr.Add(cellid, pwr);
-            }
+            
 
             //用于记录反推接收功率
             double distance = 0;
@@ -281,32 +287,74 @@ namespace LTE.ExternalInterference
         /// <summary>
         /// 分批读取数据库数据并建立索引
         /// </summary>
-        private void DataHandler()
+        //private void DataHandler()
+        //{
+        //    //获取该virsources对应的反射点Cellid
+        //    DateTime t1, t2, t3;
+
+        //    foreach (DataRow tb in tbsourceInfo.Rows)
+        //    {
+        //        t1 = DateTime.Now;
+        //        int cellid = Convert.ToInt32(tb["CI"]);
+        //        double pwr = Convert.ToDouble(tb["ReceivePW"]);
+        //        //对于每一个cellid，获取射线datatable,进行读取和映射处理
+        //        List<PathInfo> curpaths = GetPathByBatch(cellid, pwr);
+        //        t2 = DateTime.Now;
+        //        int mod = 10000;
+        //        int alllen = curpaths.Count;
+        //        for (int i = 0; i < alllen; i += mod)
+        //        {
+        //            try
+        //            {
+        //                if (i + mod > alllen)
+        //                {
+        //                    this.NewUpdatPathToGridXY(curpaths, i, alllen);
+        //                }
+        //                else
+        //                {
+        //                    this.NewUpdatPathToGridXY(curpaths, i, i + mod);
+        //                }
+        //            }
+        //            catch (Exception e)
+        //            {
+        //                Debug.WriteLine("已执行：" + i + "   发生错误：" + e.Message);
+        //            }
+
+        //        }
+        //        curpaths.Clear();
+        //        t3 = DateTime.Now;
+        //        Debug.WriteLine("批次CI=:" + cellid + "   读取处理用时：" + (t2 - t1) + "   建立索引用时：" + (t3 - t2));
+        //    }
+
+        //}
+
+        private void DataHandler(int k)
         {
             //获取该virsources对应的反射点Cellid
             DateTime t1, t2, t3;
-
-            foreach (DataRow tb in tbsourceInfo.Rows)
+            
+            //对前k个，读取的数据按照
+            for (int i = 0; i < k; i++)
             {
                 t1 = DateTime.Now;
-                int cellid = Convert.ToInt32(tb["CI"]);
-                double pwr = Convert.ToDouble(tb["ReceivePW"]);
+                int cellid = Convert.ToInt32(VitalMP[i]);
+                double pwr = cellPwr[VitalMP[i]];
                 //对于每一个cellid，获取射线datatable,进行读取和映射处理
                 List<PathInfo> curpaths = GetPathByBatch(cellid, pwr);
                 t2 = DateTime.Now;
                 int mod = 10000;
                 int alllen = curpaths.Count;
-                for (int i = 0; i < alllen; i += mod)
+                for (int j = 0; j < alllen; j += mod)
                 {
                     try
                     {
-                        if (i + mod > alllen)
+                        if (j + mod > alllen)
                         {
-                            this.NewUpdatPathToGridXY(curpaths, i, alllen);
+                            this.NewUpdatPathToGridXYZ(curpaths, j, alllen);
                         }
                         else
                         {
-                            this.NewUpdatPathToGridXY(curpaths, i, i + mod);
+                            this.NewUpdatPathToGridXYZ(curpaths, j, j + mod);
                         }
                     }
                     catch (Exception e)
@@ -319,7 +367,39 @@ namespace LTE.ExternalInterference
                 t3 = DateTime.Now;
                 Debug.WriteLine("批次CI=:" + cellid + "   读取处理用时：" + (t2 - t1) + "   建立索引用时：" + (t3 - t2));
             }
+            for (int i = k; i < VitalMP.Count; i++)
+            {
+                t1 = DateTime.Now;
+                int cellid = Convert.ToInt32(VitalMP[i]);
+                double pwr = cellPwr[VitalMP[i]];
+                //对于每一个cellid，获取射线datatable,进行读取和映射处理
+                List<PathInfo> curpaths = GetPathByBatch(cellid, pwr);
+                t2 = DateTime.Now;
+                int mod = 10000;
+                int alllen = curpaths.Count;
+                for (int j = 0; j < alllen; j += mod)
+                {
+                    try
+                    {
+                        if (j + mod > alllen)
+                        {
+                            this.NewUpdatPathToGridXYZUV(curpaths, j, alllen);
+                        }
+                        else
+                        {
+                            this.NewUpdatPathToGridXYZUV(curpaths, j, j + mod);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine("已执行：" + i + "   发生错误：" + e.Message);
+                    }
 
+                }
+                curpaths.Clear();
+                t3 = DateTime.Now;
+                Debug.WriteLine("批次CI=:" + cellid + "   读取处理用时：" + (t2 - t1) + "   建立索引用时：" + (t3 - t2));
+            }
         }
         public List<PathInfo> GetPathByBatch(int ci, double pwr)
         {
@@ -336,7 +416,7 @@ namespace LTE.ExternalInterference
             t2 = DateTime.Now;
 
             Debug.WriteLine(pathTemp.Rows.Count);
-            double nata = 300.0 / (1805 + 0.2 * (893 - 511));
+           
 
             double reflectedR = 1;//反射系数
             double diffrctedR = 1;//绕射系数
@@ -370,6 +450,8 @@ namespace LTE.ExternalInterference
                 rayType = Convert.ToInt16(pathTemp.Rows[i]["rayType"].ToString());//路径类型
 
                 PathInfo path = new PathInfo(cellid, trajID, rayLevel, rayStartPointX, rayStartPointY, rayStartPointZ, rayEndPointX, rayEndPointY, rayEndPointZ, rayType);
+
+                //计算功率
                 if (rayLevel == 0)
                 {
                     path.sourceEmit = pwr;
@@ -418,14 +500,17 @@ namespace LTE.ExternalInterference
             Debug.WriteLine(String.Format("读取数据库：{0}s, 处理数据：{1}", t2 - t1, t3 - t2));
             return raypath;
         }
+        #endregion
 
         /*-----------------------------------------------建立索引--------------------------------------------------------------------*/
+        #region 建立索引
         #region 修改内存版本
         public void NewPathToGrid(List<PathInfo> paths, int li, int hi)
         {
             Grid3D grid3d = new Grid3D();
             Point tmp = new Point();
             Dictionary<string, List<GridInfo>> curgrid = new Dictionary<string, List<GridInfo>>();
+            
             for (int i = li; i < hi; i++)
             {
                 bool SminE = true;//起点x坐标小于终点x坐标，则为true
@@ -446,7 +531,10 @@ namespace LTE.ExternalInterference
                 if (n == 0)
                 {
                     //将大地坐标转为栅格坐标
-                    GridHelper.getInstance().PointXYZGrid(paths[i].rayStartPoint, ref grid3d, ggridsize, ggridVsize);
+                    if(!GridHelper.getInstance().PointXYZGrid(paths[i].rayStartPoint, ref grid3d, ggridsize, ggridVsize))
+                    {
+                        continue;
+                    }
                     string key = String.Format("{0},{1},{2}", grid3d.gxid, grid3d.gyid, grid3d.gzid);
 
                     //存到字典中
@@ -493,8 +581,12 @@ namespace LTE.ExternalInterference
                     tmp.Y = yid;
                     tmp.Z = zid;
 
-                    GridHelper.getInstance().PointXYZGrid(tmp, ref grid3d, ggridsize, ggridVsize);
+                    if(!GridHelper.getInstance().PointXYZGrid(tmp, ref grid3d, ggridsize, ggridVsize))
+                    {
+                        continue;
+                    }
                     string key = String.Format("{0},{1},{2}", grid3d.gxid, grid3d.gyid, grid3d.gzid);
+                    //因为
                     double distance = Math.Sqrt(Math.Pow(r * ggridsize, 2) + Math.Pow(r * ggridsize * paths[i].k1, 2) + Math.Pow(r * ggridVsize * paths[i].k2, 2)) + paths[i].distance;
 
 
@@ -509,7 +601,7 @@ namespace LTE.ExternalInterference
                     {
                         if (paths[i].distance < 0.1)//如果为第一个栅格，则直接赋值当前路段接收功率
                         {
-                            receivePwr = emit;
+                            receivePwr = emit / (Math.Pow(nata / (4 * Math.PI), 2))  * Math.Pow(distance, 2);
                         }
                         else
                         {
@@ -579,7 +671,10 @@ namespace LTE.ExternalInterference
                 {
                     //将大地坐标转为栅格坐标
                     //paths[i].rayStartPoint.Z = 0;
-                    GridHelper.getInstance().PointXYZGrid(paths[i].rayStartPoint, ref grid3d, ggridsize, ggridVsize);
+                    if(!GridHelper.getInstance().PointXYZGrid(paths[i].rayStartPoint, ref grid3d, ggridsize, ggridVsize))
+                    {
+                        continue;
+                    }
                     string key = String.Format("{0},{1},{2}", grid3d.gxid, grid3d.gyid, 0);
 
                     //存到字典中
@@ -627,7 +722,10 @@ namespace LTE.ExternalInterference
                     tmp.Y = yid;
                     tmp.Z = zid;
 
-                    GridHelper.getInstance().PointXYZGrid(tmp, ref grid3d, ggridsize, ggridVsize);
+                    if(!GridHelper.getInstance().PointXYZGrid(tmp, ref grid3d, ggridsize, ggridVsize))
+                    {
+                        continue;
+                    }
                     string key = String.Format("{0},{1},{2}", grid3d.gxid, grid3d.gyid, 0);
                     double distance = Math.Sqrt(Math.Pow(r * ggridsize, 2) + Math.Pow(r * ggridsize * paths[i].k1, 2) + Math.Pow(r * ggridVsize * paths[i].k2, 2)) + paths[i].distance;
 
@@ -708,7 +806,7 @@ namespace LTE.ExternalInterference
             Grid3D grid3d = new Grid3D();
             Point tmp = new Point();
             Dictionary<string, List<GridInfo>> curgrid = new Dictionary<string, List<GridInfo>>();
-
+            
             for (int i = li; i < hi; i++)
             {
                 bool isAxisX = true;//起点x坐标小于终点x坐标，则为true
@@ -729,7 +827,14 @@ namespace LTE.ExternalInterference
                 if (Math.Abs(k) > 1)
                 {
                     isAxisX = false;
-                    if (paths[i].rayEndPoint.Y - paths[i].rayStartPoint.Y < 0) dir = -1;
+                    if (paths[i].rayEndPoint.Y - paths[i].rayStartPoint.Y < 0)
+                    {
+                        dir = -1;
+                    }
+                    else
+                    {
+                        dir = 1;
+                    }
                     n = (int)Math.Abs(paths[i].rayEndPoint.Y - paths[i].rayStartPoint.Y) / ggridsize;
                 }
 
@@ -737,7 +842,10 @@ namespace LTE.ExternalInterference
                 {
                     //将大地坐标转为栅格坐标
                     //paths[i].rayStartPoint.Z = 0;
-                    GridHelper.getInstance().PointXYZGrid(paths[i].rayStartPoint, ref grid3d, ggridsize, ggridVsize);
+                    if(!GridHelper.getInstance().PointXYZGrid(paths[i].rayStartPoint, ref grid3d, ggridsize, ggridVsize))
+                    {
+                        continue;
+                    }
                     string key = String.Format("{0},{1},{2}", grid3d.gxid, grid3d.gyid, 0);
 
                     //存到字典中
@@ -788,7 +896,10 @@ namespace LTE.ExternalInterference
                     tmp.Y = yid;
                     tmp.Z = zid;
 
-                    GridHelper.getInstance().PointXYZGrid(tmp, ref grid3d, ggridsize, ggridVsize);
+                    if(!GridHelper.getInstance().PointXYZGrid(tmp, ref grid3d, ggridsize, ggridVsize))
+                    {
+                        continue;
+                    }
                     string key = String.Format("{0},{1},{2}", grid3d.gxid, grid3d.gyid, 0);
                     double distance = Math.Sqrt(Math.Pow(r * ggridsize, 2) + Math.Pow(r * ggridsize * paths[i].k1, 2) + Math.Pow(r * ggridVsize * paths[i].k2, 2)) + paths[i].distance;
 
@@ -804,7 +915,7 @@ namespace LTE.ExternalInterference
                     {
                         if (paths[i].distance < 0.1)//如果为第一个栅格，则直接赋值当前路段接收功率
                         {
-                            receivePwr = emit;
+                            receivePwr = emit / (Math.Pow(nata / (4 * Math.PI), 2)) * Math.Pow(distance, 2);
                         }
                         else
                         {
@@ -857,7 +968,383 @@ namespace LTE.ExternalInterference
             return;
         }
 
+
+        public void NewUpdatPathToGridXYZ(List<PathInfo> paths, int li, int hi)
+        {
+            Grid3D grid3d = new Grid3D();
+            Point tmp = new Point();
+            Dictionary<string, List<GridInfo>> curgrid = new Dictionary<string, List<GridInfo>>();
+            
+            for (int i = li; i < hi; i++)
+            {
+                if (i % 10000 == 0)
+                {
+                    Debug.WriteLine("已执行" + i);
+                }
+                bool isAxisX = true;//起点x坐标小于终点x坐标，则为true
+                int dir = 1;
+                if (paths[i].rayEndPoint.X - paths[i].rayStartPoint.X < 0) dir = -1;
+
+                //double emitDbm =  paths[i].emit;
+                //double emit = Math.Pow(10, emitDbm / 10 - 3);
+
+                double sourceEmit = paths[i].sourceEmit;//反向发射源的功率
+                double emit = paths[i].emit; //当前路段的接收功率
+                string CellID = paths[i].CellID;
+                int trajID = paths[i].trajID;
+                int rayLevel = paths[i].rayLevel;
+                int rayType = paths[i].rayType;
+                double k = paths[i].k1;
+                int n = (int)Math.Abs(paths[i].rayEndPoint.X - paths[i].rayStartPoint.X) / ggridsize;//每段路径分成的栅格小段
+                if (Math.Abs(k) > 1)
+                {
+                    isAxisX = false;
+                    if (paths[i].rayEndPoint.Y - paths[i].rayStartPoint.Y < 0) dir = -1;
+                    n = (int)Math.Abs(paths[i].rayEndPoint.Y - paths[i].rayStartPoint.Y) / ggridsize;
+                }
+
+                if (n == 0)
+                {
+                    //将大地坐标转为栅格坐标
+                    //paths[i].rayStartPoint.Z = 0;
+                    if(!GridHelper.getInstance().PointXYZGrid(paths[i].rayStartPoint, ref grid3d, ggridsize, ggridVsize))
+                    {
+                        continue;
+                    }
+                    string key = String.Format("{0},{1},{2}", grid3d.gxid, grid3d.gyid, grid3d.gzid);
+
+                    //存到字典中
+                    if (curgrid.ContainsKey(key))//字典中已有该网格坐标记录，更新List，从curgrid里删除当前键值，添加更新后的
+                    {
+                        List<GridInfo> temp = curgrid[key];
+                        temp.Add(new GridInfo(CellID, trajID, rayLevel, rayType, paths[i].rayStartPoint.X, paths[i].rayStartPoint.Y, paths[i].rayStartPoint.Z, emit, sourceEmit));
+                        curgrid.Remove(key);
+                        curgrid.Add(key, new List<GridInfo>(temp));
+                        temp.Clear();
+                        //curgrid[key].Add(new GridInfo(CellID, trajID, rayLevel, rayType, paths[i].rayStartPoint.X, paths[i].rayStartPoint.Y, paths[i].rayStartPoint.Z, emit, sourceEmit));
+                    }
+                    else//字典中没有该网格坐标记录，添加
+                    {
+                        List<GridInfo> temp = new List<GridInfo>
+                        {
+                            new GridInfo(CellID, trajID, rayLevel, rayType,  paths[i].rayStartPoint.X,  paths[i].rayStartPoint.Y,  paths[i].rayStartPoint.Z, emit, sourceEmit)
+                        };
+                        curgrid.Add(key, new List<GridInfo>(temp));
+                        temp.Clear();
+                    }
+                }
+                //将每个小段记录到栅格中
+                double startx = paths[i].rayStartPoint.X;
+                double starty = paths[i].rayStartPoint.Y;
+                double startz = paths[i].rayStartPoint.Z;
+                double kxy = paths[i].k2;
+                double kyz = paths[i].k3;
+                //Debug.WriteLine("当前段" + n);
+                for (int r = 0; r < n; r++)
+                {
+
+                    double xid, yid, zid;//为当前记录的小段大地坐标id
+
+                    //路径传播方向
+                    if (isAxisX)
+                    {
+                        xid = startx + r * ggridsize * dir;
+                        yid = starty + r * ggridsize * dir * k;
+                        zid = startz + r * ggridsize * kxy * dir;
+                    }
+                    else
+                    {
+                        xid = startx + r * ggridsize * dir / k;
+                        yid = starty + r * ggridsize * dir;
+                        zid = startz + r * ggridsize * kyz * dir;
+                    }
+                    tmp.X = xid;
+                    tmp.Y = yid;
+                    tmp.Z = zid;
+                    //Debug.WriteLine()
+                    if(!GridHelper.getInstance().PointXYZGrid(tmp, ref grid3d, ggridsize, ggridVsize))
+                    {
+                        continue;
+                    }
+                    string key = String.Format("{0},{1},{2}", grid3d.gxid, grid3d.gyid, grid3d.gzid);
+                    double distance = Math.Sqrt(Math.Pow((xid-startx), 2) + Math.Pow(yid-starty, 2) + Math.Pow(zid-startz, 2)) + paths[i].distance;
+                    
+                    double receivePwr;
+
+                    //存到字典中
+                    if (r == 0)
+                    {
+                        receivePwr = emit;
+                    }
+                    else
+                    {
+                        if (paths[i].distance < 0.1)//如果为第一个栅格，则直接赋值当前路段接收功率
+                        {
+                            receivePwr = emit / (Math.Pow(nata / (4 * Math.PI), 2)) * Math.Pow(distance, 2);
+                        }
+                        else
+                        {
+                            receivePwr = Math.Pow(distance, 2) * emit / Math.Pow(paths[i].distance, 2); //根据公式求解
+                        }
+
+                    }
+
+                    if (curgrid.ContainsKey(key))//字典中已有该网格坐标记录，更新List，从curgrid里删除当前键值，添加更新后的
+                    {
+                        List<GridInfo> temp = new List<GridInfo>(curgrid[key]);
+                        temp.Add(new GridInfo(CellID, trajID, rayLevel, rayType, xid, yid, zid, receivePwr, sourceEmit));
+                        //temp.Add(new GridInfo(CellName, trajID, rayLevel, rayType, xid, yid, zid, 10 * (Math.Log10(receivePwr) + 3), sourceEmit));
+                        curgrid.Remove(key);
+                        curgrid.Add(key, new List<GridInfo>(temp));
+                        temp.Clear();
+                        //curgrid[key].Add(new GridInfo(CellID, trajID, rayLevel, rayType, paths[i].rayStartPoint.X, paths[i].rayStartPoint.Y, paths[i].rayStartPoint.Z, emit, sourceEmit));
+                    }
+                    else//字典中没有该网格坐标记录，添加
+                    {
+                        List<GridInfo> temp = new List<GridInfo>();
+                        temp.Add(new GridInfo(CellID, trajID, rayLevel, rayType, xid, yid, zid, receivePwr, sourceEmit));
+                        //temp.Add(new GridInfo(CellName, trajID, rayLevel, rayType, xid, yid, zid, 10 * (Math.Log10(receivePwr) + 3), sourceEmit));
+                        curgrid.Add(key, new List<GridInfo>(temp));
+                        temp.Clear();
+
+                    }
+                }
+
+            }
+            foreach (KeyValuePair<string, List<GridInfo>> kvp in curgrid)
+            {
+                if (togrid.ContainsKey(kvp.Key))
+                {
+                    List<GridInfo> tmpnow = togrid[kvp.Key];
+                    togrid.Remove(kvp.Key);
+                    foreach (GridInfo grid in kvp.Value)
+                    {
+                        tmpnow.Add(new GridInfo(grid));
+                    }
+                    togrid.Add(kvp.Key, new List<GridInfo>(tmpnow));
+                    tmpnow.Clear();
+                }
+                else
+                {
+                    togrid.Add(kvp.Key, new List<GridInfo>(kvp.Value));
+                }
+            }
+            curgrid.Clear();
+            return;
+        }
+
+        /// <summary>
+        /// 对次重要的点进行的三维映射
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <param name="li"></param>
+        /// <param name="hi"></param>
+        public void NewUpdatPathToGridXYZUV(List<PathInfo> paths, int li, int hi)
+        {
+            Grid3D grid3d = new Grid3D();
+            Point tmp = new Point();
+            Dictionary<string, List<GridInfo>> curgrid = new Dictionary<string, List<GridInfo>>();
+            
+            for (int i = li; i < hi; i++)
+            {
+                if (i % 10000 == 0)
+                {
+                    Debug.WriteLine("已执行" + i);
+                }
+                bool isAxisX = true;//起点x坐标小于终点x坐标，则为true
+                int dir = 1;
+                if (paths[i].rayEndPoint.X - paths[i].rayStartPoint.X < 0) dir = -1;
+
+                //double emitDbm =  paths[i].emit;
+                //double emit = Math.Pow(10, emitDbm / 10 - 3);
+
+                double sourceEmit = paths[i].sourceEmit;//反向发射源的功率
+                double emit = paths[i].emit; //当前路段的接收功率
+                string CellID = paths[i].CellID;
+                int trajID = paths[i].trajID;
+                int rayLevel = paths[i].rayLevel;
+                int rayType = paths[i].rayType;
+                double k = paths[i].k1;
+                int n = (int)Math.Abs(paths[i].rayEndPoint.X - paths[i].rayStartPoint.X) / ggridsize;//每段路径分成的栅格小段
+                if (Math.Abs(k) > 1)
+                {
+                    isAxisX = false;
+                    if (paths[i].rayEndPoint.Y - paths[i].rayStartPoint.Y < 0) dir = -1;
+                    n = (int)Math.Abs(paths[i].rayEndPoint.Y - paths[i].rayStartPoint.Y) / ggridsize;
+                }
+
+                if (n == 0)
+                {
+                    //将大地坐标转为栅格坐标
+                    //paths[i].rayStartPoint.Z = 0;
+                    if(!GridHelper.getInstance().PointXYZGrid(paths[i].rayStartPoint, ref grid3d, ggridsize, ggridVsize))
+                    {
+                        continue;
+                    }
+                    string key = String.Format("{0},{1},{2}", grid3d.gxid, grid3d.gyid, grid3d.gzid);
+
+                    //存到字典中
+                    if (curgrid.ContainsKey(key))//字典中已有该网格坐标记录，更新List，从curgrid里删除当前键值，添加更新后的
+                    {
+                        List<GridInfo> temp = new List<GridInfo>(curgrid[key]);
+                        temp.Add(new GridInfo(CellID, trajID, rayLevel, rayType, paths[i].rayStartPoint.X, paths[i].rayStartPoint.Y, paths[i].rayStartPoint.Z, emit, sourceEmit));
+                        curgrid.Remove(key);
+                        curgrid.Add(key, new List<GridInfo>(temp));
+                        temp.Clear();
+                        //curgrid[key].Add(new GridInfo(CellID, trajID, rayLevel, rayType, paths[i].rayStartPoint.X, paths[i].rayStartPoint.Y, paths[i].rayStartPoint.Z, emit, sourceEmit));
+                    }
+                    else//字典中没有该网格坐标记录，添加
+                    {
+                        List<GridInfo> temp = new List<GridInfo>
+                        {
+                            new GridInfo(CellID, trajID, rayLevel, rayType,  paths[i].rayStartPoint.X,  paths[i].rayStartPoint.Y,  paths[i].rayStartPoint.Z, emit, sourceEmit)
+                        };
+                        curgrid.Add(key, new List<GridInfo>(temp));
+                        temp.Clear();
+                    }
+                }
+                //将每个小段记录到栅格中
+                double startx = paths[i].rayStartPoint.X;
+                double starty = paths[i].rayStartPoint.Y;
+                double startz = paths[i].rayStartPoint.Z;
+                double kxy = paths[i].k2;
+                double kyz = paths[i].k3;
+                //Debug.WriteLine("当前段" + n);
+                for (int r = 0; r < n; r++)
+                {
+
+                    double xid, yid, zid;//为当前记录的小段大地坐标id
+
+                    //路径传播方向
+                    if (isAxisX)
+                    {
+                        xid = startx + r * ggridsize * dir;
+                        yid = starty + r * ggridsize * dir * k;
+                        zid = startz + r * ggridsize * kxy * dir;
+                    }
+                    else
+                    {
+                        xid = startx + r * ggridsize * dir / k;
+                        yid = starty + r * ggridsize * dir;
+                        zid = startz + r * ggridsize * kyz * dir;
+                    }
+                    tmp.X = xid;
+                    tmp.Y = yid;
+                    tmp.Z = zid;
+
+                    if(!GridHelper.getInstance().PointXYZGrid(tmp, ref grid3d, ggridsize, ggridVsize))
+                    {
+                        continue;
+                    }
+                    string key = String.Format("{0},{1},{2}", grid3d.gxid, grid3d.gyid, grid3d.gzid);
+                    double distance = Math.Sqrt(Math.Pow((xid - startx), 2) + Math.Pow(yid - starty, 2) + Math.Pow(zid - startz, 2)) + paths[i].distance;
+
+                    double receivePwr;
+
+                    //存到字典中
+                    if (r == 0)
+                    {
+                        receivePwr = emit;
+                    }
+                    else
+                    {
+                        if (paths[i].distance < 0.1)//如果为第一个栅格，则直接赋值当前路段接收功率
+                        {
+                            receivePwr = emit / (Math.Pow(nata / (4 * Math.PI), 2)) * Math.Pow(distance, 2);
+                        }
+                        else
+                        {
+                            receivePwr = Math.Pow(distance, 2) * emit / Math.Pow(paths[i].distance, 2); //根据公式求解
+                        }
+
+                    }
+
+                    if (curgrid.ContainsKey(key))//字典中已有该网格坐标记录，更新List，从curgrid里删除当前键值，添加更新后的
+                    {
+                        List<GridInfo> temp = new List<GridInfo>(curgrid[key]);
+                        temp.Add(new GridInfo(CellID, trajID, rayLevel, rayType, xid, yid, zid, receivePwr, sourceEmit));
+                        //temp.Add(new GridInfo(CellName, trajID, rayLevel, rayType, xid, yid, zid, 10 * (Math.Log10(receivePwr) + 3), sourceEmit));
+                        curgrid.Remove(key);
+                        curgrid.Add(key, new List<GridInfo>(temp));
+                        temp.Clear();
+                        //curgrid[key].Add(new GridInfo(CellID, trajID, rayLevel, rayType, paths[i].rayStartPoint.X, paths[i].rayStartPoint.Y, paths[i].rayStartPoint.Z, emit, sourceEmit));
+                    }
+                    else//字典中没有该网格坐标记录，添加
+                    {
+                        List<GridInfo> temp = new List<GridInfo>();
+                        temp.Add(new GridInfo(CellID, trajID, rayLevel, rayType, xid, yid, zid, receivePwr, sourceEmit));
+                        //temp.Add(new GridInfo(CellName, trajID, rayLevel, rayType, xid, yid, zid, 10 * (Math.Log10(receivePwr) + 3), sourceEmit));
+                        curgrid.Add(key, new List<GridInfo>(temp));
+                        temp.Clear();
+
+                    }
+                }
+
+            }
+            foreach (KeyValuePair<string, List<GridInfo>> kvp in curgrid)
+            {
+                if (togrid.ContainsKey(kvp.Key))
+                {
+                    List<GridInfo> tmpnow = new List<GridInfo>(togrid[kvp.Key]);
+                    togrid.Remove(kvp.Key);
+                    foreach (GridInfo grid in kvp.Value)
+                    {
+                        tmpnow.Add(new GridInfo(grid));
+                    }
+                    togrid.Add(kvp.Key, new List<GridInfo>(tmpnow));
+                    tmpnow.Clear();
+                }
+                //else
+                //{
+                //    togrid.Add(kvp.Key, new List<GridInfo>(kvp.Value));
+                //}
+            }
+            curgrid.Clear();
+            return;
+        }
+        #endregion
         /*-----------------------------------------------辅助函数--------------------------------------------------------------------*/
+        #region 辅助函数
+        
+        /// <summary>
+        /// 查看每个grid里覆盖的来自各个mp的数目
+        /// </summary>
+        /// <param name="grids"></param>
+        /// <param name="lower"></param>
+        private void AnalysisPathFrom(Dictionary<string, List<GridInfo>> grids,int lower)
+        {
+            Dictionary<string, Dictionary<string, int>> res = new Dictionary<string, Dictionary<string, int>>();
+            foreach(KeyValuePair<string,List<GridInfo>> kvp in grids)
+            {
+                Dictionary<string, int> oner = new Dictionary<string, int>();
+                foreach(GridInfo tmp in kvp.Value)
+                {
+                    if (oner.Count<1 || !oner.ContainsKey(tmp.cellid))
+                    {
+                        oner.Add(tmp.cellid, 1); 
+                    }
+                    else
+                    {
+                        oner[tmp.cellid] += 1;
+                    }
+                }
+                Debug.WriteLine("ID" + kvp.Key);
+                foreach (KeyValuePair<string,int> o in oner)
+                {
+                    if (o.Value > lower)
+                    {
+                        Debug.WriteLine("    from:" + o.Key + "     count:" + o.Value);
+                    }
+                    
+                }
+            }
+            
+        }
+        
+        /// <summary>
+        /// 原始的grid_from求解方法，没有射线路径数约束
+        /// </summary>
+        /// <param name="grids"></param>
         private void GetGrid_From(Dictionary<string, List<GridInfo>> grids)
         {
             Dictionary<string, HashSet<String>> gridfrom = new Dictionary<string, HashSet<string>>();
@@ -877,13 +1364,104 @@ namespace LTE.ExternalInterference
                         _fromtmp.Add(tmp.cellid);
                     }
                 }
+                if (max_from < _fromtmp.Count)
+                {
+                    max_from = _fromtmp.Count;
+                }
                 gridfrom.Add(kvp.Key, _fromtmp);
             }
             this.grid_from = new Dictionary<string, HashSet<string>>(gridfrom);
             gridfrom.Clear();
         }
 
-        private Dictionary<string, long> GetGrid_StrongP(Dictionary<string, List<GridInfo>> grids)
+
+        /// <summary>
+        /// 栅格G只有接收到至少来自A的lower条射线，才判定G覆盖A发出的射线
+        /// </summary>
+        /// <param name="grids"></param>
+        /// <param name="lower"></param>
+        private void GetGrid_From(Dictionary<string, List<GridInfo>> grids,int lower)
+        {
+            Dictionary<string, HashSet<String>> gridfrom = new Dictionary<string, HashSet<string>>();
+            if (grids == null || grids.Count < 1)
+            {
+                Debug.WriteLine("GetGrid_form 传入参数为空");
+                return;
+            }
+
+            Dictionary<string, Dictionary<string, int>> res = new Dictionary<string, Dictionary<string, int>>();
+            foreach (KeyValuePair<string, List<GridInfo>> kvp in grids)
+            {
+                Dictionary<string, int> oner = new Dictionary<string, int>();
+                foreach (GridInfo tmp in kvp.Value)
+                {
+                    if (oner.Count < 1 || !oner.ContainsKey(tmp.cellid))
+                    {
+                        oner.Add(tmp.cellid, 1);
+                    }
+                    else
+                    {
+                        oner[tmp.cellid] += 1;
+                    }
+                }
+                //Debug.WriteLine("ID" + kvp.Key);
+                HashSet<string> _fromtmp = new HashSet<string>();
+                foreach (KeyValuePair<string, int> o in oner)
+                {
+                    if(o.Value>lower)
+                    {
+                        _fromtmp.Add(o.Key);
+                    }
+                    //Debug.WriteLine("    from:" + o.Key + "     count:" + o.Value);
+                }
+                if (max_from < _fromtmp.Count)
+                {
+                    max_from = _fromtmp.Count;
+                }
+                gridfrom.Add(kvp.Key, new HashSet<string>(_fromtmp));
+                //res.Add(kvp.Key, new Dictionary<string, int>(oner));
+            }
+
+            ///栅格-From-值
+            //foreach (KeyValuePair<string, Dictionary<string, int>>  kvp in res)
+            //{
+            //    //遍历每个栅格经过的射线，获得其经过的射线来源
+            //    HashSet<string> _fromtmp = new HashSet<string>();
+            //    int i = 0;
+            //    foreach (KeyValuePair<string, int> tmp in kvp.Value)//仅加入射线束数目超过lower的From
+            //    {
+            //        if (tmp.Value > lower && !_fromtmp.Contains(tmp.Key))
+            //        {
+            //            _fromtmp.Add(tmp.Key);
+            //            i++;
+            //        }
+            //    }
+            //    if (i != _fromtmp.Count)
+            //    {
+            //        Debug.WriteLine("问题出在这里");
+            //    }
+            //    else
+            //    {
+            //        Debug.WriteLine("FromCount:" + _fromtmp.Count);
+            //    }
+            //    if (max_from < _fromtmp.Count)
+            //    {
+            //        max_from = _fromtmp.Count;
+            //    }
+            //    gridfrom.Add(kvp.Key,new HashSet<string>( _fromtmp));
+            //}
+            Debug.WriteLine("Max_from" + max_from);
+            this.grid_from = new Dictionary<string, HashSet<string>>(gridfrom);
+            gridfrom.Clear();
+        }
+
+        /// <summary>
+        /// 强信号射线的判定
+        /// 需要计算功率
+        /// </summary>
+        /// <param name="grids"></param>
+        /// <returns></returns>
+        private Dictionary<string, long> GetGrid_StrongP(Dictionary<string, List<GridInfo>> grids,int way)
         {
             Dictionary<string, long> tmp1 = new Dictionary<string, long>();
             String[] keyArr = grids.Keys.ToArray<String>();
@@ -891,18 +1469,312 @@ namespace LTE.ExternalInterference
             {
                 long count = 0;
                 List<GridInfo> tmp = grids[keyArr[i]];
-                for (int j = 0; j < tmp.Count; j++)
+                if (way == 0)//仅考虑初级射线
                 {
-                    if (tmp[j].rayType == 0 || tmp[j].rayType == 1 || tmp[j].rayType == 2)
+                    for (int j = 0; j < tmp.Count; j++)
                     {
-                        count++;
+                        if (IsStrong(tmp[j]))
+                        {
+                            count++;
+                        }
                     }
                 }
+                else if(way == 1)
+                {
+                    int dcount = 0, fcount = 0, rcount = 0;
+                    for (int j = 0; j < tmp.Count; j++)
+                    {
+                        if(tmp[j].rayType==0 && dcount < 40)
+                        {
+                            dcount++;
+                        }
+                        else if((tmp[j].rayType==1|| tmp[j].rayType == 2) && fcount < 20)
+                        {
+                            fcount++;
+                        }
+                        else if((tmp[j].rayType == 3 || tmp[j].rayType == 4) && fcount < 10)
+                        {
+                            rcount++;
+                        }
+                        //进行功率转换，转换成dbm,
+                    }
+                    count = dcount + fcount + rcount;
+                }
+                else if (way == 2)
+                {
+                    //调用新的函数，传入参数（tmp，keyArr[i]）,返回对应的射线路径数
+                    count = GetStrongPNum(tmp, keyArr[i], 5, 10, 15, 2);
+                }
+                
                 tmp1.Add(keyArr[i], count);
             }
             return tmp1;
         }
 
+        /// <summary>
+        /// 计算一个大栅格里面小栅格的覆盖情况，统计覆盖比率及值
+        /// </summary>
+        /// <param name="infos">栅格中射线路径记录</param>
+        /// <param name="key">栅格id</param>
+        /// <param name="dslot">直射路径的小栅格大小</param>
+        /// <param name="rslot">反射路径的小栅格大小</param>
+        /// <param name="fslot">绕射路径的小栅格大小</param>
+        /// <param name="num">每个小栅格最多可以记录多少条射线</param>
+        /// <returns></returns>
+        private int GetStrongPNum(List<GridInfo> infos,string key,int dslot,int rslot,int fslot,int num)
+        {
+            int count = 0;
+            String[] ktmp = key.Split(',');
+
+            int gx = 0, gy = 0, gz = 0;
+            try
+            {
+                gx = Convert.ToInt32(ktmp[0]); gy = Convert.ToInt32(ktmp[1]); gz = Convert.ToInt32(ktmp[2]);
+            }
+            catch
+            {
+                Debug.WriteLine("栅格格式有误："+key);
+                return 0;
+            }
+            Geometric.Point p = new Geometric.Point();
+            Grid3D tmp1 = new Grid3D(gx, gy, gz);
+            GridHelper.getInstance().PointGridXYZ(ref p, tmp1, ggridsize, ggridVsize);
+            p.X -= ggridsize / 2;
+            p.Y -= ggridsize / 2;
+            p.Z -= ggridVsize / 2;
+
+            Dictionary<string, List<GridInfo>> fromdirInfos = new Dictionary<string, List<GridInfo>>();//记录gridkey对应的每个fromname对应的直射路径信息
+            Dictionary<string, List<GridInfo>> fromrefInfos = new Dictionary<string, List<GridInfo>>();//记录gridkey对应的每个fromname对应的反射路径信息
+            Dictionary<string, List<GridInfo>> fromfInfos = new Dictionary<string, List<GridInfo>>();//记录gridkey对应的每个fromname对应的绕射路径信息
+            foreach (GridInfo tmp in infos)
+            {
+                if (tmp.rayType == 0)
+                {
+                    if (fromdirInfos.ContainsKey(tmp.cellid))
+                    {
+                        List<GridInfo> ginfo = new List<GridInfo>(fromdirInfos[tmp.cellid]);
+                        ginfo.Add(new GridInfo(tmp));
+                        fromdirInfos.Remove(tmp.cellid);
+                        fromdirInfos.Add(tmp.cellid, ginfo);
+                    }
+                    else
+                    {
+                        List<GridInfo> ginfo = new List<GridInfo>();
+                        ginfo.Add(new GridInfo(tmp));
+                        fromdirInfos.Add(tmp.cellid, ginfo);
+                    }
+                }
+                else if (tmp.rayType == 1 || tmp.rayType == 2)
+                {
+                    if (fromrefInfos.ContainsKey(tmp.cellid))
+                    {
+                        List<GridInfo> ginfo = new List<GridInfo>(fromrefInfos[tmp.cellid]);
+                        ginfo.Add(new GridInfo(tmp));
+                        fromrefInfos.Remove(tmp.cellid);
+                        fromrefInfos.Add(tmp.cellid, ginfo);
+                    }
+                    else
+                    {
+                        List<GridInfo> ginfo = new List<GridInfo>();
+                        ginfo.Add(new GridInfo(tmp));
+                        fromrefInfos.Add(tmp.cellid, ginfo);
+                    }
+                }
+                else if (tmp.rayType == 3 || tmp.rayType == 4)
+                {
+                    if (fromfInfos.ContainsKey(tmp.cellid))
+                    {
+                        List<GridInfo> ginfo = new List<GridInfo>(fromfInfos[tmp.cellid]);
+                        ginfo.Add(new GridInfo(tmp));
+                        fromfInfos.Remove(tmp.cellid);
+                        fromfInfos.Add(tmp.cellid, ginfo);
+                    }
+                    else
+                    {
+                        List<GridInfo> ginfo = new List<GridInfo>();
+                        ginfo.Add(new GridInfo(tmp));
+                        fromfInfos.Add(tmp.cellid, ginfo);
+                    }
+                }
+                
+            }
+
+            //确保每个字典都有记录，避免出现键不存在的情况
+            foreach(string g_from in grid_from[key])
+            {
+                if (!fromdirInfos.ContainsKey(g_from))
+                {
+                    fromdirInfos.Add(g_from, new List<GridInfo>());
+                }
+                if (!fromrefInfos.ContainsKey(g_from))
+                {
+                    fromrefInfos.Add(g_from, new List<GridInfo>());
+                }
+                if (!fromfInfos.ContainsKey(g_from))
+                {
+                    fromfInfos.Add(g_from, new List<GridInfo>());
+                }
+            }
+            int dirn = 30 / dslot, refn = 30 / rslot, feon = 30 / fslot;
+            if (30 % dslot != 0)
+            {
+                dirn++;
+            }
+            if (30 % rslot != 0)
+            {
+                refn++;
+            }
+            if (30 % fslot != 0)
+            {
+                feon++;
+            }
+            int d2n = dirn * dirn;
+            int r2n = refn * refn;
+            int f2n = feon * feon;
+            int dn = dirn * dirn * dirn;
+            int rn = refn * refn * refn;
+            int fn = feon * feon * feon;
+            ///定义小栅格的数组，格式为xg+yg*dirn+zg*dirn*dirn
+            int[] darr = new int[dn];
+            int[] rarr = new int[rn];
+            int[] farr = new int[fn];
+            for(int i = 0; i < dn; i++)
+            {
+                darr[i] = 0;
+            }
+            for(int i = 0; i < rn; i++)
+            {
+                rarr[i] = 0;
+            }
+            for(int i = 0; i < fn; i++)
+            {
+                farr[i] = 0;
+            }
+
+            Dictionary<string, int> ansdic = new Dictionary<string, int>();
+            //对栅格覆盖的每一个栅格，计算其小部分的
+            foreach (string ckey in grid_from[key])
+            {
+                int dcou = 0, dncou = 0, rcou = 0, rncou = 0, fcou = 0, fncou = 0;
+                foreach(GridInfo g in fromdirInfos[ckey])
+                {
+                    int xg = (int)(g.x - p.X) / dslot;
+                    int yg = (int)(g.y - p.Y) / dslot;
+                    int zg = (int)(g.z - p.Z) / dslot;
+                    if (xg == dirn && (g.x - p.X) >= ggridsize) xg = dirn - 1;
+                    if (yg == dirn && (g.y - p.Y) >= ggridsize) yg = dirn - 1;
+                    if (zg == dirn && (g.z - p.Z) >= ggridVsize) zg = dirn - 1;
+                    if (xg < 0) xg = 0;
+                    if (yg < 0) yg = 0;
+                    if (zg < 0) zg = 0;
+                    int index = xg + yg * dirn + zg * d2n;
+                    int curcou = darr[index];
+                    if (curcou == 0)
+                    {
+                        dcou++;
+                    }
+                    if (curcou < num)
+                    {
+                        darr[index]++;
+                        dncou++;
+                    }
+                }
+                foreach (GridInfo g in fromrefInfos[ckey])
+                {
+                    int xg = (int)(g.x - p.X) / rslot;
+                    int yg = (int)(g.y - p.Y) / rslot;
+                    int zg = (int)(g.z - p.Z) / rslot;
+                    if (xg == refn && (g.x - p.X) >= ggridsize) xg = refn - 1;
+                    if (yg == refn && (g.y - p.Y) >= ggridsize) yg = refn - 1;
+                    if (zg == refn && (g.z - p.Z) >= ggridVsize) zg = refn - 1;
+                    int index = xg + yg * refn + zg * r2n;
+                    
+                    int curcou = rarr[index];
+                    if (curcou == 0)
+                    {
+                        rcou++;
+                    }
+                    if (curcou < num)
+                    {
+                        rarr[index]++;
+                        rncou++;
+                    }
+                }
+                foreach (GridInfo g in fromfInfos[ckey])
+                {
+                    int xg = (int)(g.x - p.X) / fslot;
+                    int yg = (int)(g.y - p.Y) / fslot;
+                    int zg = (int)(g.z - p.Z) / fslot;
+                    if (xg == feon && (g.x - p.X) >= ggridsize) xg = feon - 1;
+                    if (yg == feon && (g.y - p.Y) >= ggridsize) yg = feon - 1;
+                    if (zg == feon && (g.z - p.Z) >= ggridVsize) zg = feon - 1;
+                    int index = xg + yg * feon + zg * f2n;
+                    
+                    int curcou = farr[index];
+                    if (curcou == 0)
+                    {
+                        fcou++;
+                    }
+                    if (curcou < num)
+                    {
+                        farr[index]++;
+                        fncou++;
+                    }
+                }
+                int sumcount = dncou + rncou + fncou;
+                ansdic.Add(ckey, sumcount);
+                count += sumcount;
+                for (int i = 0; i < dn; i++)
+                {
+                    darr[i] = 0;
+                }
+                for (int i = 0; i < rn; i++)
+                {
+                    rarr[i] = 0;
+                }
+                for (int i = 0; i < fn; i++)
+                {
+                    farr[i] = 0;
+                }
+            }
+            return count;
+        }
+        /// <summary>
+        /// 计算强信号射线占比
+        /// </summary>
+        /// <param name="grids"></param>
+        /// <returns></returns>
+        private Dictionary<string, double> ComputeRateO(Dictionary<string, List<GridInfo>> grids)
+        {
+            Dictionary<string, double> ans = new Dictionary<string, double>();
+            foreach (KeyValuePair<string, List<GridInfo>> kvp in grids)
+            {
+                int count = 0;
+                foreach (GridInfo tmp in kvp.Value)
+                {
+                    if (IsStrong(tmp))
+                    {
+                        count++;
+                    }
+                }
+                ans.Add(kvp.Key, (double)count / kvp.Value.Count);
+            }
+            return ans;
+        }
+
+        /// <summary>
+        /// 定义强信号射线规则的函数
+        /// </summary>
+        /// <param name="ginf"></param>
+        /// <returns></returns>
+        private bool IsStrong(GridInfo ginf)
+        {
+            if (ginf.pathloss<150&&(ginf.rayType == 0 || ginf.rayType == 1)) 
+            {
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// 基于GridInfo采用的是单位w， 加权统计栅格接收功率
@@ -978,13 +1850,14 @@ namespace LTE.ExternalInterference
                     len = up;
                 }
                 double sum = 0;
-                // Debug.WriteLine("   id  : " + kvp.Key);
+               // Debug.WriteLine("   id  : " + kvp.Key);
                 for (int i = 0; i < len; i++)
                 {
                     if (kvp.Value[i].pathloss < 120)
                     {
+                        //Debug.WriteLine("接收功率：" + kvp.Value[i].recP + "     原始功率：" + kvp.Value[i].emit);
                         sum += kvp.Value[i].pathloss;
-                        //Debug.Write("   pathloss:" + kvp.Value[i].pathloss + "   cellname    " + kvp.Value[i].cellname + "   trajID:" + kvp.Value[i].trajID + "-" + kvp.Value[i].raylevel + "-" + kvp.Value[i].rayType);
+                        //Debug.Write("   pathloss:" + kvp.Value[i].pathloss + "   cellname    " + kvp.Value[i].cellid + "   trajID:" + kvp.Value[i].trajID + "-" + kvp.Value[i].raylevel + "-" + kvp.Value[i].rayType);
                     }
                     else
                     {
@@ -1037,7 +1910,7 @@ namespace LTE.ExternalInterference
             grid_pwr.Clear();
             grid_pathloss.Clear();
         }
-
+        #endregion
         /*------------------------------------------------筛选得到候选点  具体三种过程实现--------------------------------------------------------------------*/
 
         #region  筛选掉不符合条件的栅格，减少计算量
@@ -1135,13 +2008,26 @@ namespace LTE.ExternalInterference
         /// <param name="lownum">通过栅格最小射线</param>
         public void BalanceFiltParaS(int threshold, int threshold_1, double param_1, double param_2, int lownum)
         {
-            Dictionary<string, List<GridInfo>> pre = new Dictionary<string, List<GridInfo>>(togrid);
             Dictionary<string, List<GridInfo>> tmp = new Dictionary<string, List<GridInfo>>(togrid);
 
             //优先过滤小区
             int count = tmp.Count;
             int itera = 500;
-            while ((count > threshold + 100 || count < 5) && itera-- > 0)
+
+            String[] keyArr = tmp.Keys.ToArray<String>();
+            for (int i = 0; i < keyArr.Length; i++)
+            {
+                string key = keyArr[i];
+                if (grid_from[key].Count < this.max_from - 1)
+                {
+                    tmp.Remove(keyArr[i]);
+                }
+            }
+
+            Dictionary<string, List<GridInfo>> pre = new Dictionary<string, List<GridInfo>>(togrid);
+            #region 之前栅格From条件的代码
+
+            /*while ((count > threshold + 100 || count < 5) && itera-- > 0)
             {
                 count = this.FiltrateGridByCell(param_1, tmp);
                 if (count > threshold + 100)
@@ -1171,10 +2057,15 @@ namespace LTE.ExternalInterference
             {
                 pre.Clear();
                 pre = new Dictionary<string, List<GridInfo>>(tmp);
-            }
-
-            count = GetFiltrateGrid(param_2, lownum, tmp);
+            }*/
+            #endregion
+            Debug.WriteLine("一层过滤结果集大小" + togrid.Count);
+            Dictionary<string, double> ratRec = ComputeRateO(pre);
+            count = OPGetFiltrateGrid(param_2, lownum, tmp, ratRec);
+            
+            //count = GetFiltrateGrid(param_2, lownum, tmp);
             itera = 500;
+            bool firstF = true;
             while ((count > threshold || count < threshold_1) && itera-- > 0)
             {
                 if (count > threshold)
@@ -1188,13 +2079,18 @@ namespace LTE.ExternalInterference
                     tmp.Clear();
                     param_2 -= 0.02;
                     tmp = new Dictionary<string, List<GridInfo>>(pre);
-                    itera = 2;
+                    if (firstF)
+                    {
+                        itera = 2;
+                        firstF = false;
+                    }
                 }
                 else
                 {
                     break;
                 }
-                count = count = GetFiltrateGrid(param_2, lownum, tmp);
+                //count =  GetFiltrateGrid(param_2, lownum, tmp);
+                count = OPGetFiltrateGrid(param_2, lownum, tmp, ratRec);
             }
             if (count > threshold || count < threshold_1)
             {
@@ -1207,6 +2103,8 @@ namespace LTE.ExternalInterference
                 pre = new Dictionary<string, List<GridInfo>>(tmp);
             }
             this.togrid = new Dictionary<string, List<GridInfo>>(tmp);
+            Debug.WriteLine("二层过滤结果集大小" + togrid.Count);
+            //清空grid_from中的多余部分
             Dictionary<string, HashSet<string>> tmpFrom = new Dictionary<string, HashSet<string>>();
             foreach (KeyValuePair<string, List<GridInfo>> kvp in tmp)
             {
@@ -1214,37 +2112,15 @@ namespace LTE.ExternalInterference
             }
             grid_from.Clear();
             grid_from = new Dictionary<string, HashSet<string>>(tmpFrom);
-        }
-        /// <summary>
-        /// 从映射栅格中删除反向发射点周边
-        /// </summary>
-        public void FiltrateGrid()
-        {
-            //DataTable tbsource = IbatisHelper.ExecuteQueryForDataTable("GetSelectedPoint", null);
-            const int xadj = 4, yadj = 4, zadj = 30;//删除范围（4*栅格大小，4*栅格大小，30*栅格大小）的栅格
-            foreach (DataRow row in tbsourceInfo.Rows)
-            {
-                Geometric.Point point = new Geometric.Point(Convert.ToDouble(row["x"]), Convert.ToDouble(row["y"]), 0);
-                Grid3D tmp = new Grid3D();
-                GridHelper.getInstance().PointXYZGrid(point, ref tmp, ggridsize, ggridVsize);//此处应该有设置映射栅格大小设置
-                for (int i = 0; i < zadj; i++)
-                {
-                    for (int k = -3; k < xadj; k++)
-                    {
-                        for (int k1 = -3; k1 < yadj; k1++)
-                        {
-                            string key = String.Format("{0},{1},{2}", tmp.gxid + k, tmp.gyid + k1, i);
-                            if (togrid.ContainsKey(key))
-                            {
-                                togrid.Remove(key);
-                            }
-                        }
 
-                    }
 
-                }
-            }
+            //int count_3= FiliteGridByVitalCell(togrid, 3);
+            //Debug.WriteLine("三层过滤结果集大小" + togrid.Count+"    过滤个数："+count_3);
+
+            
         }
+
+        
 
 
         /// <summary>
@@ -1256,7 +2132,8 @@ namespace LTE.ExternalInterference
         public int FiltrateGridByCell(double low, Dictionary<string, List<GridInfo>> curTogrid)
         {
             //DataTable source = IbatisHelper.ExecuteQueryForDataTable("GetSelectedPoint", null);
-            int lower = Convert.ToInt16(low * tbsourceInfo.Rows.Count);
+            if (cellPwr.Count < 2) return 0;
+            int lower = Convert.ToInt16(low * cellPwr.Count);
 
             String[] keyArr = curTogrid.Keys.ToArray<String>();
             for (int i = 0; i < keyArr.Length; i++)
@@ -1270,6 +2147,74 @@ namespace LTE.ExternalInterference
             return curTogrid.Count;
         }
 
+
+        private int FiliteGridByVitalCell(Dictionary<string, List<GridInfo>> curTogrid,int k)
+        {
+            //Dictionary<string, double> cellPwr = new Dictionary<string, double>();
+
+            //double curMax = double.MinValue, nextMax = double.MinValue;
+            //Debug.WriteLine("源点信息");
+            //foreach (DataRow tb in tbsourceInfo.Rows)
+            //{
+            //    string cellid = Convert.ToString(tb["CI"]);
+            //    double pwr = Convert.ToDouble(tb["ReceivePW"]);//单位是w
+            //    cellPwr.Add(cellid, pwr);
+            //    if (curMax < pwr)
+            //    {
+            //        curMax = pwr;
+            //    }
+            //    Debug.WriteLine("source:" + cellid + "      pwr:" + pwr);
+            //}
+            //List<String> VitalMP = new List<string>();
+            //Debug.WriteLine("前k个信息");
+            //for(int i = 0; i < k; i++)
+            //{
+            //    nextMax = double.MinValue;
+            //    bool isfind = false;
+            //    foreach (KeyValuePair<string,double> kvp in cellPwr)
+            //    {
+            //        if (!isfind && kvp.Value == curMax)
+            //        {
+            //            VitalMP.Add(kvp.Key);
+            //            Debug.WriteLine("id"+i+"source:" + kvp.Key + "      pwr:" + kvp.Value);
+            //            isfind = true;
+            //        }
+            //        else if(isfind && kvp.Value == curMax)
+            //        {
+            //            if (++i < k)//重复的情况
+            //            {
+            //                Debug.WriteLine("重复：id" + i + "source:" + kvp.Key + "      pwr:" + kvp.Value);
+            //                VitalMP.Add(kvp.Key);
+            //            }
+            //        }
+            //        else if(kvp.Value< curMax && kvp.Value > nextMax)
+            //        {
+            //            nextMax = kvp.Value;
+            //        }
+            //    }
+            //    curMax = nextMax;
+            //}
+            //Debug.WriteLine("前k个List信息");
+            //for (int i = 0; i < VitalMP.Count; i++)
+            //{
+            //    Debug.WriteLine(VitalMP[i]);
+            //}
+
+            int filitCount = 0;
+            foreach(KeyValuePair<string,HashSet<string>> kvp in grid_from)
+            {
+                for (int i = 0; i < k; i++)
+                {
+                    if (!kvp.Value.Contains(VitalMP[i]))
+                    {
+                        filitCount++;
+                        curTogrid.Remove(kvp.Key);
+                        break;
+                    }
+                }
+            }
+            return filitCount;
+        }
         /// <summary>
         /// 通过直反射线比例以及射线数目控制
         /// </summary>
@@ -1304,16 +2249,148 @@ namespace LTE.ExternalInterference
             return grids.Count;
         }
 
-
+        public int OPGetFiltrateGrid(double rate, int lownum, Dictionary<string, List<GridInfo>> grids, Dictionary<string, double> ratRec)
+        {
+            String[] keyArr = grids.Keys.ToArray<String>();
+            for (int i = 0; i < keyArr.Length; i++)
+            {
+                int count = 0;
+                List<GridInfo> tmp = grids[keyArr[i]];
+                if (tmp.Count < lownum) //有效射线低于某值，则可以不考虑
+                {
+                    grids.Remove(keyArr[i]);
+                    continue;
+                }
+                if (ratRec[keyArr[i]]<rate)
+                {
+                    grids.Remove(keyArr[i]);
+                }
+            }
+            return grids.Count;
+        }
         #endregion
 
         /*------------------------------------------------评估候选点 --------------------------------------------------------------------*/
         #region 评估候选干扰点
+
+        public double Evaluate(List<GridInfo> infos, int l,int kn,int way)
+        {
+            //求解前kn个信号较强的路测点对应的平均综合干扰差值
+            Dictionary<string, List<double>> cell_pathloss = new Dictionary<string, List<double>>();
+            for(int i = 0; i < kn; i++)
+            {
+                cell_pathloss.Add(VitalMP[i], new List<double>());
+            }
+            
+            //计算每个路测点的前l个直射线到达信号
+            foreach (GridInfo grid in infos)
+            {
+                if (cell_pathloss.ContainsKey(grid.cellid))
+                {
+                    List<double> tmp = new List<double>(cell_pathloss[grid.cellid]);
+                    if (tmp.Count < l && (grid.rayType == 0|| grid.rayType == 1))//仅取l位数
+                    {
+                        tmp.Add(grid.pathloss);
+                        cell_pathloss.Remove(grid.cellid);
+                        cell_pathloss.Add(grid.cellid, tmp);
+                    }
+                }
+            }
+            Dictionary<string, double> cellRecPwr = new Dictionary<string, double>();
+            foreach (KeyValuePair<string, List<double>> kvp in cell_pathloss)//求直射线的平均损耗
+            {
+                double sumv = 0.0;
+                foreach (double v in kvp.Value)
+                {
+                    sumv += v;
+                }
+                Debug.WriteLine("ID" + kvp.Key + "    sumv:" + sumv + "     count:" + kvp.Value.Count);
+                cellRecPwr.Add(kvp.Key, sumv / kvp.Value.Count);
+            }
+            cell_pathloss.Clear();
+            
+            String[] keyArr = cellRecPwr.Keys.ToArray<String>();
+            double sum = 0.0;
+            for (int i = 0; i < keyArr.Length - 1; i++)
+            {
+                string cellidA = keyArr[i];
+                double pwrA = cellPwr[cellidA];//接收功率
+
+                for (int j = i + 1; j < keyArr.Length; j++)
+                {
+                    double pwrB = cellPwr[keyArr[j]];
+                    // Debug.WriteLine(cellnameA+" countA:" + k+"     "+cellnameB+"   countB:"+k);
+                    sum += Math.Abs(10 * (Math.Log10(pwrA) + 3) - 10 * (Math.Log10(pwrB) + 3) + cellRecPwr[keyArr[i]] - cellRecPwr[keyArr[j]]);
+                }
+            }
+            return sum / (kn * (kn - 1) / 2);
+        }
+
+        public double Evaluate(string key,List<GridInfo> infos, int L, int kn)
+        {
+            //求解前kn个信号较强的路测点对应的平均综合干扰差值
+            Dictionary<string, List<double>> cell_pathloss = new Dictionary<string, List<double>>();
+
+            for (int i = 0,j=0; i < kn && j<VitalMP.Count;j++ )
+            {
+                if (grid_from[key].Contains(VitalMP[j])){
+                    cell_pathloss.Add(VitalMP[j], new List<double>());
+                    i++;
+                }
+            }
+
+            //计算每个路测点的前l个直射线到达信号
+            foreach (GridInfo grid in infos)
+            {
+                if (cell_pathloss.ContainsKey(grid.cellid))
+                {
+                    List<double> tmp = new List<double>(cell_pathloss[grid.cellid]);
+                    if (tmp.Count < L && (grid.rayType == 0 || grid.rayType == 1))//仅取l位数
+                    {
+                        tmp.Add(grid.pathloss);
+                        cell_pathloss.Remove(grid.cellid);
+                        cell_pathloss.Add(grid.cellid, tmp);
+                    }
+                }
+            }
+
+            Dictionary<string, double> cellRecPwr = new Dictionary<string, double>();
+            foreach (KeyValuePair<string, List<double>> kvp in cell_pathloss)//求直射线的平均损耗
+            {
+                double sumv = 0.0;
+                foreach (double v in kvp.Value)
+                {
+                    sumv += v;
+                }
+                Debug.WriteLine("ID" + kvp.Key + "    sumv:" + sumv + "     count:" + kvp.Value.Count);
+                cellRecPwr.Add(kvp.Key, sumv / kvp.Value.Count);
+            }
+            cell_pathloss.Clear();
+
+            String[] keyArr = cellRecPwr.Keys.ToArray<String>();
+            double sum = 0.0;
+            for (int i = 0; i < keyArr.Length - 1; i++)
+            {
+                string cellidA = keyArr[i];
+                double pwrA = cellPwr[cellidA];//接收功率
+
+                for (int j = i + 1; j < keyArr.Length; j++)
+                {
+                    double pwrB = cellPwr[keyArr[j]];
+                    // Debug.WriteLine(cellnameA+" countA:" + k+"     "+cellnameB+"   countB:"+k);
+                    sum += Math.Abs(10 * (Math.Log10(pwrA) + 3) - 10 * (Math.Log10(pwrB) + 3) + cellRecPwr[keyArr[i]] - cellRecPwr[keyArr[j]]);
+                }
+            }
+            return sum / (kn * (kn - 1) / 2);
+        }
+
+
+
         /// <summary>
-        /// 计算一个栅格里的两两小区之间功率损耗差值总和
+        /// 计算一个栅格里的两两小区之间功率损耗差值总和，单位dbm
         /// </summary>
         /// <param name="infos">栅格信息</param>
-        /// <param name="l">选取前l个进行计算</param>
+        /// <param name="l">选取前l个直射线求平均进行计算</param>
         /// <returns></returns>
         public double Evaluate(List<GridInfo> infos, int l)
         {
@@ -1324,14 +2401,13 @@ namespace LTE.ExternalInterference
             {
                 if (cell_pathloss.ContainsKey(grid.cellid))
                 {
-                    List<double> tmp = cell_pathloss[grid.cellid];
-                    if (tmp.Count < l)//仅取l位数
+                    List<double> tmp = new List<double>(cell_pathloss[grid.cellid]);
+                    if (tmp.Count < l && grid.rayType == 0)//仅取l位数
                     {
                         tmp.Add(grid.pathloss);
                         cell_pathloss.Remove(grid.cellid);
                         cell_pathloss.Add(grid.cellid, tmp);
                     }
-
                 }
                 else
                 {
@@ -1347,16 +2423,22 @@ namespace LTE.ExternalInterference
             //ht["fromName"] = this.virname;
             ///获取多个反向发射点的接收功率
             //DataTable tbsourcePwr = IbatisHelper.ExecuteQueryForDataTable("GetSelectedPoint", null);
-            Dictionary<string, double> cellPwr = new Dictionary<string, double>();
-            foreach (DataRow tb in tbsourceInfo.Rows)
+
+            //String[] keyArr = cell_pathloss.Keys.ToArray<String>();
+
+            Dictionary<string, double> cellRecPwr = new Dictionary<string, double>();
+            foreach(KeyValuePair<string, List<double>> kvp in cell_pathloss)//求直射线的平均损耗
             {
-                string cellid = Convert.ToString(tb["CI"]);
-                double pwr = Convert.ToDouble(tb["ReceivePW"]);
-                cellPwr.Add(cellid, pwr);
+                double sumv = 0.0;
+                foreach(double v in kvp.Value)
+                {
+                    sumv += v;
+                }
+                cellRecPwr.Add(kvp.Key, sumv / kvp.Value.Count);
+
             }
 
-            String[] keyArr = cell_pathloss.Keys.ToArray<String>();
-
+            String[] keyArr = cellRecPwr.Keys.ToArray<String>();
             double sum = 0.0;
             for (int i = 0; i < keyArr.Length - 1; i++)
             {
@@ -1366,45 +2448,17 @@ namespace LTE.ExternalInterference
 
                 for (int j = i + 1; j < keyArr.Length; j++)
                 {
-                    string cellnameB = keyArr[j];
-                    List<double> tmpB = cell_pathloss[cellnameB];
-
-                    //同步对数
-                    int k = 0;
-                    if (tmpA.Count > tmpB.Count)
-                    {
-                        k = tmpB.Count;
-                    }
-                    else
-                    {
-                        k = tmpA.Count;
-                    }
-
-                    //求tmp平均
-                    double averA = 0.0;
-                    for (int r = 0; r < k; r++)
-                    {
-                        averA += tmpA[r];
-                    }
-                    averA /= k;
-
-                    double pwrB = cellPwr[cellnameB];
-                    double averB = 0.0;
-                    for (int r = 0; r < k; r++)
-                    {
-                        averB += tmpB[r];
-                    }
-                    averB /= k;
-
+                    double pwrB = cellPwr[keyArr[j]];
+                    
                     // Debug.WriteLine(cellnameA+" countA:" + k+"     "+cellnameB+"   countB:"+k);
-                    sum += Math.Abs(10 * (Math.Log10(pwrA) + 3) - 10 * (Math.Log10(pwrA) + 3) + averA - averB);
+                    sum += Math.Abs(10 * (Math.Log10(pwrA) + 3) - 10 * (Math.Log10(pwrB) + 3) + cellRecPwr[keyArr[i]] - cellRecPwr[keyArr[j]]);
                 }
             }
-            return sum;
+            return sum/(keyArr.Length*(keyArr.Length-1)/2);
         }
 
         /// <summary>
-        /// 评估函数
+        /// 评估函数，功率占比
         /// </summary>
         /// <param name="candidate_grid"></param>
         /// <param name="ratioAP">平均损耗</param>
@@ -1420,7 +2474,7 @@ namespace LTE.ExternalInterference
             Dictionary<string, double> Ppathloss = new Dictionary<string, double>();//存储栅格中两两小区功率损耗差值
             foreach (KeyValuePair<string, List<GridInfo>> kvp in candidate_grid)
             {
-                double p = Evaluate(kvp.Value, 20);
+                double p = Evaluate(kvp.Value, 10);
                 Ppathloss.Add(kvp.Key, p);
                 if (candidate_grid.Count == 1) return kvp.Key;
             }
@@ -1502,6 +2556,7 @@ namespace LTE.ExternalInterference
             return maxKey;
 
         }
+
         /// <summary>
         /// 评估函数
         /// </summary>
@@ -1517,17 +2572,30 @@ namespace LTE.ExternalInterference
             Dictionary<string, double> Ppathloss = new Dictionary<string, double>();//存储栅格中两两小区功率损耗差值
             foreach (KeyValuePair<string, List<GridInfo>> kvp in candidate_grid)
             {
-                double p = Evaluate(kvp.Value, 20);
+                double p = Evaluate(kvp.Value, 10);
                 Ppathloss.Add(kvp.Key, p);
                 if (candidate_grid.Count == 1) return kvp.Key;
             }
 
-            Dictionary<string, long> grid_strongP = this.GetGrid_StrongP(candidate_grid);
-
-
+            Dictionary<string, long> grid_strongP = this.GetGrid_StrongP(candidate_grid,0);
 
             string maxKey = "";
             double max = 0;
+            Hashtable ht = new Hashtable();
+            ht["cellname"] = this.virname;
+            DataTable source = IbatisHelper.ExecuteQueryForDataTable("GetVirSourceAllInfo", ht);
+            Geometric.Point point= new Point();
+            bool isCompare = true;
+            if (source.Rows.Count < 1)
+            {
+                Debug.WriteLine("tbRealSource中无数据");
+                isCompare = false;
+            }
+            else
+            {
+                point = new Geometric.Point(Convert.ToDouble(source.Rows[0]["x"]), Convert.ToDouble(source.Rows[0]["y"]), 0);
+            }
+            
             foreach (KeyValuePair<string, List<GridInfo>> kvp in candidate_grid)
             {
                 string k = kvp.Key;
@@ -1539,8 +2607,178 @@ namespace LTE.ExternalInterference
                     maxKey = k;
                     max = value;
                 }
-                Debug.WriteLine("Grid_:" + k + "    rate:" + value + "    from:" + grid_from[k].Count + " 综合干扰差值：" + Ppathloss[k]);
+                Debug.Write("Grid_:" + k + "    rate:" + value + "    from:" + grid_from[k].Count + " 综合干扰差值：" + Ppathloss[k]);
+                if (isCompare)
+                {
+                    string[] str = k.Split(',');
+                    if (str.Length != 3)
+                    {
+                        Debug.WriteLine("key 分解错误");
+                    }
+                    else
+                    {
+                        Geometric.Point p = new Geometric.Point();
+                        Grid3D tmp1 = new Grid3D(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]));
+                        GridHelper.getInstance().PointGridXYZ(ref p, tmp1, ggridsize, ggridVsize);
+                        double dis = Geometric.Point.distance(point, p);
+                        Debug.WriteLine( "     与源点距离：" + dis + "   路径数" + kvp.Value.Count + "    栅格功率：dbm" + 10 * (Math.Log10(grid_pwr[kvp.Key]) + 3) + "     栅格平均路径损耗：" + grid_pathloss[kvp.Key]);
+                    }
+                }
             }
+            return maxKey;
+
+        }
+
+
+        /// <summary>
+        /// 评估函数，指定最终的目标个数
+        /// </summary>
+        /// <param name="candidate_grid"></param>
+        /// <param name="pathnum"></param>
+        /// <param name="ratioP"></param>
+        /// <param name="from"></param>
+        /// <param name="kn"></param>
+        /// <returns></returns>
+        public string EvaluateCombineAll(Dictionary<string, List<GridInfo>> candidate_grid, double pathnum, double ratioP, double from, int kn)
+        {
+            if (candidate_grid.Count < 1) return null;
+
+            Dictionary<string, double> Ppathloss = new Dictionary<string, double>();//存储栅格中两两小区功率损耗差值
+            foreach (KeyValuePair<string, List<GridInfo>> kvp in candidate_grid)
+            {
+                double p = Evaluate(kvp.Key,kvp.Value, 10,3);
+                Ppathloss.Add(kvp.Key, p);
+                if (candidate_grid.Count == 1) return kvp.Key;
+            }
+
+            Dictionary<string, long> grid_strongP = this.GetGrid_StrongP(candidate_grid,2);
+
+            string maxKey = "";
+            double max = 0;
+            Hashtable ht = new Hashtable();
+            ht["cellname"] = this.virname;
+            DataTable source = IbatisHelper.ExecuteQueryForDataTable("GetVirSourceAllInfo", ht);
+            Geometric.Point point = new Point();
+            bool isCompare = true;
+            if (source.Rows.Count < 1)
+            {
+                Debug.WriteLine("tbRealSource中无数据");
+                isCompare = false;
+            }
+            else
+            {
+                point = new Geometric.Point(Convert.ToDouble(source.Rows[0]["x"]), Convert.ToDouble(source.Rows[0]["y"]), 0);
+            }
+            //AnalysisPathFrom(togrid,10);
+
+            MinHeap<LocResult> rec = new MinHeap<LocResult>(kn);
+            MinHeap<LocPResult> recP = new MinHeap<LocPResult>(kn);
+            MinHeap<LocPpResult> recPp = new MinHeap<LocPpResult>(kn);
+            foreach (KeyValuePair<string, List<GridInfo>> kvp in candidate_grid)
+            {
+                string k = kvp.Key;
+                //计算值
+                double value = grid_from[k].Count * from + grid_strongP[k] * 0.002 * pathnum - Ppathloss[k] * 0.1 * ratioP;
+
+                if (value > max)
+                {
+                    maxKey = k;
+                    max = value;
+                }
+                Debug.Write("Grid_:" + k + "    rate:" + value + "    from:" + grid_from[k].Count + " 综合干扰差值：" + Ppathloss[k] + "   路径数" + kvp.Value.Count+"   强信号射线数"+ grid_strongP[k]);
+                double dis = 0;
+                string[] str = k.Split(',');
+                if (str.Length != 3)
+                {
+                    Debug.WriteLine("key 分解错误");
+                    continue;
+                }
+                if (isCompare)
+                {
+                    Geometric.Point p = new Geometric.Point();
+                    Grid3D tmp1 = new Grid3D(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]),0);
+                    GridHelper.getInstance().PointGridXYZ(ref p, tmp1, ggridsize, ggridVsize);
+                    dis = Geometric.Point.distance(point, p);
+                    Debug.WriteLine("     与源点距离：" + dis + "    栅格功率：dbm" + 10 * (Math.Log10(grid_pwr[kvp.Key]) + 3) + "     栅格平均路径损耗：" + grid_pathloss[kvp.Key]);
+                    
+                }
+                if (rec.isFull())//已添加k个
+                {
+                    if (value > rec.GetMinItem().rp)
+                    {
+                        LocResult loc = new LocResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, kvp.Value.Count);
+                        rec.DeteleMinItem();
+                        rec.AddItem(loc);
+                    }
+                }
+                else
+                {
+                    LocResult loc = new LocResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, kvp.Value.Count);
+                    rec.AddItem(loc);
+                }
+
+                if (recP.isFull())//已添加k个
+                {
+                    if (grid_strongP[k] > recP.GetMinItem().snum)
+                    {
+                        LocPResult loc = new LocPResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, kvp.Value.Count);
+
+                        recP.DeteleMinItem();
+                        recP.AddItem(loc);
+                    }
+                }
+                else
+                {
+                    LocPResult loc = new LocPResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, kvp.Value.Count);
+                    recP.AddItem(loc);
+                }
+
+                if (recPp.isFull())//已添加k个
+                {
+                    if (Ppathloss[k] > recPp.GetMinItem().subPloss)
+                    {
+                        LocPpResult loc = new LocPpResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, kvp.Value.Count);
+
+                        recPp.DeteleMinItem();
+                        recPp.AddItem(loc);
+                    }
+                }
+                else
+                {
+                    LocPpResult loc = new LocPpResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, kvp.Value.Count);
+                    recPp.AddItem(loc);
+                }
+
+
+            }
+            int count = 0;
+
+            Debug.WriteLine("路径数值最大前"+kn+ "个结果集，由路径数大小从小到大输出");
+            while (!recP.isEmpty())
+            {
+                LocPResult loc = recP.GetMinItem();
+                Debug.WriteLine(count + " grid:" + loc.gridx + "  " + loc.gridy + "   " + loc.gridz + "    rate:" + loc.rp + "    dis:" + loc.dis + "    from:" + loc.fromnum + "    综合干扰差值：" + loc.subPloss + "   路径数" + loc.snum);
+                recP.DeteleMinItem();
+            }
+
+            Debug.WriteLine("综合干扰差值最小前" + kn + "个结果集，由差值大小从大到小输出");
+            while (!recPp.isEmpty())
+            {
+                LocPpResult loc = recPp.GetMinItem();
+                Debug.WriteLine(count + " grid:" + loc.gridx + "  " + loc.gridy + "   " + loc.gridz + "    rate:" + loc.rp + "    dis:" + loc.dis + "    from:" + loc.fromnum + "    综合干扰差值：" + loc.subPloss + "   路径数" + loc.snum);
+                recPp.DeteleMinItem();
+            }
+
+            Debug.WriteLine(kn + "个结果集，由评分从小到大输出");
+            while (!rec.isEmpty())
+            {
+                LocResult loc = rec.GetMinItem();
+                Debug.WriteLine(count + " grid:" + loc.gridx + "  " + loc.gridy + "   " + loc.gridz + "    rate:" + loc.rp + "    dis:" + loc.dis + "    from:" + loc.fromnum + "    综合干扰差值：" + loc.subPloss + "   路径数" + loc.snum);
+                rec.DeteleMinItem();
+            }
+
+
+            
             return maxKey;
 
         }
@@ -1590,5 +2828,136 @@ namespace LTE.ExternalInterference
         }
         #endregion
 
+    }
+
+    /// <summary>
+    /// 用于得到前k个结果
+    /// </summary>
+    public class LocResult : IComparable
+    {
+        public int gridx;
+        public int gridy;
+        public int gridz;
+        public double rp;
+        public double dis;
+        public int snum;
+        public int fromnum;
+        public double subPloss;
+        public LocResult(int gridx, int gridy, int gridz,double rp,int fromnum,double subPloss,double dis,int snum)
+        {
+            this.gridx = gridx;
+            this.gridy = gridy;
+            this.gridz = gridz;
+            this.rp = rp;
+            this.fromnum = fromnum;
+            this.subPloss = subPloss;
+            this.snum = snum;
+            this.dis = dis;
+        }
+
+        public LocResult(int gridx, int gridy, int gridz, double rp, int fromnum, double subPloss, int snum)
+        {
+            this.gridx = gridx;
+            this.gridy = gridy;
+            this.gridz = gridz;
+            this.rp = rp;
+            this.fromnum = fromnum;
+            this.subPloss = subPloss;
+            this.snum = snum;
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (obj == null) return 1;
+            LocResult otherG = obj as LocResult;
+            if (this.rp < otherG.rp) return -1;
+            else if (Math.Abs(this.rp - otherG.rp) < 0.0001) return 0;
+            return 1;
+        }
+    }
+    public class LocPResult : IComparable
+    {
+        public int gridx;
+        public int gridy;
+        public int gridz;
+        public double rp;
+        public double dis;
+        public int snum;
+        public int fromnum;
+        public double subPloss;
+        public LocPResult(int gridx, int gridy, int gridz, double rp, int fromnum, double subPloss, double dis, int snum)
+        {
+            this.gridx = gridx;
+            this.gridy = gridy;
+            this.gridz = gridz;
+            this.rp = rp;
+            this.fromnum = fromnum;
+            this.subPloss = subPloss;
+            this.snum = snum;
+            this.dis = dis;
+        }
+
+        public LocPResult(int gridx, int gridy, int gridz, double rp, int fromnum, double subPloss, int snum)
+        {
+            this.gridx = gridx;
+            this.gridy = gridy;
+            this.gridz = gridz;
+            this.rp = rp;
+            this.fromnum = fromnum;
+            this.subPloss = subPloss;
+            this.snum = snum;
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (obj == null) return 1;
+            LocPResult otherG = obj as LocPResult;
+            if (this.snum < otherG.snum) return -1;
+            else if (Math.Abs(this.snum - otherG.snum) < 0.0001) return 0;
+            return 1;
+        }
+    }
+
+    public class LocPpResult : IComparable
+    {
+        public int gridx;
+        public int gridy;
+        public int gridz;
+        public double rp;
+        public double dis;
+        public int snum;
+        public int fromnum;
+        public double subPloss;
+        public LocPpResult(int gridx, int gridy, int gridz, double rp, int fromnum, double subPloss, double dis, int snum)
+        {
+            this.gridx = gridx;
+            this.gridy = gridy;
+            this.gridz = gridz;
+            this.rp = rp;
+            this.fromnum = fromnum;
+            this.subPloss = subPloss;
+            this.snum = snum;
+            this.dis = dis;
+        }
+
+        public LocPpResult(int gridx, int gridy, int gridz, double rp, int fromnum, double subPloss, int snum)
+        {
+            this.gridx = gridx;
+            this.gridy = gridy;
+            this.gridz = gridz;
+            this.rp = rp;
+            this.fromnum = fromnum;
+            this.subPloss = subPloss;
+            this.snum = snum;
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (obj == null) return 1;
+            LocPpResult otherG = obj as LocPpResult;
+            if (this.subPloss < otherG.subPloss) return -1;
+            else if (Math.Abs(this.subPloss - otherG.subPloss) < 0.0001) return 0;
+            return 1;
+        }
     }
 }

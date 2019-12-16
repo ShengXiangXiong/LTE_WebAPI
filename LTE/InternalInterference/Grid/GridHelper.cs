@@ -641,9 +641,10 @@ namespace LTE.InternalInterference.Grid
                 //同划分网格一致
                 double dy = p.Y - oY;
                 double dx = p.X - oX;
-                grid.gxid = Convert.ToInt32(Math.Ceiling(dx / gridxy)) - 1;
-                grid.gyid = Convert.ToInt32(Math.Ceiling(dy / gridxy)) - 1;
-                grid.gzid = (int)Math.Ceiling(p.Z / gridz);
+                grid.gxid = dx == 0 ? 0 : Convert.ToInt32(Math.Ceiling(dx / gridxy)) - 1;
+                grid.gyid = dy == 0 ? 0 : Convert.ToInt32(Math.Ceiling(dy / gridxy)) - 1;
+                grid.gzid = p.Z == 0 ? 0 : Convert.ToInt32(Math.Ceiling(p.Z / gridz)) - 1;
+                
             }
 
             return ret;
@@ -664,7 +665,7 @@ namespace LTE.InternalInterference.Grid
             double half = 0.5 * agridsize;
             p.X = oX + grid.gxid * agridsize + half;
             p.Y = oY + grid.gyid * agridsize + half;
-            p.Z = 0 + (grid.gzid + 0.5) * agridVsize;
+            p.Z = (grid.gzid + 0.5) * agridVsize;
 
         }
     }

@@ -97,6 +97,7 @@ namespace LTE.CalcProcess
                 //AuthenticationHeaderValue authValue = new AuthenticationHeaderValue("Basic", token);
                 //httpClient.DefaultRequestHeaders.Authorization = authValue;
                 HttpResponseMessage response = await httpClient.PostAsync(url, httpContent);
+                //Console.WriteLine("response:"+response.IsSuccessStatusCode);
             }
             catch (Exception)
             {
@@ -268,7 +269,10 @@ namespace LTE.CalcProcess
                         else
                         {
                             if (true)
+                            {
+                                Console.WriteLine("CoverAnalysis");
                                 this.startCalc();
+                            }
                             else
                             {
                                 // 2019.1.12 尹静萍

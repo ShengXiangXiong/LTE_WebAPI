@@ -9,7 +9,7 @@ namespace LTE.Model
     {
         public CELL()
         { }
-        #region
+        #region 变量声明
         private int? _id;
 
         public int? ID

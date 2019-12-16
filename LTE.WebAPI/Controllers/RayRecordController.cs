@@ -18,7 +18,8 @@ namespace LTE.WebAPI.Controllers
         [HttpPost]
         public Result PostRayRecordLoc([FromBody]RayLocRecordModel ray)
         {
-            return ray.RecordRayLoc();
+            Result res = ray.RecordRayLoc(1);
+            return res;
         }
 
         /// <summary>

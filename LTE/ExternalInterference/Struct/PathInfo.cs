@@ -23,7 +23,7 @@ namespace LTE.ExternalInterference.Struct
         public double sourceEmit;//记录该轨迹始发点接收功率
 
         public int rayType;
-        public double distance;
+        public double distance;//已经多长
         public double emit;//单位为w，接收功率
         public double k1;//斜率
         public double k2;//斜率
