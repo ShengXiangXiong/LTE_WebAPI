@@ -11,6 +11,8 @@ using System.Diagnostics;
 using LTE.Model;
 using LTE.WebAPI.Utils;
 using System.Xml.Linq;
+using System.IO;
+using System.Text;
 
 namespace LTE.WebAPI.Models
 {
@@ -146,12 +148,17 @@ namespace LTE.WebAPI.Models
                 return rt;
 
             //更新cell的altitude信息以及计算k个邻近小区的平均距离和最大最小距离
-            rt = updateCell(maxAgxid, maxAgyid, 30,batchSize:100,k:5);
+            rt = updateCell(maxAgxid, maxAgyid, 30, batchSize: 100, k: 5);
             if (!rt.ok)
                 return rt;
 
             // 2019.6.11 地面栅格
             rt = calcGroundGrid(pMin.X, pMin.Y, maxgxid, maxgyid, this.sideLength);
+            if (!rt.ok)
+                return rt;
+
+            // 2019.11.26 更新地面栅格的海拔字段,基于地形，jinhj
+            rt = calcGroundGridAltitude(pMin.X, pMin.Y, pMax.X, pMax.Y, 0, 0, maxAgxid, maxAgyid, 0, 0, maxgxid, maxgyid);
             if (!rt.ok)
                 return rt;
 
@@ -1319,6 +1326,159 @@ namespace LTE.WebAPI.Models
             }
             catch (Exception ex)
             { return new Result(false, ex.ToString()); }
+        }
+
+        // 2019.11.26 根据地形得到地面栅格海拔 jinhj
+        Result calcGroundGridAltitude(double minX, double minY, double maxX, double maxY,
+            int minAxid, int minAyid, int maxAxid, int maxAyid,
+            int mingxid, int mingyid, int maxgxid, int maxgyid)
+        {
+            //2019.07.20 分页操作，防止内存溢出
+            int pageSize = 100;
+            int minAgxid = minAxid;
+            //int minAgyid = minAyid;
+            int maxAgxid = Math.Min(maxAxid, minAxid + pageSize);
+            //int maxAgyid = Math.Min(maxAyid, minAxid + pageSize);
+
+            //int counter = 0;//记录循环次数
+            //string pathGrids = @"D:\CSProject\NanJingNewWeb\LTE_WebAPI\GridsAltitude.txt";//打印日志输出路径
+            //StreamWriter swGridsStart = new StreamWriter(pathGrids, true, Encoding.Default);
+            //swGridsStart.WriteLine("============ start ======================");
+            //swGridsStart.Close();
+
+            while (minAgxid <= maxAxid)
+            {
+                int minAgyid = 0;
+                int maxAgyid = Math.Min(maxAyid, minAgyid + pageSize);
+                while (minAgyid <= maxAyid)
+                {
+                    //counter++;
+                    //Stopwatch reportTime = new Stopwatch();//计时开始
+                    //reportTime.Start();
+                    ////打印进度信息
+                    //StreamWriter swGrids = new StreamWriter(pathGrids, true, Encoding.Default);
+                    //swGrids.WriteLine("num: " + counter.ToString() + " minAgxid:" + minAgxid.ToString() + " maxAgxid:" + maxAgxid.ToString() + " maxAxid:" + maxAxid.ToString());
+                    //swGrids.WriteLine(" minAgyid:" + minAgyid.ToString() + " maxAgyid:" + maxAgyid.ToString() + " maxAyid:" + maxAyid.ToString());
+                    //swGrids.Close();
+
+                    //根据均匀栅格网格id获得平面坐标范围(注意坐标代表的是左下角的id，所以求范围时，min用原始坐标id计算即可，而max就得在原始坐标的基础上+1计算才行)
+                    double minGX = minX + minAgxid * 30;
+                    double minGY = minY + minAgyid * 30;
+                    double maxGX = minX + (maxAgxid + 1) * 30;
+                    double maxGY = minY + (maxAgyid + 1) * 30;
+
+                    // 读取范围内的加速栅格信息
+                    AccelerateStruct.setAccGridRange(minAgxid, minAgyid, maxAgxid, maxAgyid);
+                    //AccelerateStruct.constructAccelerateStructAltitude();
+                    AccelerateStruct.constructGridTin();
+
+                    // 读取范围内的地形 TIN
+                    TINInfo.setBound(minx: minGX, miny: minGY, maxx: maxGX, maxy: maxGY);
+                    TINInfo.constructTINVertex();
+
+                    // 读取范围内的地面栅格中心点
+                    //BuildingGrid3D.constructBuildingCenterByArea(minGx: minGX, minGy: minGY, maxGx: maxGX, maxGy: maxGY);
+                    GroundGrid.constructGGridsByArea(minGx: minGX, minGy: minGY, maxGx: maxGX, maxGy: maxGY);
+
+                    // 计算地面栅格中心的海拔
+                    Dictionary<string, double> altitude = new Dictionary<string, double>();
+                    foreach (var ggridKeyVal in GroundGrid.ggrids)
+                    {
+                        string ggridKey = ggridKeyVal.Key;
+
+                        // 地面栅格中心所在的 TIN
+                        Grid3D agridid = new Grid3D();
+                        Geometric.Point center = new Geometric.Point(GroundGrid.ggrids[ggridKey].X, GroundGrid.ggrids[ggridKey].Y, 0);
+                        bool ok = GridHelper.getInstance().PointXYZToAccGrid(center, ref agridid);  // 地面栅格中心所在的均匀栅格
+                        if (!ok)
+                        {
+                            altitude[ggridKey] = 0;
+                            continue;
+                        }
+                        string key = string.Format("{0},{1},{2}", agridid.gxid, agridid.gyid, agridid.gzid);
+                        List<int> TINs = AccelerateStruct.gridTIN[key];
+
+                        // 地面栅格中心的海拔
+                        for (int i = 0; i < TINs.Count; i++)
+                        {
+                            List<Geometric.Point> pts = TINInfo.getTINVertex(TINs[i]);
+
+                            if (TINs[i] == 173047)
+                            {
+                                Console.WriteLine(TINInfo.getTINVertex(TINs[i]));
+                            }
+
+                            if (pts.Count < 3)
+                                return new Result(false, "TIN 数据出错");
+
+
+                            bool inTIN = Geometric.PointHeight.isInside(pts[0], pts[1], pts[2],
+                                GroundGrid.ggrids[ggridKey].X, GroundGrid.ggrids[ggridKey].Y);
+
+                            if (inTIN) // 位于当前 TIN 三角形内
+                            {
+                                double alt = Geometric.PointHeight.getPointHeight(pts[0], pts[1], pts[2],
+                                    GroundGrid.ggrids[ggridKey].X, GroundGrid.ggrids[ggridKey].Y);
+                                altitude[ggridKey] = alt;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 更新数据库
+                    //TODO: 部分更新tbGridDem数据表
+                    Hashtable ht = new Hashtable();
+                    ht["minGX"] = minGX;
+                    ht["maxGX"] = maxGX;
+                    ht["minGY"] = minGY;
+                    ht["maxGY"] = maxGY;
+                    System.Data.DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getGroudGridsByArea", ht);
+                    for (int i = 0; i < tb.Rows.Count; i++)
+                    {
+                        int gxid = Convert.ToInt32(tb.Rows[i]["GXID"]);
+                        int gyid = Convert.ToInt32(tb.Rows[i]["GYID"]);
+                        string key = string.Format("{0},{1}", gxid, gyid);
+                        if (!altitude.Keys.Contains(key))
+                            continue;
+                        tb.Rows[i]["Dem"] = altitude[key];
+                    }
+                    IbatisHelper.ExecuteDelete("DeleteGroudGridsByArea", ht);
+
+                    using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))  // 写入新的
+                    {
+                        bcp.BatchSize = tb.Rows.Count;
+                        bcp.BulkCopyTimeout = 1000;
+                        bcp.DestinationTableName = "tbGridDem";
+                        bcp.WriteToServer(tb);
+
+                        bcp.Close();
+                    }
+                    tb.Clear();
+                    //xsx 及时清理内存
+                    AccelerateStruct.clearAccelerateStruct();
+                    TINInfo.clear();
+                    GroundGrid.clearGroundGridData();
+                    minAgyid = maxAgyid + 1;
+                    maxAgyid = Math.Min(maxAgyid + pageSize, maxAyid);
+
+                    ////本轮计时结束
+                    //reportTime.Stop();
+                    //double elapsedTime = reportTime.ElapsedMilliseconds;//毫秒
+                    //                                                    //打印本轮时间
+                    //StreamWriter swGridsTime = new StreamWriter(pathGrids, true, Encoding.Default);
+                    //swGridsTime.WriteLine("time: " + elapsedTime.ToString());
+                    //swGridsTime.Close();
+                }
+                minAgxid = maxAgxid + 1;
+                maxAgxid = Math.Min(maxAgxid + pageSize, maxAxid);
+            }
+
+            ////打印日志结束
+            //StreamWriter swGridsFinish = new StreamWriter(pathGrids, true, Encoding.Default);
+            //swGridsFinish.WriteLine("============ finish ======================");
+            //swGridsFinish.Close();
+
+            return new Result(true);
         }
 
         class BuildingVertex

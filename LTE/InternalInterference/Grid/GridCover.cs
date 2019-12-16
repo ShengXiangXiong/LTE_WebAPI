@@ -172,7 +172,7 @@ namespace LTE.InternalInterference.Grid
             foreach (KeyValuePair<string, GridStrength> kv in GridStrengths)
             {
                 gs = kv.Value;
-                if (gs.Level == 0)
+                if (gs.ground)
                 {//地面栅格
                     ng++;
                     dr = groundCover.NewRow();

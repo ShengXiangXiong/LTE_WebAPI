@@ -95,7 +95,7 @@ namespace LTE.WebAPI.Models
             }
             catch (Exception e)
             {
-                return new Result(false, "地面覆盖图层刷新失败" + e);
+                return new Result(false, "地面覆盖图层刷新失败: " + e);
             }
             finally
             {
@@ -132,7 +132,7 @@ namespace LTE.WebAPI.Models
                 }
                 else
                 {
-                    return new Result(false, "立体覆盖图层刷新失败");
+                    return new Result(false, "立体覆盖图层刷新失败: "+res.Msg);
                 }
             }
             catch (Exception e)

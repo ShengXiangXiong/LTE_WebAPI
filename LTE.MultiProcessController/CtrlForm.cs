@@ -634,7 +634,7 @@ namespace LTE.MultiProcessController
             gs.ReceivedPowerW = ret.ReceivedPowerW;
             gs.ReceivedPowerdbm = ret.ReceivedPowerdbm;
             gs.PathLoss = ret.PathLoss;
-
+            gs.ground = ret.ground;
             return gs;
         }
 

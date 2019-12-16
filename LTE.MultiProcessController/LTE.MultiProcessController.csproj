@@ -163,12 +163,14 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>COPY $(TargetPath) $(ProjectDir)..\LTE.WebAPI
-COPY $(TargetDir)$(TargetName).XML $(ProjectDir)..\LTE.WebAPI
-COPY $(TargetDir)$(TargetName).exe.config $(ProjectDir)..\LTE.WebAPI
-COPY $(TargetPath) $(ProjectDir)..\LTE\bin\Debug
-COPY $(TargetDir)$(TargetName).XML $(ProjectDir)..\LTE\bin\Debug
-COPY $(TargetDir)$(TargetName).exe.config $(ProjectDir)..\LTE\bin\Debug\</PostBuildEvent>
+    <PostBuildEvent>
+      COPY $(TargetPath) $(ProjectDir)..\LTE.WebAPI
+      COPY $(TargetDir)$(TargetName).XML $(ProjectDir)..\LTE.WebAPI
+      COPY $(TargetDir)$(TargetName).exe.config $(ProjectDir)..\LTE.WebAPI
+      COPY $(TargetPath) $(ProjectDir)..\LTE\bin\Debug
+      COPY $(TargetDir)$(TargetName).XML $(ProjectDir)..\LTE\bin\Debug
+      COPY $(TargetDir)$(TargetName).exe.config $(ProjectDir)..\LTE\bin\Debug\
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

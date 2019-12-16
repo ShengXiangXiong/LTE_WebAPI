@@ -391,14 +391,13 @@ namespace LTE.InternalInterference
         {
             crossWithBuilding = false;
             crossWithTIN = false;
+            bool notCrossValid = true;
 
             buildingids = AccelerateStruct.getAccelerateStruct(grid.gxid, grid.gyid, grid.gzid);
             TINs = AccelerateStruct.getAccelerateStructTIN(grid.gxid, grid.gyid, grid.gzid);
 
-            if (buildingids == null)
-            {
-                return false;
-            }
+            
+            if(buildingids==null && TINs==null) { return true; }
 
             // 均匀栅格底面的 4 个顶点
             List<Point> Vertix = new List<Point>();
@@ -423,37 +422,65 @@ namespace LTE.InternalInterference
 
                 Point crossPoint = GeometricUtilities.Intersection(origin, dir, Vertix[i], new Vector3D(normal.x, normal.y, 0));
 
-                for (int k = 0; k < buildingids.Count; k++)
+                if (buildingids!=null)
                 {
-                    // 射线与均匀栅格侧面的交点比建筑物低，有可能会与建筑物发生碰撞
-                    if (crossPoint != null && crossPoint.Z < BuildingGrid3D.getBuildingHeight(buildingids[k]))
+                    for (int k = 0; k < buildingids.Count; k++)
                     {
-                        crossWithBuilding = true;
-                        return false;
+                        // 射线与均匀栅格侧面的交点比建筑物低，有可能会与建筑物发生碰撞
+                        if (crossPoint != null && crossPoint.Z < BuildingGrid3D.getBuildingHeight(buildingids[k]))
+                        {
+                            crossWithBuilding = true;
+                            notCrossValid = false;
+                        }
                     }
                 }
+                //for (int k = 0; k < buildingids.Count; k++)
+                //{
+                //    // 射线与均匀栅格侧面的交点比建筑物低，有可能会与建筑物发生碰撞
+                //    if (crossPoint != null && crossPoint.Z < BuildingGrid3D.getBuildingHeight(buildingids[k]))
+                //    {
+                //        crossWithBuilding = true;
+                //        return false;
+                //    }
+                //}
 
-                // 2019.5.28 地形
-                if (crossWithTIN)   // 已经与地形碰撞过了
-                    continue;
 
-                if (TINs == null)  // 当前均匀栅格内无地形
-                    continue;
-
-                for (int k = 0; k < TINs.Count; k++)
+                if (TINs!=null)
                 {
-                    // TIN 的最高点
-                    double height = TINInfo.getTINMaxHeight(TINs[k]);
-
-                    // 射线与均匀栅格侧面的交点比 TIN 低，有可能会与 TIN 发生碰撞
-                    if (crossPoint != null && crossPoint.Z < height)
+                    for (int k = 0; k < TINs.Count; k++)
                     {
-                        crossWithTIN = true;
+                        // TIN 的最高点
+                        double height = TINInfo.getTINMaxHeight(TINs[k]);
+
+                        // 射线与均匀栅格侧面的交点比 TIN 低，有可能会与 TIN 发生碰撞
+                        if (crossPoint != null && crossPoint.Z < height)
+                        {
+                            crossWithTIN = true;
+                            notCrossValid = false;
+                        }
                     }
                 }
+                //// 2019.5.28 地形
+                //if (crossWithTIN)   // 已经与地形碰撞过了
+                //    continue;
+
+                //if (TINs == null)  // 当前均匀栅格内无地形
+                //    continue;
+
+                //for (int k = 0; k < TINs.Count; k++)
+                //{
+                //    // TIN 的最高点
+                //    double height = TINInfo.getTINMaxHeight(TINs[k]);
+
+                //    // 射线与均匀栅格侧面的交点比 TIN 低，有可能会与 TIN 发生碰撞
+                //    if (crossPoint != null && crossPoint.Z < height)
+                //    {
+                //        crossWithTIN = true;
+                //    }
+                //}
             }
 
-            return true;
+            return notCrossValid;
         }
        
         /// <summary>
@@ -588,6 +615,8 @@ namespace LTE.InternalInterference
                     if (!PointHeight.isInside(polygonPoints[2], polygonPoints[1], polygonPoints[0], crossPt.X, crossPt.Y))
                         continue;
 
+                    //todo 判断碰撞点是否在当前地面栅格或建筑物栅格内
+
                     // 构造射线
                     if (GridHelper.getInstance().checkPointXYZInGrid(crossPt))
                     {
@@ -701,13 +730,13 @@ namespace LTE.InternalInterference
                         this.rayCountDirG++;
                         ray = new NodeInfo(originPoint, endPoint, new Point(-1, -1, -1), new Point(-1, -1, -1), -1, 0, null, rayType, Vector3D.getAngle(ref dir, ref normal) - Math.PI / 2.0);
                         rayList.Add(ray);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                     }
                     // 2019.5.30 可能与地形碰撞
                     else if (ray.SideFromPoint == null)
                     {
                         rayList.Add(ray);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                     }
                     // 2017.6.18  穿过建筑物到达地面
                     else
@@ -728,7 +757,7 @@ namespace LTE.InternalInterference
                     if (ray.SideFromPoint == null)
                     {
                         rayList.Add(ray);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                     }
                     // 直接到达建筑物顶面
                     else if (Math.Abs(ray.CrossPoint.Z - endPoint.Z) < 0.5)
@@ -739,7 +768,7 @@ namespace LTE.InternalInterference
                         // 计算建筑物顶面接收到的场强
                         NodeInfo ray1 = new NodeInfo(originPoint, endPoint, new Point(-1, -1, -1), new Point(-1, -1, -1), -1, 0, null, rayType, Vector3D.getAngle(ref dir, ref normal) - Math.PI / 2.0);
                         rayList.Add(ray1);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,false);
                         rayList.Remove(ray1);
 
                         rayList.Add(ray);  // 先把初级直射线加进来
@@ -772,7 +801,7 @@ namespace LTE.InternalInterference
                     if (ray.SideFromPoint == null)
                     {
                         rayList.Add(ray);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                     }
                     else
                     {
@@ -789,7 +818,7 @@ namespace LTE.InternalInterference
                                 this.rayCount++;
                                 //this.rayCountTra++;
                                 //this.TransmissionAnalysis(rayList, sourceInfo);
-                                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,false);
                             }
 
                             // 跟踪后续反射线
@@ -812,7 +841,7 @@ namespace LTE.InternalInterference
                     if (ray.SideFromPoint == null)
                     {
                         rayList.Add(ray);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                     }
                     else
                     {
@@ -886,7 +915,7 @@ namespace LTE.InternalInterference
             {
                 if (dis(rayList[0].PointOfIncidence, rayList[rayList.Count - 1].CrossPoint) < distance * 1.5)
                 {
-                    this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                    this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,false);
                 }
                 return;
             }
@@ -1012,7 +1041,7 @@ namespace LTE.InternalInterference
                         rayList[rayList.Count - 1].CrossPoint.Z = 0;
                         if (dis(rayList[0].PointOfIncidence, rayList[rayList.Count - 1].CrossPoint) < distance * 1.5)
                         {
-                            this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                            this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                         }
                         rayList.Remove(ray);
                     }
@@ -1023,7 +1052,7 @@ namespace LTE.InternalInterference
             else if (ray.SideFromPoint == null)
             {
                 rayList.Add(ray);
-                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                 return;
             }
 
@@ -1036,7 +1065,7 @@ namespace LTE.InternalInterference
                     this.rayCount++;
                     this.rayCountTra++;
                     //this.TransmissionAnalysis(rayList, sourceInfo);
-                    this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                    this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,false);
                 }
 
                 ReflectedRay refRay = new ReflectedRay(ray);
@@ -1124,7 +1153,8 @@ namespace LTE.InternalInterference
             List<Point> polygonPoints = null;
 
             int[] scene = new int[scenNum];
-
+            Grid3D accgrid = new Grid3D();
+            GridHelper.getInstance().PointXYZToAccGrid(endPoint, ref accgrid);
             do
             {
                 curAccGrid = lineCrossGrid.getNextCrossAccGrid();
@@ -1146,6 +1176,11 @@ namespace LTE.InternalInterference
                     ray.rayType = rayType;
                     break;
                 }
+                // 终点终止
+                if (accgrid.gxid == curAccGrid.gxid && accgrid.gyid == curAccGrid.gyid)
+                {
+                    break;
+                }
             } while (true);
 
             switch (type)
@@ -1159,13 +1194,14 @@ namespace LTE.InternalInterference
                         ray = new NodeInfo(originPoint, endPoint, new Point(-1, -1, -1), new Point(-1, -1, -1), -1, 0, null, rayType, Vector3D.getAngle(ref dir, ref normal) - Math.PI / 2.0);
                         rayScene(ref ray, ref scene);  // 2019.3.25 场景记录
                         rayList.Add(ray);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                     }
                     // 2019.5.30 可能与地形碰撞
                     else if (ray.SideFromPoint == null)
                     {
+                        rayScene(ref ray, ref scene);  // 2019.3.25 场景记录
                         rayList.Add(ray);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                     }
                     // 2017.6.18  穿过建筑物到达地面
                     else
@@ -1186,8 +1222,9 @@ namespace LTE.InternalInterference
                     // 2019.5.30 可能与地形碰撞
                     if (ray.SideFromPoint == null)
                     {
+                        rayScene(ref ray, ref scene);  // 2019.3.25 场景记录
                         rayList.Add(ray);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                     }
                     // 直接到达建筑物顶面
                     else if (Math.Abs(ray.CrossPoint.Z - endPoint.Z) < 0.5)
@@ -1199,7 +1236,7 @@ namespace LTE.InternalInterference
                         NodeInfo ray1 = new NodeInfo(originPoint, endPoint, new Point(-1, -1, -1), new Point(-1, -1, -1), -1, 0, null, rayType, Vector3D.getAngle(ref dir, ref normal) - Math.PI / 2.0);
                         rayScene(ref ray1, ref scene);  // 2019.3.25 场景记录
                         rayList.Add(ray1);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,false);
                         rayList.Remove(ray1);
 
                         rayScene(ref ray, ref scene);  // 2019.3.25 场景记录
@@ -1233,8 +1270,9 @@ namespace LTE.InternalInterference
                     // 2019.5.30 可能与地形碰撞
                     if (ray.SideFromPoint == null)
                     {
+                        rayScene(ref ray, ref scene);  // 2019.3.25 场景记录
                         rayList.Add(ray);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                     }
                     else
                     {
@@ -1252,7 +1290,7 @@ namespace LTE.InternalInterference
                                 this.rayCount++;
                                 //this.rayCountTra++;
                                 //this.TransmissionAnalysis(rayList, sourceInfo);
-                                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,false);
                             }
 
                             // 跟踪后续反射线
@@ -1274,8 +1312,9 @@ namespace LTE.InternalInterference
                     // 2019.5.30 可能与地形碰撞
                     if (ray.SideFromPoint == null)
                     {
+                        rayScene(ref ray, ref scene);  // 2019.3.25 场景记录
                         rayList.Add(ray);
-                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                        this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                     }
                     else
                     {
@@ -1350,7 +1389,7 @@ namespace LTE.InternalInterference
             {
                 if (dis(rayList[0].PointOfIncidence, rayList[rayList.Count - 1].CrossPoint) < distance * 1.5)
                 {
-                    this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                    this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,false);
                 }
                 return;
             }
@@ -1384,6 +1423,7 @@ namespace LTE.InternalInterference
                     ray.rayType = rayType;
                     break;
                 }
+
             } while (true);
 
             //射线没有与建筑物相交且射线方向向下
@@ -1483,7 +1523,7 @@ namespace LTE.InternalInterference
                         rayList[rayList.Count - 1].CrossPoint.Z = 0;
                         if (dis(rayList[0].PointOfIncidence, rayList[rayList.Count - 1].CrossPoint) < distance * 1.5)
                         {
-                            this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                            this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                         }
                         rayList.Remove(ray);
                     }
@@ -1493,8 +1533,9 @@ namespace LTE.InternalInterference
             // 2019.5.30 可能与地形碰撞
             else if (ray.SideFromPoint == null)
             {
+                rayScene(ref ray, ref scene);  // 2019.3.25 场景记录
                 rayList.Add(ray);
-                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                 return;
             }
 
@@ -1508,7 +1549,7 @@ namespace LTE.InternalInterference
                     this.rayCount++;
                     this.rayCountTra++;
                     //this.TransmissionAnalysis(rayList, sourceInfo);
-                    this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                    this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,false);
                 }
 
                 ReflectedRay refRay = new ReflectedRay(ray);
@@ -1593,7 +1634,7 @@ namespace LTE.InternalInterference
             {
                 if (dis(rayList[0].PointOfIncidence, rayList[rayList.Count - 1].CrossPoint) < distance * 1.5)
                 {
-                    this.CalcOutDoorRayStrength(rayList, emitPwr);
+                    this.CalcOutDoorRayStrength(rayList, emitPwr,false);
                 }
                 return;
             }
@@ -1650,7 +1691,7 @@ namespace LTE.InternalInterference
                         rayList.Add(ray);
 
                         rayList[rayList.Count - 1].CrossPoint.Z = 0;
-                        this.CalcOutDoorRayStrength(rayList, emitPwr);
+                        this.CalcOutDoorRayStrength(rayList, emitPwr,true);
 
                         rayList.Remove(ray);
                     }
@@ -1661,7 +1702,7 @@ namespace LTE.InternalInterference
             else if (ray.SideFromPoint == null)
             {
                 rayList.Add(ray);
-                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false);
+                this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);
                 return;
             }
 
@@ -1676,7 +1717,7 @@ namespace LTE.InternalInterference
                     this.TransmissionAnalysis(rayList, sourceInfo);
                 }
                 else
-                    this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, true);
+                    this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, true,false);
 
                 ReflectedRay refRay = new ReflectedRay(ray);
                 Vector3D refDir = refRay.ConstructReflectedRay(ref dir);  // 反射线方向
@@ -1744,7 +1785,7 @@ namespace LTE.InternalInterference
         /// <param name="rayAzimuth">初始射线方位角</param>
         /// <param name="rayInclination">初始射线下倾角</param>
         /// <param name="isT">是否为初始直射线与建筑物相交</param>
-        public void CalcOutDoorRayStrength(List<NodeInfo> rays, double rayAzimuth, double rayInclination, bool isT)
+        public void CalcOutDoorRayStrength(List<NodeInfo> rays, double rayAzimuth, double rayInclination, bool isT,bool ground)
         {
             if (rays.Count == 0)//|| rays[rays.Count - 1].CrossPoint.Z > 0)
             {
@@ -1753,7 +1794,7 @@ namespace LTE.InternalInterference
 
             //Console.WriteLine("rays[rays.Count - 1].CrossPoint.Z = 0 ");
             this.recRayCounter++;
-            this.calcStrength.CalcAndMergeGGridStrength(rayAzimuth, rayInclination, rays, isT);
+            this.calcStrength.CalcAndMergeGGridStrength(rayAzimuth, rayInclination, rays, isT,ground);
         }
 
         /// <summary>
@@ -1763,7 +1804,7 @@ namespace LTE.InternalInterference
         /// <param name="rayAzimuth">初始射线方位角</param>
         /// <param name="rayInclination">初始射线下倾角</param>
         /// <param name="isT">是否为初始直射线与建筑物相交</param>
-        public void CalcOutDoorRayStrength(List<NodeInfo> rays, double emitPwr)
+        public void CalcOutDoorRayStrength(List<NodeInfo> rays, double emitPwr,bool ground)
         {
             if (rays.Count == 0)//|| rays[rays.Count - 1].CrossPoint.Z > 0)
             {
@@ -1772,7 +1813,7 @@ namespace LTE.InternalInterference
 
             //Console.WriteLine("rays[rays.Count - 1].CrossPoint.Z = 0 ");
             this.recRayCounter++;
-            this.calcStrength.CalcAndMergeGGridStrength(rays, emitPwr);
+            this.calcStrength.CalcAndMergeGGridStrength(rays, emitPwr, ground);
         }
 
         /// <summary>
@@ -3059,6 +3100,8 @@ namespace LTE.InternalInterference
         public int GYID;
         //level = 0 表示地面，level>1表示室内
         public int Level;
+        //ground = true 表示地面，false表示建筑物
+        public bool ground;
         public Point GCenter;
         public int eNodeB;
         public int CI;
@@ -3097,6 +3140,7 @@ namespace LTE.InternalInterference
         public int GYID;
         //level = 0 表示地面，level>1表示室内
         public int Level;
+        public bool ground;
         public double x;
         public double y;
         public double z;

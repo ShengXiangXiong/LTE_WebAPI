@@ -15,10 +15,10 @@
         <h3>路测</h3>
         开始时间：<input type="text" id="startTime" value="2019-03-27 00:00:00" /><br />
         结束时间：<input type="text" id="endTime" value="2019-03-29 00:00:00" /> <br />
-        场景个数：<input type="text" id="sceneNum" value=3 /><br />
+        场景个数：<input type="text" id="sceneNum" value=4 /><br />
         <h3>遗传算法</h3>
-        种群大小：<input type="text" id="popSize" value=50 /><br />
-        遗传代数：<input type="text" id="gen" value=500 /><br /><br />
+        种群大小：<input type="text" id="popSize" value=200 /><br />
+        遗传代数：<input type="text" id="gen" value=800 /><br /><br />
         <input type="button" id="cali" value="确定" /><br /><br />
     </div>
 </body>
@@ -41,6 +41,7 @@
             type: "POST",
             contentType: "application/json; charset=utf-8",
             data: JSON.stringify(cof),
+            headers: { "auth": window.localStorage.getItem("token") },
             success: function (data, status)
             {
                 if (data.ok == true)

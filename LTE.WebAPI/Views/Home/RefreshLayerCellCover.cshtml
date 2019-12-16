@@ -31,6 +31,7 @@
             type: "POST",
             contentType: "application/json; charset=utf-8",
             data: JSON.stringify(cell),
+            headers: { "auth": window.localStorage.getItem("token") },
             success: function (data, status)
             {
                 if (data.ok == true)
@@ -56,6 +57,7 @@
             url: "/api/RefreshLayer/PostRefreshCell3DCover",
             type: "POST",
             contentType: "application/json; charset=utf-8",
+            headers: { "auth": window.localStorage.getItem("token") },
             data: JSON.stringify(cell),
             success: function (data, status) {
                 if (data.ok == true) {

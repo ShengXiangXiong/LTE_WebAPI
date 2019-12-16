@@ -50,18 +50,26 @@ namespace GisClient
 
         public static OpreateGisLayer.Client getGisLayerService(string url = "localhost", int port = 8800)
         {
-            if (client == null)
+            try
             {
-                transport = new TSocket(url, port);
-                protocol = new TBinaryProtocol(transport);
-                transport.Open();
-                client = new OpreateGisLayer.Client(protocol);
+                if (client == null)
+                {
+                    transport = new TSocket(url, port);
+                    protocol = new TBinaryProtocol(transport);
+                    transport.Open();
+                    client = new OpreateGisLayer.Client(protocol);
+                }
+                if (!transport.IsOpen)
+                {
+                    transport.Open();
+                }
+                return client;
             }
-            if (!transport.IsOpen)
+            catch (Exception)
             {
-                transport.Open();
+
+                throw;
             }
-            return client;
         }
         public static void CloseConn()
         {

@@ -135,6 +135,7 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <None Include="app.config" />
+    <None Include="bin\x86\Debug\LTE.CalcProcess.exe.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -171,6 +172,16 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="bin\Debug\LTE.CalcProcess.XML" />
+    <Content Include="bin\x64\Debug\Microsoft.VisualStudio.Threading.dll" />
+    <Content Include="bin\x86\Debug\LTE.CalcProcess.exe" />
+    <Content Include="bin\x86\Debug\LTE.CalcProcess.pdb" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\Release\" />
+    <Folder Include="bin\x86\Release\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

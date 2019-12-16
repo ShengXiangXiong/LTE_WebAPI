@@ -21,6 +21,7 @@ using LTE.Model;
 using System.Net.Http;
 using System.Net;
 using System.Net.Http.Headers;
+using Point = LTE.Geometric.Point;
 
 namespace LTE.CalcProcess
 {
@@ -458,6 +459,15 @@ namespace LTE.CalcProcess
 
             //将位于扇区覆盖范围内的地面栅格加进来
             List<LTE.Geometric.Point> gfPoints = GroundGrid.getGGridCenterBySector(source, this.distance, this.fromAngle, this.toAngle, null);
+
+            foreach (var item in gfPoints)
+            {
+                Point t_p = new Point(item.X,item.Y,item.Z);
+                int gxid = -1, gyid = -1;
+                if (!GridHelper.getInstance().XYToGGrid(t_p.X, t_p.Y, ref gxid, ref gyid))
+                    return;
+            }
+
 
             //建筑物顶面栅格
             List<LTE.Geometric.Point> topPoints = TopPlaneGrid.GetAllTopGrid(source, this.bids);
@@ -1385,10 +1395,13 @@ namespace LTE.CalcProcess
             Console.WriteLine("扇区内建筑物顶面栅格数量 = {0}", topPoints.Count);
             Console.WriteLine("扇区内建筑物立面栅格数量 = {0}", vmPoints.Count);
             Console.WriteLine("扇区内建筑物棱边栅格数量 = {0}", diffPoints.Count);
-            Console.WriteLine("扇区内<6m建筑物数量 = {0}, 占比 = {1} ", h1, h1 / this.bids.Count);
-            Console.WriteLine("扇区内6~20m建筑物数量 = {0}, 占比 = {1} ", h2, h2 / this.bids.Count);
-            Console.WriteLine("扇区内>20m建筑物数量 = {0}, 占比 = {1} ", h3, h3 / this.bids.Count);
-            Console.WriteLine("扇区内建筑物占比 = {0}", topPoints.Count / gfPoints.Count);
+            if (this.bids.Count != 0 && gfPoints.Count!=0) {
+                Console.WriteLine("扇区内<6m建筑物数量 = {0}, 占比 = {1} ", h1, h1 / this.bids.Count);
+                Console.WriteLine("扇区内6~20m建筑物数量 = {0}, 占比 = {1} ", h2, h2 / this.bids.Count);
+                Console.WriteLine("扇区内>20m建筑物数量 = {0}, 占比 = {1} ", h3, h3 / this.bids.Count);
+                Console.WriteLine("扇区内建筑物占比 = {0}", topPoints.Count / gfPoints.Count);
+            }
+
             Console.WriteLine("射线数量 = {0}", this.rayLocate.rayCount);
             Console.WriteLine("直射线数量 = {0}", this.rayLocate.rayCountDir);
             Console.WriteLine("绕射线数量 = {0}", this.rayLocate.rayCountDif);
@@ -1403,8 +1416,8 @@ namespace LTE.CalcProcess
 
             this.afterCalc();
 
-            //Console.ReadKey();
             //this.cs.free();
+            this.Close();
         }
         #endregion
 
@@ -1430,6 +1443,16 @@ namespace LTE.CalcProcess
                     this.updateProgress(rayCounter);
                 }
 
+                Point t_p = new Point(endp.X, endp.Y, endp.Z);
+                int gxid = -1, gyid = -1;
+                if (!GridHelper.getInstance().XYToGGrid(t_p.X, t_p.Y, ref gxid, ref gyid))
+                    return;
+
+                if (gxid == 3421 && gyid == 8916)
+                {
+                    Console.WriteLine("111111");
+                }
+
                 //if (rayCounter < 2117)
                 //    continue;
 
@@ -1450,6 +1473,7 @@ namespace LTE.CalcProcess
                 // 跟踪某种类型的射线传播
                 rayList.Clear();
                 this.interAnalysis.rayTracingFirst(s.SourcePoint, endp, rayList, s, LTE.InternalInterference.RayType.Direction, type, coverageRadius);
+                //this.rayLocate.rayTracingFirstAdj(s.SourcePoint, endp, rayList, s, LTE.InternalInterference.RayType.Direction, type);
             }
             //MessageBox.Show("finish");
             this.updateProgress(points.Count);
@@ -1998,6 +2022,7 @@ namespace LTE.CalcProcess
             else if (this.isRayAdj)
             {
                 writeRayAdj();
+                RayHelper.clearInstance();
                 IPC.PostMessage(this.parentHandle, IPC.WM_POST_CALCDONE, this.Handle, 0);
             }
             else
@@ -2179,6 +2204,7 @@ namespace LTE.CalcProcess
                 ret.ReceivedPowerW = gs.ReceivedPowerW;
                 ret.ReceivedPowerdbm = gs.ReceivedPowerdbm;
                 ret.PathLoss = gs.PathLoss;
+                ret.ground = gs.ground;
             }
             catch (Exception e)
             {

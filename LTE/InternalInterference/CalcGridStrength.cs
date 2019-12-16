@@ -72,9 +72,9 @@ namespace LTE.InternalInterference
         /// <returns>接收功率，路径长度</returns>
         public double[] calcRayStrength(double rayAzimuth, double rayInclination, ref List<NodeInfo> rays)
         {
-            // 使用多场景校正系数 2019.3.26
             if (this.scenNum > 0)
             {
+                //直接使用多场景校正系数
                 return calcRayStrengthAdj(rayAzimuth, rayInclination, ref rays);
             }
             else  // 使用界面输入的校正系数
@@ -126,7 +126,8 @@ namespace LTE.InternalInterference
                     }
                     else if (ray.rayType == RayType.HDiffraction || ray.rayType == RayType.VDiffraction) //绕射
                     {
-                        ray.attenuation = diffractCoefficient(ray.Angle) * amendCoeDif; // 用于系数校正
+                        ray.attenuation = reflectCoefficient(ray.Angle) * amendCoeDif;// 暂时使用计算反射系数的函数 代替计算绕射系数的函数
+                        //ray.attenuation = diffractCoefficient(ray.Angle) * amendCoeDif; // 用于系数校正
                         diffrctedR *= ray.attenuation;
                     }
                     else
@@ -146,73 +147,22 @@ namespace LTE.InternalInterference
         // 多场景校正系数
         public double[] calcRayStrengthAdj(double rayAzimuth, double rayInclination, ref List<NodeInfo> rays)
         {
-            //计算dbmPt
-            double[] ret = new double[3];
-
-            double distance = 0;
-            double reflectedR = 1;//反射系数
-            double diffrctedR = 1;//绕射系数
-
-            double[,] coef = AdjCoeffHelper.getInstance().getCoeff(); 
-
-            double nata = 0;
-            if (cellInfo.cellType == CellType.GSM1800)
-            {
-                //f(n) = 1805 + 0.2*(n－511) MHz
-                nata = 300.0 / (1805 + 0.2 * (cellInfo.frequncy - 511));
-            }
-            else
-            {
-                //f(n) = 935 + 0.2n MHz
-                nata = 300.0 / (935 + 0.2 * cellInfo.frequncy);
-            }
-
+            //计算发射功率p0
             double dbmPt = calcDbmPt(rayAzimuth, rayInclination);  //定向
             if (rays.Count > 0 && cellInfo.SourcePoint.Z < 1.1)
                 dbmPt = cellInfo.EIRP;
-
             double wPt = convertdbm2w(dbmPt);
 
-            int length = rays.Count;
-            NodeInfo ray;
-            double[] scenDistance = new double[this.scenNum];
+            //获得校正系数矩阵
+            double[,] coef = AdjCoeffHelper.getInstance().getCoeff();
+            
+            //计算接收功率
+            RayInfo rayInfo = new RayInfo(rays, wPt);
+            rayInfo.calcRecePwrW(ref coef, this.scenNum, cellInfo.frequncy);
 
-            for (int i = 0; i < length; i++)
-            {
-                ray = rays[i];
-
-                // 当前射线经过每个场景的距离
-                string[] scenArr = ray.proportion.Split(';');
-                for (int j = 0; j < this.scenNum; j++)
-                    scenDistance[j] += Convert.ToDouble(scenArr[j]) * ray.Distance;
-
-                distance += ray.Distance;
-                if (ray.rayType == RayType.HReflection || ray.rayType == RayType.VReflection) //反射
-                {
-                    //反射系数是平方后的结果？todo
-                    // 弧度
-                    ray.attenuation = reflectCoefficient(ray.Angle) * coef[ray.endPointScen,1]; // 用于系数校正
-                    reflectedR *= ray.attenuation;
-
-                }
-                else if (ray.rayType == RayType.HDiffraction || ray.rayType == RayType.VDiffraction) //绕射
-                {
-                    ray.attenuation = diffractCoefficient(ray.Angle) * coef[ray.endPointScen, 2]; // 用于系数校正
-                    diffrctedR *= ray.attenuation;
-                }
-                else
-                    ray.attenuation = 1;
-                //透射另行计算
-            }
-
-            double amendDirSum = 0;
-            for (int j = 0; j < scenNum; j++)
-                amendDirSum += coef[j, 0] * (scenDistance[j] / distance);
-
-            double receivePwr = 0;
-            receivePwr = Math.Pow(nata / (4 * Math.PI), 2) * (wPt / Math.Pow(distance, (2 + amendDirSum))) * Math.Pow(reflectedR, 2) * Math.Pow(diffrctedR, 2);
-            ret[0] = receivePwr;
-            ret[1] = distance;
+            double[] ret = new double[3];
+            ret[0] = rayInfo.recePwrW;
+            ret[1] = rayInfo.distance;
             ret[2] = wPt;
             return ret;
         }
@@ -268,7 +218,8 @@ namespace LTE.InternalInterference
                 }
                 else if (ray.rayType == RayType.HDiffraction || ray.rayType == RayType.VDiffraction) //绕射
                 {
-                    ray.attenuation = diffractCoefficient(ray.Angle) * amendCoeDif; // 用于系数校正
+                    ray.attenuation = reflectCoefficient(ray.Angle) * amendCoeDif;//暂时用反射系数代替
+                    //ray.attenuation = diffractCoefficient(ray.Angle) * amendCoeDif; // 用于系数校正
                     diffrctedR *= ray.attenuation;
                 }
                 else
@@ -300,7 +251,7 @@ namespace LTE.InternalInterference
             double dbmPt1 = dbmPt(EIRP, 0, Math.Abs(rayInclination));
             //double dbmPt1 = EIRP;
             double wPt = convertdbm2w(dbmPt1);
-            nata = 300.0 / (1085 + 0.2 * (nata - 511));
+            nata = 300.0 / (1805 + 0.2 * (nata - 511));
             double receivePwr = Math.Pow(nata / (4 * Math.PI), 2) * (wPt / Math.Pow(distance, (2 + amendCoeDis)));
             double ReceivedPower_dbm = convertw2dbm(receivePwr);
 
@@ -314,12 +265,18 @@ namespace LTE.InternalInterference
         /// <param name="rayInclination">初始射线下倾角</param>
         /// <param name="rays"></param>
         /// <param name="isT">初级射线是否与建筑物相交</param>
-        public void CalcAndMergeGGridStrength(double rayAzimuth, double rayInclination, List<NodeInfo> rays, bool isT)
+        public void CalcAndMergeGGridStrength(double rayAzimuth, double rayInclination, List<NodeInfo> rays, bool isT,bool ground)
         {
             double[] receiveList = calcRayStrength(rayAzimuth, rayInclination, ref rays);
 
             double ReceivedPwr = receiveList[0];
             double ReceivedPower_dbm = convertw2dbm(ReceivedPwr);
+
+            Point t_p = rays[rays.Count - 1].CrossPoint;
+            int gxid = -1, gyid = -1;
+            if (!GridHelper.getInstance().XYToGGrid(t_p.X, t_p.Y, ref gxid, ref gyid))
+                return;
+
             if (isT) // 如果是穿过建筑物后到达地面或楼顶
             {
                 ReceivedPower_dbm -= 18;// transmissionLoss(0);
@@ -332,18 +289,18 @@ namespace LTE.InternalInterference
             }
             //Console.WriteLine("ReceivedPower_dbm >= -130");
 
-            Point t_p = rays[rays.Count - 1].CrossPoint;
+            //Point t_p = rays[rays.Count - 1].CrossPoint;
 
-            int gxid = -1, gyid = -1;
-            if (!GridHelper.getInstance().XYToGGrid(t_p.X, t_p.Y, ref gxid, ref gyid))
-                return;
+            //int gxid = -1, gyid = -1;
+            //if (!GridHelper.getInstance().XYToGGrid(t_p.X, t_p.Y, ref gxid, ref gyid))
+            //    return;
 
             if (Math.Abs(t_p.Z) < 1)
-                mergeGridStrength(gxid, gyid, 0, t_p, rays, receiveList[2], ReceivedPwr, isT);
+                mergeGridStrength(gxid, gyid, 0, t_p, rays, receiveList[2], ReceivedPwr, isT,true);
             else
             {
                 int gzid = (int)(t_p.Z / GridHelper.getInstance().getGHeight()) + 1;
-                mergeGridStrength(gxid, gyid, gzid, t_p, rays, receiveList[2], ReceivedPwr, isT);
+                mergeGridStrength(gxid, gyid, gzid, t_p, rays, receiveList[2], ReceivedPwr, isT, ground);
             }
         }
 
@@ -354,7 +311,7 @@ namespace LTE.InternalInterference
         /// <param name="rayInclination">初始射线下倾角</param>
         /// <param name="rays"></param>
         /// <param name="isT">初级射线是否与建筑物相交</param>
-        public void CalcAndMergeGGridStrength(List<NodeInfo> rays, double emitPwr)
+        public void CalcAndMergeGGridStrength(List<NodeInfo> rays, double emitPwr,bool ground)
         {
             double[] receiveList = calcRayStrength(ref rays, emitPwr);
 
@@ -375,11 +332,11 @@ namespace LTE.InternalInterference
                 return;
 
             if (Math.Abs(t_p.Z) < 1)
-                mergeGridStrength(gxid, gyid, 0, t_p, rays, receiveList[2], ReceivedPwr, false);
+                mergeGridStrength(gxid, gyid, 0, t_p, rays, receiveList[2], ReceivedPwr, false,true);
             else
             {
                 int gzid = (int)Math.Ceiling(t_p.Z / GridHelper.getInstance().getGHeight()) + 1;
-                mergeGridStrength(gxid, gyid, gzid, t_p, rays, receiveList[2], ReceivedPwr, false);
+                mergeGridStrength(gxid, gyid, gzid, t_p, rays, receiveList[2], ReceivedPwr, false,ground);
             }
         }
 
@@ -592,9 +549,15 @@ namespace LTE.InternalInterference
         // Pwr1  接收功率，单位w
         // isT   是否穿过建筑物
         // ci    小区标识
-        public void mergeGridStrength(int gxid, int gyid, int gzid, Point p, List<NodeInfo> rays, double Pwr0, double Pwr1, bool isT)
+        public void mergeGridStrength(int gxid, int gyid, int gzid, Point p, List<NodeInfo> rays, double Pwr0, double Pwr1, bool isT,bool ground)
         {
             GridStrength gs;
+
+            //将入地射线的栅格高度统一为0
+            if (ground)
+            {
+                gzid = 0;
+            }
             string key = String.Format("{0},{1},{2}", gxid, gyid, gzid);
 
             if (this.gridStrengths.ContainsKey(key))
@@ -602,7 +565,8 @@ namespace LTE.InternalInterference
                 gs = this.gridStrengths[key];
 
                 // 当前射线存在绕射和反射
-                if (rays.Count > 0)
+                //if (rays.Count > 0)
+                if (rays.Count > 1)
                 {
                     updateBuildingID(ref gs, rays);
                     NodeInfo ray = rays[rays.Count - 1];
@@ -630,7 +594,7 @@ namespace LTE.InternalInterference
                     gs.DirectPwrW += Pwr1;
                     gs.MaxDirectPwrW = Math.Max(gs.MaxDirectPwrW, Pwr1);
                 }
-
+                gs.ground = ground;
                 this.gridStrengths[key] = gs;  // 更新
             }
             else
@@ -671,7 +635,7 @@ namespace LTE.InternalInterference
                     gs.DirectNum = 1;
                     gs.ReceivedPowerW = gs.MaxDirectPwrW = gs.DirectPwrW = Pwr1;
                 }
-
+                gs.ground = ground;
                 this.gridStrengths.Add(key, gs);
             }
         }
@@ -797,16 +761,38 @@ namespace LTE.InternalInterference
 
         public double dbmPt(double EIRP, double mjDir, double mjTilt)
         {
+            //夹角度数为小数时，按比例取大于它和小于它的整度数对应的损耗
             //dbmPt = EiRP－ HLoss(Dir,θ) － VLoss(Tilt, Φ)
             Hashtable paramTable = new Hashtable();
             paramTable["gainType"] = "KRE738819_902";
             paramTable["direction"] = 0; // 0对应HLoss
-            paramTable["degree"] = (int)Math.Round(mjDir) % 360;
-            double HLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            paramTable["degree"] = (int)Math.Floor(mjDir) % 360;
+            double HLoss1 = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            paramTable["degree"] = (int)Math.Ceiling(mjDir) % 360;
+            double HLoss2= Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            double w1 = Math.Abs(mjDir - Math.Floor(mjDir) % 360);
+            double HLoss = HLoss1 * w1 + HLoss2 * (1 - w1);
 
             paramTable["direction"] = 1; // 1对应VLoss.
-            paramTable["degree"] = (int)Math.Round(mjTilt) % 360;
-            double VLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            paramTable["degree"] = (int)Math.Floor(mjTilt) % 360;
+            double VLoss1 = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            paramTable["degree"] = (int)Math.Ceiling(mjTilt) % 360;
+            double VLoss2 = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+            double w2 =Math.Abs(mjTilt-Math.Floor(mjTilt)%360);
+            double VLoss = VLoss1 * w2 + VLoss2 * (1 - w2);
+
+
+            //旧版代码，夹角度数为小数时采用随机取整
+            ////dbmPt = EiRP－ HLoss(Dir,θ) － VLoss(Tilt, Φ)
+            //Hashtable paramTable = new Hashtable();
+            //paramTable["gainType"] = "KRE738819_902";
+            //paramTable["direction"] = 0; // 0对应HLoss
+            //paramTable["degree"] = (int)Math.Round(mjDir) % 360;
+            //double HLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
+
+            //paramTable["direction"] = 1; // 1对应VLoss.
+            //paramTable["degree"] = (int)Math.Round(mjTilt) % 360;
+            //double VLoss = Convert.ToDouble(IbatisHelper.ExecuteQueryForDataTable("getLoss", paramTable).Rows[0]["Loss"]);
 
             //旧版代码，从内存读取
             //AbstrGain abstrGain = GainFactory.GetabstractGain("KRE738819_902");
@@ -816,6 +802,7 @@ namespace LTE.InternalInterference
             //double VLoss = VAGain[(int)Math.Round(mjTilt) % 360];
 
             double dbmPt = EIRP - HLoss - VLoss - 2;
+
             return dbmPt;
         }
 

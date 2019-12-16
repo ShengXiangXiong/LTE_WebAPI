@@ -126,7 +126,10 @@
     <Compile Include="Beam\Vector.cs" />
     <Compile Include="Beam\NodeInfo.cs" />
     <Compile Include="Calibration\CalRays.cs" />
+    <Compile Include="Calibration\ConvertUtil.cs" />
     <Compile Include="Calibration\EA.cs" />
+    <Compile Include="Calibration\ErrorGridStaticInfo.cs" />
+    <Compile Include="Calibration\Matrix.cs" />
     <Compile Include="Calibration\pareto.cs" />
     <Compile Include="Calibration\RandomToND.cs" />
     <Compile Include="DataOperate\ExportToExcel.cs" />
@@ -140,7 +143,9 @@
     <Compile Include="ExternalInterference\Struct\PathInfo.cs" />
     <Compile Include="ExternalInterference\Struct\ResultRecord.cs" />
     <Compile Include="Geometric\GetPointHeight.cs" />
+    <Compile Include="Geometric\NewVector3D.cs" />
     <Compile Include="InternalInterference\AdjCoeffHelper.cs" />
+    <Compile Include="InternalInterference\DTInfo.cs" />
     <Compile Include="InternalInterference\Grid\Math\Divide.cs" />
     <Compile Include="InternalInterference\Grid\Math\LM.cs" />
     <Compile Include="InternalInterference\Grid\Math\Mat.cs" />

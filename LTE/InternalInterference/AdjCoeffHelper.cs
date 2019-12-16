@@ -35,6 +35,7 @@ namespace LTE.InternalInterference
         {
             DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getAdjCoeff", null);
             scenNum = tb.Rows.Count;
+            int coeNumOfAScen = tb.Columns.Count-1;//第一列为场景号
 
             if (scenNum < 1)
             {
@@ -42,13 +43,13 @@ namespace LTE.InternalInterference
                 return false;
             }
 
-            coeff = new double[scenNum, 3];
+            coeff = new double[scenNum, coeNumOfAScen];
 
             for (int i = 0; i < scenNum; i++)
             {
-                coeff[i, 0] = Convert.ToDouble(tb.Rows[i]["DirectCoefficient"].ToString());
-                coeff[i, 1] = Convert.ToDouble(tb.Rows[i]["ReflectCoefficient"].ToString());
-                coeff[i, 2] = Convert.ToDouble(tb.Rows[i]["DiffracteCoefficient"].ToString());
+                for (int j = 0; j < coeNumOfAScen; j++) {
+                    coeff[i,j]= Convert.ToDouble(tb.Rows[i][j+1].ToString());//第一列为场景号
+                }
             }
             return true;
         }
