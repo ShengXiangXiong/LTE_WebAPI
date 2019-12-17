@@ -98,7 +98,7 @@
       <iterate conjunction=";" open="" close="">
         update cell set
         Altitude = #[].Altitude#
-        where id = #[].ID# or id = #[].ID#+1 or id = #[].ID#+2
+        where BtsName =#[].BtsName#
       </iterate>
     </update>
 
@@ -110,7 +110,7 @@
         MinDis = #[].MinDis#,
         x = #[].x#,
         y = #[].y#
-        where id = #[].ID# or id = #[].ID#+1 or id = #[].ID#+2
+        where BtsName =#[].BtsName#
       </iterate>
     </update>
 
@@ -249,7 +249,8 @@
     </select>
     
     <select id="getAllCellProjPos" parameterClass="HashTable" >
-      SELECT [ID],[Longitude],[Latitude],[Altitude] FROM [dbo].[CELL] where id % 3 = 1
+      select [ID],[Longitude],[Latitude],[Altitude],[BtsName] from cell where id in 
+      (SELECT min(a.[ID]) FROM [dbo].[CELL] a group by btsName) order by id
     </select>
     
 	</statements>

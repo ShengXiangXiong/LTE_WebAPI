@@ -1155,6 +1155,7 @@ namespace LTE.InternalInterference
             int[] scene = new int[scenNum];
             Grid3D accgrid = new Grid3D();
             GridHelper.getInstance().PointXYZToAccGrid(endPoint, ref accgrid);
+
             do
             {
                 curAccGrid = lineCrossGrid.getNextCrossAccGrid();
@@ -1173,8 +1174,20 @@ namespace LTE.InternalInterference
 
                 if (ray != null)
                 {
-                    ray.rayType = rayType;
-                    break;
+                    // 检测碰撞点是否超出终点栅格
+                    double dif = (ray.CrossPoint.X - endPoint.X) * (ray.CrossPoint.X + endPoint.X - 2 * originPoint.X) +
+                        (ray.CrossPoint.Y - endPoint.Y) * (ray.CrossPoint.Y + endPoint.Y - 2 * originPoint.Y) +
+                        (ray.CrossPoint.Z - endPoint.Z) * (ray.CrossPoint.Z + endPoint.Z - 2 * originPoint.Z);
+
+                    if (dif<=0)
+                    {
+                        ray.rayType = rayType;
+                        break;
+                    }
+                    else
+                    {
+                        ray = null;
+                    }
                 }
                 // 终点终止
                 if (accgrid.gxid == curAccGrid.gxid && accgrid.gyid == curAccGrid.gyid)
@@ -1199,6 +1212,9 @@ namespace LTE.InternalInterference
                     // 2019.5.30 可能与地形碰撞
                     else if (ray.SideFromPoint == null)
                     {
+                        //Grid3D crossGrid = new Grid3D();
+                        //GridHelper.getInstance().XYZToGGrid(ray.CrossPoint, ref crossGrid);
+                        
                         rayScene(ref ray, ref scene);  // 2019.3.25 场景记录
                         rayList.Add(ray);
                         this.CalcOutDoorRayStrength(rayList, sourceInfo.RayAzimuth, sourceInfo.RayInclination, false,true);

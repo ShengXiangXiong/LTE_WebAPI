@@ -367,16 +367,16 @@ namespace LTE.InternalInterference.Grid
         /// <param name="gxid"></param>
         /// <param name="gyid"></param>
         /// <returns></returns>
-        public bool XYZToGGrid(double x, double y, double z, ref int gxid, ref int gyid, ref int gzid)
+        public bool XYZToGGrid(Point p, ref Grid3D grid3D)
         {
-            if (checkXYZInGrid(x, y, 0))
+            if (checkXYZInGrid(p.X, p.Y, 0))
             {
                 //同划分网格一致
-                double dy = y - oY;
-                double dx = x - oX;
-                gxid = (int)Math.Floor(dx / ggridsize);
-                gyid = (int)Math.Floor(dy / ggridsize);
-                gzid = (int)Math.Floor(z / gheight);
+                double dy = p.Y - oY;
+                double dx = p.X - oX;
+                grid3D.gxid = (int)Math.Floor(dx / ggridsize);
+                grid3D.gyid = (int)Math.Floor(dy / ggridsize);
+                grid3D.gzid = (int)Math.Floor(p.Z / gheight);
                 return true;
             }
             return false;

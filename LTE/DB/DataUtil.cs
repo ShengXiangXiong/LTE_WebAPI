@@ -55,6 +55,12 @@ namespace LTE.DB
                 bcp.DestinationTableName = tableName;
                 bcp.BulkCopyTimeout = 600;
 
+                //fix bug 列名与表名一一对应
+                foreach (DataColumn col in dataTable.Columns)
+                {
+                    bcp.ColumnMappings.Add(col.ColumnName, col.ColumnName);
+                }
+
                 try
                 {
                     bcp.WriteToServer(dataTable);

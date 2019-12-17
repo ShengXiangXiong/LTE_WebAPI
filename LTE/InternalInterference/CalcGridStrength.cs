@@ -20,7 +20,6 @@ namespace LTE.InternalInterference
     {
         public CellInfo cellInfo;
         private Dictionary<string, GridStrength> gridStrengths;
-
         //多径修正参数
         private double alfa1 = 0.4;  //反射
         private double alfa2 = 0.4;  //绕射
@@ -553,11 +552,11 @@ namespace LTE.InternalInterference
         {
             GridStrength gs;
 
-            //将入地射线的栅格高度统一为0
-            if (ground)
-            {
-                gzid = 0;
-            }
+            ////将入地射线的栅格高度统一为0
+            //if (ground)
+            //{
+            //    gzid = 0;
+            //}
             string key = String.Format("{0},{1},{2}", gxid, gyid, gzid);
 
             if (this.gridStrengths.ContainsKey(key))
