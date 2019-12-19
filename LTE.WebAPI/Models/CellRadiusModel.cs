@@ -84,7 +84,7 @@ namespace LTE.WebAPI.Models
                     cellCnt[a.BtsName] = 1;
                 }
             }
-
+            IList<CELL> res = new List<CELL>();
             for (int i = 0; i < cells.Count; i++)
             {
                 //if (radius.ContainsKey(cells[i].BtsName))
@@ -136,9 +136,14 @@ namespace LTE.WebAPI.Models
 
                     cells[i].CoverageRadius = (float)cmptRadius(cells[i].Tilt.Value, cells[i].AntHeight.Value + cells[i].Altitude.Value, outCellCover, inCellCover, minDis, avgDis);
                     radius[cells[i].BtsName] = cells[i].CoverageRadius.Value;
-
+                    res.Add(cells[i]);
                     //sw.WriteLine("{0} {1} {2}", cells[i].id, cells[i].BtsName, cells[i].CoverageRadius);
                     //sw.WriteLine("{0}", (int)cells[i].CoverageRadius);
+                    if (res.Count > 100)
+                    {
+                        IbatisHelper.ExecuteUpdate("CELLBatchUpdateCoverageRadius", res);
+                        res.Clear();
+                    }
                 }
             }
             //sw.Close();
@@ -247,7 +252,7 @@ namespace LTE.WebAPI.Models
             //dtable.Clear();
             // */
             #endregion
-            IbatisHelper.ExecuteUpdate("CELLBatchUpdateCoverageRadius", cells);
+            IbatisHelper.ExecuteUpdate("CELLBatchUpdateCoverageRadius", res);
             return new Result(true);
         }
 

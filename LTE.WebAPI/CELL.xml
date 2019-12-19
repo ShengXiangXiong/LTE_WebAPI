@@ -245,7 +245,7 @@
 
 		<select id="CELL_SelectAll" resultMap="CELL_Result" >
       SELECT [ID],[CellName],[BtsName],[Longitude],[Latitude],[x],[y],[Altitude],[AntHeight],[Azimuth],[MechTilt],[ElecTilt],[Tilt],[CoverageRadius],[FeederLength],[EIRP],[PathlossMode],[CoverageType],[NetType],[Comments],[eNodeB],[CI],[CellNameChs],[EARFCN],[PCI],KDis,MaxDis,MinDis
-      FROM [dbo].[CELL]
+      FROM [dbo].[CELL] where AntHeight is not null and Tilt is not null
     </select>
     
     <select id="getAllCellProjPos" parameterClass="HashTable" >

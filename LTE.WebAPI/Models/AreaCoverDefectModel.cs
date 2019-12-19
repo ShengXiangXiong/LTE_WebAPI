@@ -54,17 +54,19 @@ namespace LTE.WebAPI.Models
             pMin.X = this.minLongitude;
             pMin.Y = this.minLatitude;
             pMin.Z = 0;
-            pMin = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(pMin);
+            pMin = LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(pMin);
 
             LTE.Geometric.Point pMax = new Geometric.Point();
             pMax.X = this.maxLongitude;
             pMax.Y = this.maxLatitude;
             pMax.Z = 0;
-            pMin = LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(pMax);
+            pMax = LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(pMax);
 
             int minxid = 0, minyid = 0, maxxid = 0, maxyid = 0;
             GridHelper.getInstance().XYToGGrid(pMin.X, pMin.Y, ref minxid, ref minyid);
             GridHelper.getInstance().XYToGGrid(pMax.X, pMax.Y, ref maxxid, ref maxyid);
+            //GridHelper.getInstance().LngLatToGGrid(pMin.X, pMin.Y, ref minxid, ref minyid);
+            //GridHelper.getInstance().LngLatToGGrid(pMax.X, pMax.Y, ref maxxid, ref maxyid);
 
             double T = 6;  // 门限
             double T1 = 6;
@@ -86,11 +88,24 @@ namespace LTE.WebAPI.Models
 
             double effective = -110;  // 有效信号阈值
 
+            DataTable tb1 = IbatisHelper.ExecuteQueryForDataTable("CoverAnalysis", ht);
+            DataTable tb2 = IbatisHelper.ExecuteQueryForDataTable("CoverAnalysis3D", ht);
+            int cnt = tb1.Rows.Count + tb2.Rows.Count;
+            //if (cnt < 1)
+            //{
+            //    return new Result(false, "当前区域未进行覆盖计算");
+            //}
+            if (cnt < 0.85 * (maxxid - minxid + 1) * (maxyid - minyid + 1))
+            {
+                return new Result(false, "当前区域已计算覆盖率过小，请对此区域重新计算小区覆盖");
+            }
+
+
             #region 地面
-            DataTable tb = IbatisHelper.ExecuteQueryForDataTable("CoverAnalysis", ht);
+            DataTable tb = tb1;
             int n = tb.Rows.Count;
-            if (n < 1)
-                return new Result(false, "当前区域未进行覆盖计算");
+            //if (n < 1)
+            //    return new Result(false, "当前区域未进行覆盖计算");
 
             Dictionary<string, List<Sub>> dic = new Dictionary<string, List<Sub>>();       // 栅格的其它信息
             Dictionary<string, List<double>> xy = new Dictionary<string, List<double>>();  // 栅格位置
@@ -319,10 +334,10 @@ namespace LTE.WebAPI.Models
             List<Analysis> overlap1 = new List<Analysis>();  // 重叠覆盖
             List<Analysis> exessive1 = new List<Analysis>(); // 过覆盖
 
-            tb = IbatisHelper.ExecuteQueryForDataTable("CoverAnalysis3D", ht);
+            tb = tb2;
             n = tb.Rows.Count;
-            if (n < 1)
-                return new Result(false, "当前区域未进行覆盖计算");
+            //if (n < 1)
+            //    return new Result(false, "当前区域未进行覆盖计算");
 
             double h = GridHelper.getInstance().getGHeight();
 
