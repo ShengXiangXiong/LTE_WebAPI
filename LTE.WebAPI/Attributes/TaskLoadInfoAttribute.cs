@@ -72,8 +72,7 @@ namespace LTE.WebAPI.Attributes
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().setLoadInfo(LoadInfo.UserId.Value, taskName1);
             }
             loadInfo.loadCreate();
-            ////清空AOP的描述型字段值，否则它会一直保持，导致下一次请求带有上一次的描述值
-            //taskName = null;
+            
         }
         public override void OnActionExecuted(HttpActionExecutedContext actionExecutedContext)
         {

@@ -1265,7 +1265,7 @@ namespace LTE.InternalInterference
                         Vector3D refDir = refRay.ConstructReflectedRay(ref inDir);
                         rayCountRef++;
                         this.rayCountRef1++;
-                        this.rayTracingAdj(ray.CrossPoint, refDir, rayList, sourceInfo, trayType, coverageRadius);
+                        this.rayTracingAdj(ray.CrossPoint, endPoint, refDir, rayList, sourceInfo, trayType, coverageRadius);
                     }
                     // 2017.7.4 穿过中间建筑物后到达建筑物顶面
                     else
@@ -1316,7 +1316,7 @@ namespace LTE.InternalInterference
                             Vector3D refDir = refRay.ConstructReflectedRay(ref inDir);
                             rayCountRef++;
                             this.rayCountRef1++;
-                            this.rayTracingAdj(ray.CrossPoint, refDir, rayList, sourceInfo, trayType, coverageRadius);
+                            this.rayTracingAdj(ray.CrossPoint,endPoint, refDir, rayList, sourceInfo, trayType, coverageRadius);
                         }
                     }
                     break;
@@ -1367,7 +1367,7 @@ namespace LTE.InternalInterference
                                 rayCountDif++;
                                 rayCountDif1++;
 
-                                this.rayTracingAdj(ray.CrossPoint, difDir, rayList, sourceInfo, trayType, coverageRadius);
+                                this.rayTracingAdj(ray.CrossPoint,endPoint, difDir, rayList, sourceInfo, trayType, coverageRadius);
                             }
                         }
                     }
@@ -1387,7 +1387,7 @@ namespace LTE.InternalInterference
         /// <param name="sourceInfo">小区</param>
         /// <param name="rayType">射线类型</param>
         /// <param name="coverageRadius">小区理论覆盖半径</param>
-        public void rayTracingAdj(Point originPoint, Vector3D dir, List<NodeInfo> rayList, SourceInfo sourceInfo, RayType rayType, double coverageRadius)
+        public void rayTracingAdj(Point originPoint, Point endPoint, Vector3D dir, List<NodeInfo> rayList, SourceInfo sourceInfo, RayType rayType, double coverageRadius)
         {
             if (double.IsNaN(sourceInfo.RayAzimuth))
             {
@@ -1418,6 +1418,8 @@ namespace LTE.InternalInterference
             List<Point> polygonPoints = null;
 
             int[] scene = new int[scenNum];
+            Grid3D accgrid = new Grid3D();
+            GridHelper.getInstance().PointXYZToAccGrid(endPoint, ref accgrid);
             do
             {
                 curAccGrid = lineCrossGrid.getNextCrossAccGrid();
@@ -1436,7 +1438,24 @@ namespace LTE.InternalInterference
 
                 if (ray != null)
                 {
-                    ray.rayType = rayType;
+                    // 检测碰撞点是否超出终点栅格
+                    double dif = (ray.CrossPoint.X - endPoint.X) * (ray.CrossPoint.X + endPoint.X - 2 * originPoint.X) +
+                        (ray.CrossPoint.Y - endPoint.Y) * (ray.CrossPoint.Y + endPoint.Y - 2 * originPoint.Y) +
+                        (ray.CrossPoint.Z - endPoint.Z) * (ray.CrossPoint.Z + endPoint.Z - 2 * originPoint.Z);
+
+                    if (dif <= 0)
+                    {
+                        ray.rayType = rayType;
+                        break;
+                    }
+                    else
+                    {
+                        ray = null;
+                    }
+                }
+                // 终点终止
+                if (accgrid.gxid == curAccGrid.gxid && accgrid.gyid == curAccGrid.gyid)
+                {
                     break;
                 }
 
@@ -1580,7 +1599,7 @@ namespace LTE.InternalInterference
                     rayCountRef3++;
 
                 //递归
-                this.rayTracingAdj(ray.CrossPoint, refDir, rayList, sourceInfo, trayType, coverageRadius);
+                this.rayTracingAdj(ray.CrossPoint,endPoint, refDir, rayList, sourceInfo, trayType, coverageRadius);
             }
             else
             {
@@ -1611,7 +1630,7 @@ namespace LTE.InternalInterference
                     else if (diffractionCounter == 1)
                         this.rayCountDif2++;
 
-                    this.rayTracingAdj(ray.CrossPoint, difDir, rayList, sourceInfo, trayType, coverageRadius);
+                    this.rayTracingAdj(ray.CrossPoint,endPoint, difDir, rayList, sourceInfo, trayType, coverageRadius);
                 }
             }
             rayList.Remove(ray);
