@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using LTE.WebAPI.Attributes;
 using LTE.WebAPI.Models;
 
 namespace LTE.WebAPI.Controllers
@@ -16,6 +17,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="cali"></param>
         /// <returns>校正后的直射、反射和绕射系数</returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "系数校正", type = TaskType.Calibration)]
         public Result PostCalibrate([FromBody]CalibrationModel cali)
         {
             return cali.calilbrate();

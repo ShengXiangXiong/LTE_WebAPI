@@ -17,6 +17,21 @@ namespace LTE.WebAPI.Models
     // 如果虚拟路测为空，则生成的射线轨迹不会记在数据库中
     public class RayRecordAdjModel : CellRayTracing
     {
+        //public RayRecordAdjModel(RayRecordAdjBatchModeModel rayRecordAdjBatchModeModel)
+        //{
+        //    this.distance = rayRecordAdjBatchModeModel.distance;
+        //    this.incrementAngle = rayRecordAdjBatchModeModel.incrementAngle;
+        //    this.threadNum = rayRecordAdjBatchModeModel.threadNum;
+        //    this.reflectionNum = rayRecordAdjBatchModeModel.reflectionNum;
+        //    this.diffractionNum = rayRecordAdjBatchModeModel.diffractionNum;
+        //    this.computeIndoor = rayRecordAdjBatchModeModel.computeIndoor;
+        //    this.computeDiffrac = rayRecordAdjBatchModeModel.computeDiffrac;
+        //    this.directCoeff = rayRecordAdjBatchModeModel.directCoeff;
+        //    this.reflectCoeff = rayRecordAdjBatchModeModel.reflectCoeff;
+        //    this.diffractCoeff = rayRecordAdjBatchModeModel.diffractCoeff;
+        //    this.diffractCoeff2 = rayRecordAdjBatchModeModel.diffractCoeff2;
+        //}
+
         public Result rayRecord()
         {
             List<ProcessArgs> paList = new List<ProcessArgs>();

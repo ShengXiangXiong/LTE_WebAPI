@@ -19,7 +19,8 @@ namespace LTE.WebAPI.Models
         AreaCoverCompu = 8,
         AreaInterference = 9,
         RayRecordAdj = 10,
-        RayRecordLoc = 11
-
+        RayRecordLoc = 11,
+        RayRecordAdjBatchMode = 12,
+        Calibration =13
     }
 }

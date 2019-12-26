@@ -536,6 +536,13 @@
             <param name="rt">界面输入的参数</param>
             <returns></returns>
         </member>
+        <member name="M:LTE.WebAPI.Controllers.CalibrationRangeController.PostCalibrationRange(LTE.WebAPI.Models.CalibrationRangeModel)">
+            <summary>
+            更新系数校正射线生成及用于校正的经纬度范围
+            </summary>
+            <param name="calibrationRange"></param>
+            <returns></returns>
+        </member>
         <member name="M:LTE.WebAPI.Controllers.DTdataController.DeleteVDT">
             <summary>
             删除虚拟路测
@@ -633,7 +640,6 @@
             <param name="ray">界面输入参数</param>
             <returns></returns>
         </member>
-        <!-- 对于成员“M:LTE.WebAPI.Controllers.RayRecordController.PostRayRecordAdjBatchMode(LTE.WebAPI.Models.RayRecordAdjModel)”忽略有格式错误的 XML 注释 -->
         <member name="M:LTE.WebAPI.Controllers.RefreshLayerController.PostRefreshCell">
             <summary>
             刷新小区图层
@@ -918,6 +924,12 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="M:LTE.WebAPI.Models.CalibrationRangeModel.updateCalibrationRange">
+            <summary>
+            更新用于系数校正射线生成及校正的经纬度范围
+            </summary>
+            <returns></returns>
+        </member>
         <!-- 对于成员“M:LTE.WebAPI.Models.CellRadiusModel.cmptCovR(System.Double,System.Double,System.Double,System.Double@,System.Double@,System.Double@)”忽略有格式错误的 XML 注释 -->
         <!-- 对于成员“M:LTE.WebAPI.Models.CellRadiusModel.cmptRadius(System.Double,System.Decimal,System.Double,System.Double,System.Double,System.Double)”忽略有格式错误的 XML 注释 -->
         <member name="P:LTE.WebAPI.Models.DebugCellRayTracing.cellName">
@@ -1163,6 +1175,71 @@
             <param name="num">选取的点的个数</param>
             <param name="distanceBT">点间距</param>
             <returns></returns>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.distance">
+            <summary>
+            小区覆盖半径
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.incrementAngle">
+            <summary>
+            以方位角为中心，两边扩展的角度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.threadNum">
+            <summary>
+            线程个数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.reflectionNum">
+            <summary>
+            反射次数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.diffractionNum">
+            <summary>
+            绕射次数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.diffPointsMargin">
+            <summary>
+            建筑物棱边绕射点间隔
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.computeIndoor">
+            <summary>
+            计算立体覆盖
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.computeDiffrac">
+            <summary>
+            计算棱边绕射
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.directCoeff">
+            <summary>
+            直射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.reflectCoeff">
+            <summary>
+            反射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.diffractCoeff">
+            <summary>
+            绕射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.diffractCoeff2">
+            <summary>
+            菲涅尔绕射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RayRecordAdjBatchModeModel.minLongitude">
+            <summary>
+            tbRayAdjRange范围
+            </summary>
         </member>
         <member name="P:LTE.WebAPI.Models.RayLocRecordModel.virsource">
             <summary>

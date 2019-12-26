@@ -75,6 +75,16 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 			'$AGridVSize$','$MaxAGXID$', '$MaxAGYID$', '$MinX$', '$MinY$', '$MinGGXID$', '$MinGGYID$', '$MinAGXID$', '$MinAGYID$',
 			'$MaxTinHeight$','$MinTinHeight$');
 		</insert>
+
+	<!--更新系数矫正经纬度范围-->
+	<delete id="DeleteRayAdjRange">
+		delete from tbRayAdjRange
+	</delete>
+	
+	<insert id="insertRayAdjRange" parameterClass="Hashtable">
+		insert into tbRayAdjRange
+		values('$MinLon$', '$MinLat$', '$MaxLon$','$MaxLat$','$MinX$', '$MinY$', '$MaxX$','$MaxY$');
+	</insert>
   
     <insert id ="gennerateTin" parameterClass="Hashtable">
       <![CDATA[
@@ -347,67 +357,74 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 	select gxid, gyid, 1 gzid, buildingid from tmp_accelerateGridBuilding where gzid=2
     </insert>
 
+	<!--tbDT-->
   <!-- 更新路测数据   -->
     <update id="UpdateDT">
-	update tbDT
-	set RecePowerDbm = tbGridPathloss.ReceivedPowerdbm
-	from tbDT, tbGridPathloss 
-	where tbDT.gxid = tbGridPathloss.GXID
-	and tbDT.gyid = tbGridPathloss.GYID 
-    </update>
-	
+		update tbDTData
+		set RecePowerDbm = tbGridPathloss.ReceivedPowerdbm
+		from tbDTData, tbGridPathloss
+		where tbDTData.gxid = tbGridPathloss.GXID
+		and tbDTData.gyid = tbGridPathloss.GYID
+	</update>
+
+	<!--tbDT-->
     <!-- 更新路测数据1-->
-    <update id="UpdateDT1">  
-	update tbDT
-	set RecePowerDbm = a.recePower
-	from tbDT, (select gxid, gyid,  MAX(ReceivedPowerdbm) from tbGridPathloss 
-		    group by GXID, gyid) as a(gxid, gyid, recePower)
-	where tbDT.gxid = a.GXID
-	and tbDT.gyid = a.GYID 
-    </update>
+    <update id="UpdateDT1">
+		update tbDTData
+		set RecePowerDbm = a.recePower
+		from tbDTData, (select gxid, gyid,  MAX(ReceivedPowerdbm) from tbGridPathloss
+		group by GXID, gyid) as a(gxid, gyid, recePower)
+		where tbDTData.gxid = a.GXID
+		and tbDTData.gyid = a.GYID
+	</update>
 
-    <update id="UpdateDT2">  
-	update tbDT
-	set RecePowerDbm = -130
-	where RecePowerDbm = 0;
-    </update>
+	<!--tbDT-->
+    <update id="UpdateDT2">
+		update tbDTData
+		set RecePowerDbm = -130
+		where RecePowerDbm = 0;
+	</update>
 
+	<!--tbDT-->
     <!-- 获得路测数据，用于显示  -->
-    <select id="getDTdisplay" parameterClass="">      
-	select distinct tbDT.gxid, tbDT.gyid, MinX, MinY, MaxX, MaxY, a.RecePower
-	from tbDT, tbGridDem, (select gxid, gyid, MAX(recepowerDbm) as recepower 
-						   from tbDT 
-						   where gxid = tbdt.gxid and gyid = tbdt.gyid
-						   group by gxid, gyid) as a
-	where tbDT.gxid = tbGridDem.GXID 
-	and tbDT.gyid = tbGridDem.GYID
-	and tbdt.gxid = a.gxid
-	and tbdt.gyid = a.gyid
-	--and roadid = 0
-    </select>
+    <select id="getDTdisplay" parameterClass="">
+		select distinct tbDTData.gxid, tbDTData.gyid, MinX, MinY, MaxX, MaxY, a.RecePower
+		from tbDTData, tbGridDem, (select gxid, gyid, MAX(recepowerDbm) as recepower
+		from tbDTData
+		where gxid = tbDTData.gxid and gyid = tbDTData.gyid
+		group by gxid, gyid) as a
+		where tbDTData.gxid = tbGridDem.GXID
+		and tbDTData.gyid = tbGridDem.GYID
+		and tbDTData.gxid = a.gxid
+		and tbDTData.gyid = a.gyid
+		--and roadid = 0
+	</select>
 
+	<!--tbDT-->
     <!-- 获得路测数据-->
-    <select id="getDT" parameterClass="Hashtable">    
-	select distinct tbDT.gxid, tbDT.gyid, id, roadid, tbdt.x, tbdt.y, tbdt.longtitude, tbdt.latitude, a.RecePowerDbm
-	from tbDT,(select gxid, gyid, MAX(recepowerDbm) as RecePowerDbm
-			   from tbDT 
-			   where gxid = tbdt.gxid and gyid = tbdt.gyid
-			   group by gxid, gyid) as a
-	where tbdt.gxid = a.gxid
-	and tbdt.gyid = a.gyid
-	and roadid between $RoadID1$ and $RoadID2$
-	order by id
-    </select>
+    <select id="getDT" parameterClass="Hashtable">
+		select distinct tbDTData.gxid, tbDTData.gyid, id, roadid, tbDTData.x, tbDTData.y, tbDTData.longtitude, tbDTData.latitude, a.RecePowerDbm
+		from tbDTData,(select gxid, gyid, MAX(recepowerDbm) as RecePowerDbm
+		from tbDTData
+		where gxid = tbDTData.gxid and gyid = tbDTData.gyid
+		group by gxid, gyid) as a
+		where tbDTData.gxid = a.gxid
+		and tbDTData.gyid = a.gyid
+		and roadid between $RoadID1$ and $RoadID2$
+		order by id
+	</select>
 
-    <select id="getDT1" parameterClass="Hashtable">      
-	select * 
-	from tbDT
-	order by id
-    </select>
+	<!--tbDT-->
+    <select id="getDT1" parameterClass="Hashtable">
+		select *
+		from tbDTData
+		order by id
+	</select>
 
+	<!--tbDT-->
     <delete id="DeleteDT">
-	delete from tbDT
-    </delete>
+		delete from tbDTData
+	</delete>
 
     <!-- 获得道路数据-->
     <select id="GetStreet" parameterClass="Hashtable">      
@@ -500,18 +517,21 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 	select distinct x, y from cell
     </select>
 
+	<!--tbDT-->
     <select id="GetDTgrids" parameterClass="">    
-	select gxid, gyid from tbdt
+	select gxid, gyid from tbdtData
     </select>
 
+	<!--tbDT-->
 	<select id="GetDTGridsOfACell" parameterClass="HashTable">
-		select x,y from tbdt
-		where eNodeBID=$eNodeBID$
+		select x,y from tbdtData
+		where CI=$CI$
 		and SCell_Dist between 0 and $radius$
 	</select>
 
+	<!--tbDT-->
 	<select id="GetAllDTGridsOfACell" parameterClass="HashTable">
-		select x,y from tbdt
+		select x,y from tbdtData
 		where cellIndex=$cellIndex$
 	</select>
 
@@ -683,19 +703,31 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 	</select>
 
 	<!-- 用于系数矫正的轨迹信息 -->
-	<select id="getRays" parameterClass=""> 
-		select *
-		from tbRayAdj
-		order by trajID,rayLevel 
+	<select id="getRaysInAdjRange" parameterClass="">
+		SELECT *
+		FROM tbRayAdj
+		where cellID in (
+		SELECT CI
+		FROM CELL
+		where Longitude between (select MinLon from tbRayAdjRange) and (select MaxLon from tbRayAdjRange)
+		and Latitude between (select MinLat from tbRayAdjRange) and (select MaxLat from tbRayAdjRange)
+		)
+		order by trajID,rayLevel
 	</select>
 
 	<!-- 用于系数校正的部分轨迹信息 -->
-	<select id="getSomeRaysByMod" parameterClass="Hashtable">
-    select *
-    from tbRayAdj
-    where gxid % $mod$ = 0
-    order by trajID,rayLevel
-  </select>
+	<select id="getSomeRaysByModInAdjRange" parameterClass="Hashtable">
+		select *
+		from tbRayAdj
+		where cellID in (
+		SELECT CI
+		FROM CELL
+		where Longitude between (select MinLon from tbRayAdjRange) and (select MaxLon from tbRayAdjRange)
+		and Latitude between (select MinLat from tbRayAdjRange) and (select MaxLat from tbRayAdjRange)
+		)
+		and gxid % $mod$ = 0
+		order by trajID,rayLevel
+	</select>
 
 	<!--获得轨迹对应的小区集合-->
 	<select id="getRayAdjCells" >
@@ -707,39 +739,58 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		select count(*) from tbRayAdj
 	</select>
 
+	<!--tbDT-->
 	<!--获得所有路测xy坐标及信号强度-->
 	<select id="getCellDT" parameterClass="">
 		select *
-		from tbDT
+		from tbDTData
 	</select>
 
-	<select id="getCellDTTest" parameterClass="">
+	<!--tbDT-->
+	<select id="getCellDTInAdjRangeOverNegative100" parameterClass="">
 		select *
-		from tbDT
-		where RSRP>-100
+		from tbDTData
+		where RSRP>-100 and ci is not null
+		and Lon between (select MinLon from tbRayAdjRange) and (select MaxLon from tbRayAdjRange)
+		and Lat between (select MinLat from tbRayAdjRange) and (select MaxLat from tbRayAdjRange)
 	</select>
 
+	<!--tbDT-->
 	<select id="getDTNum" parameterClass="">
-		select count(*) from tbDT
+		select count(*) from tbDTData
 	</select>
 
+	<!--tbDT-->
 	<!--获得所选区域内所有有路测点的主小区名，jin-->
 	<select id="getAreaDTMainCellName" parameterClass="">
 		select CellName
 		from Cell
 		where cellName in(
 		select distinct CellName
-		from tbDT
+		from tbDTData
 		where Lon between (select MinLon from tbRayAdjRange) and (select MaxLon from tbRayAdjRange)
 		and Lat between (select MinLat from tbRayAdjRange) and (select MaxLat from tbRayAdjRange)
+		and CI is not null
 		)
 		order by CellName
 	</select>
 
+	<!--获得tbRayAdj表中所有轨迹的对应的小区名-->
+	<select id="getRayAdjCellNames" parameterClass="">
+		select CellName,CI,CoverageRadius
+		from Cell
+		where CI in(
+		select distinct CellID
+		from tbRayAdj
+		)
+		order by CellName
+	</select>
+
+	<!--tbDT-->
 	<!--获得每个小区路测数据条数-->
 	<select id="getDtCntOfCell" parameterClass="">
 		SELECT cellName,count(*) as cnt
-		FROM tbDT
+		FROM tbDTData
 		group by cellName
 		order by cnt
 	</select>
@@ -777,7 +828,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   </select>
 
   <select id="getAdjCoeff" parameterClass="">
-    select * from tbAdjCoefficient
+	  select * from tbBestAdjCoefficient
   </select>
 
   <select id="GetAgridScene" parameterClass="HashTable">
@@ -1333,15 +1384,22 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 
 	<!--获得RRU经纬度在最大范围内的小区名称-->
 	<select id="getCellsInMaxArea" parameterClass="">
-		SELECT CellName
+		SELECT CellName,CoverageRadius
 		FROM CELL
 		where Longitude between (select AreaMinLong from tbGridRange) and (select AreaMaxLong from tbGridRange) and Latitude between (select AreaMinLat from tbGridRange) and (select AreaMaxLat from tbGridRange)
+		and Tilt is not null
+		and Azimuth is not null
 	</select>
 
 	<select id="getmaxRange" parameterClass="">
 		SELECT TOP (1) *
 		FROM tbGridRange
 	</select>
-
-  </statements>
+	
+	<select id="getInitZeroStateCnt" parameterClass="">
+		SELECT count(*)
+		FROM tbDependTable
+		where State=0
+	</select>
+	</statements>
 </sqlMap>

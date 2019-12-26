@@ -13,6 +13,8 @@ using LTE.Calibration;
 using LTE.DB;
 using System.IO;
 using LTE.Geometric;
+using LTE.Model;
+using LTE.Utils;
 
 namespace LTE.WebAPI.Models
 {
@@ -53,160 +55,171 @@ namespace LTE.WebAPI.Models
         /// <returns></returns>
         public Result calilbrate()
         {
-            #region 得到轨迹数据（会进行内存控制）
+            //进度类实例
+            LoadInfo loadInfo = new LoadInfo();
 
-            double capacity = MemoryInfo() / 20;
+            try {
+                //初始条件检查
+                if (!DataCheck.checkInitFinished())
+                {
+                    loadInfo.breakdown = true;
+                    loadInfo.loadBreakDown();
+                    return new Result(false, "系数校正射线计算失败，请先完成场景建模。");
+                }
 
-            // 不要超过的射线条数（待核实）
-            int size = 350; // 一条射线约占350字节;
-            int maxRayNum = (int)(capacity * (1073741824 / size));
+                #region 得到轨迹数据（会进行内存控制）
 
-            // 对轨迹数据进行内存控制：比较tbRayAdj射线数与控制的最大射线条数，若超过，则对读取tbRayAdj的数据量进行内存控制（取模）
-            DataTable rayAdjGridsCntTb = DB.IbatisHelper.ExecuteQueryForDataTable("getRayAdjNum", null);
-            if (rayAdjGridsCntTb.Rows.Count < 1) {
-                return new Result(false, "不存在轨迹数据！");
-            }
-            int rayAdjGridsCnt = Convert.ToInt32(rayAdjGridsCntTb.Rows[0][0]);
+                double capacity = MemoryInfo() / 20;
 
-            DataTable rayAdjTb;
-            if (rayAdjGridsCnt > maxRayNum)
-            {
-                int mod = (int)Math.Ceiling((double)rayAdjGridsCnt / maxRayNum);
-                if (mod == 1)
-                    mod = 2;
-                Hashtable para1 = new Hashtable();
-                para1["mod"] = mod;
-                rayAdjTb = DB.IbatisHelper.ExecuteQueryForDataTable("getSomeRaysByMod", para1);
-            }
-            else
-            {
-                rayAdjTb = DB.IbatisHelper.ExecuteQueryForDataTable("getRays", null);
-            }
+                // 不要超过的射线条数（待核实）
+                int size = 350; // 一条射线约占350字节;
+                int maxRayNum = (int)(capacity * (1073741824 / size));
 
-            //对路测数据进行内存控制
-            int maxGridNum = maxRayNum / 200;  // 不要超过的路测栅格数量。假设一个栅格收到来自 40 个小区的信号，每个信号有 5 条射线（待核实）
-            int maxdTCnt = maxGridNum * 2; //假设路测点数是栅格数的二倍
+                // 对轨迹数据进行内存控制：比较tbRayAdj射线数与控制的最大射线条数，若超过，则对读取tbRayAdj的数据量进行内存控制（取模）
+                DataTable rayAdjGridsCntTb = DB.IbatisHelper.ExecuteQueryForDataTable("getRayAdjNum", null);
+                if (rayAdjGridsCntTb.Rows.Count < 1)
+                {
+                    return new Result(false, "不存在轨迹数据！");
+                }
+                int rayAdjGridsCnt = Convert.ToInt32(rayAdjGridsCntTb.Rows[0][0]);
 
-            // 获得轨迹数据包含的小区集合对应的路测数据的条数
-            List<String> cellIdList= new List<String>();
-            DataTable rayAdjCells = DB.IbatisHelper.ExecuteQueryForDataTable("getRayAdjCells", null);
-            for (int i = 0; i < rayAdjCells.Rows.Count; ++i) {
-                cellIdList.Add(rayAdjCells.Rows[i][0].ToString());
-            }
+                DataTable rayAdjTb;
+                if (rayAdjGridsCnt > maxRayNum)
+                {
+                    int mod = (int)Math.Ceiling((double)rayAdjGridsCnt / maxRayNum);
+                    if (mod == 1)
+                        mod = 2;
+                    Hashtable para1 = new Hashtable();
+                    para1["mod"] = mod;
+                    rayAdjTb = DB.IbatisHelper.ExecuteQueryForDataTable("getSomeRaysByModInAdjRange", para1);
+                }
+                else
+                {
+                    rayAdjTb = DB.IbatisHelper.ExecuteQueryForDataTable("getRaysInAdjRange", null);
+                }
 
-            DataTable dTCntTb = DB.IbatisHelper.ExecuteQueryForDataTable("getDTNum", null);//todo 更改为查小区集合内的路测数据数量,根据cellIdList
-            //if (dTCntTb.Rows.Count < 1)
-            //{
-            //    return new Result(false, "不存在轨迹数据对应小区的路测数据！");
-            //}
-            //int tbDTCnt = Convert.ToInt32(dTCntTb.Rows[0][0]);
+                //对路测数据进行内存控制
+                int maxGridNum = maxRayNum / 200;  // 不要超过的路测栅格数量。假设一个栅格收到来自 40 个小区的信号，每个信号有 5 条射线（待核实）
+                int maxdTCnt = maxGridNum * 2; //假设路测点数是栅格数的二倍
 
-            DataTable tbDTTb;
-            //if (tbDTCnt > maxdTCnt)
-            //{
-            //    int mod = (int)Math.Ceiling((double)tbDTCnt / maxdTCnt);
-            //    if (mod == 1)
-            //        mod = 2;
-            //    Hashtable para = new Hashtable();
-            //    para["mod"] = mod;
-            //    tbDTTb = DB.IbatisHelper.ExecuteQueryForDataTable("getSomeCellDTByMod", para);// todo sql未写
-            //}
-            //else
-            //{
+                // 获得轨迹数据包含的小区集合对应的路测数据的条数
+                List<String> cellIdList = new List<String>();
+                DataTable rayAdjCells = DB.IbatisHelper.ExecuteQueryForDataTable("getRayAdjCells", null);
+                for (int i = 0; i < rayAdjCells.Rows.Count; ++i)
+                {
+                    cellIdList.Add(rayAdjCells.Rows[i][0].ToString());
+                }
+
+                DataTable dTCntTb = DB.IbatisHelper.ExecuteQueryForDataTable("getDTNum", null);//todo 更改为查小区集合内的路测数据数量,根据cellIdList
+                                                                                               //if (dTCntTb.Rows.Count < 1)
+                                                                                               //{
+                                                                                               //    return new Result(false, "不存在轨迹数据对应小区的路测数据！");
+                                                                                               //}
+                                                                                               //int tbDTCnt = Convert.ToInt32(dTCntTb.Rows[0][0]);
+
+                DataTable tbDTTb;
+                //if (tbDTCnt > maxdTCnt)
+                //{
+                //    int mod = (int)Math.Ceiling((double)tbDTCnt / maxdTCnt);
+                //    if (mod == 1)
+                //        mod = 2;
+                //    Hashtable para = new Hashtable();
+                //    para["mod"] = mod;
+                //    tbDTTb = DB.IbatisHelper.ExecuteQueryForDataTable("getSomeCellDTByMod", para);// todo sql未写
+                //}
+                //else
+                //{
                 //tbDTTb = DB.IbatisHelper.ExecuteQueryForDataTable("getCellDT", null);//todo 更改为查小区集合内的路测数据
-                tbDTTb= DB.IbatisHelper.ExecuteQueryForDataTable("getCellDTTest", null);
-            //}
 
-            #endregion
+                //查询tbRayAdjRange中接收信号强度高于-100dbm的路测点
+                tbDTTb = DB.IbatisHelper.ExecuteQueryForDataTable("getCellDTInAdjRangeOverNegative100", null);
+                //}
 
-            // 得到计算值和真实路测的公共部分
-            Dictionary<string, List<DTInfo>> dtInfoDic = new Dictionary<string, List<DTInfo>>();// 路测数据
-            Dictionary<string, TrajInfo> rayDic = new Dictionary<string, TrajInfo>();// 计算值
-            
+                #endregion
 
-            #region //测试用,一个点
-            Dictionary<string, List<DTInfo>> dtPwrDicTest = new Dictionary<string, List<DTInfo>>();//测试用的路测数据
-            Boolean tag = true;
-            foreach (string key in dtInfoDic.Keys)
-            {
-                if (tag) {
-                    dtPwrDicTest[key] = new List<DTInfo>();
-                    foreach (DTInfo point in dtInfoDic[key]) {
-                        if (!dtPwrDicTest.ContainsKey(key)) {
-                            dtPwrDicTest[key] = new List<DTInfo>();
+                // 得到计算值和真实路测的公共部分
+                Dictionary<string, List<DTInfo>> dtInfoDic = new Dictionary<string, List<DTInfo>>();// 路测数据
+                Dictionary<string, TrajInfo> rayDic = new Dictionary<string, TrajInfo>();// 计算值
+                #region //测试用,一个点
+                Dictionary<string, List<DTInfo>> dtPwrDicTest = new Dictionary<string, List<DTInfo>>();//测试用的路测数据
+                Boolean tag = true;
+                foreach (string key in dtInfoDic.Keys)
+                {
+                    if (tag)
+                    {
+                        dtPwrDicTest[key] = new List<DTInfo>();
+                        foreach (DTInfo point in dtInfoDic[key])
+                        {
+                            if (!dtPwrDicTest.ContainsKey(key))
+                            {
+                                dtPwrDicTest[key] = new List<DTInfo>();
+                            }
+                            dtPwrDicTest[key].Add(point);
                         }
-                        dtPwrDicTest[key].Add(point);
+                        tag = false;
+                        break;
                     }
-                    tag = false;
-                    break;
                 }
+                #endregion
+                filterWithDTInfo(ref rayAdjTb, ref tbDTTb, ref dtInfoDic, ref rayDic);
+
+                // 遗传算法
+                int frequence = 63;// EARFCN，绝对频率号，与小区工参表 cell 中的数据保持一致
+                                   //根据轨迹中射线信息计算每条线段对应的转角
+                calcDefAngle(ref rayDic);
+                // ---------------- start ---------------------
+                bool isFilterGrids_withCondition = true;//进行筛选
+                int gridsType = 0;//筛选出只含直射的栅格 
+
+                if (isFilterGrids_withCondition)
+                {
+                    filterGrids_withCondition(ref rayDic, gridsType);
+                    int test = 0;
+                }
+                else
+                {
+                    filterGrids_withCondition(ref rayDic, -1);
+                }
+                // ----------------- end -----------------------
+                int type0LowerBound = 10;//200; // 400;//控制第一轮实际代数
+                int type0HigherBound = 300;//250; // 550;
+                double ratio = 0.5;//0.5;//第一轮代数占用户输入代数的比例
+                int popSizeType;
+                int genType;
+
+                // 初始化进度信息
+                int round1Cnt = Math.Min(type0HigherBound, Math.Max(type0LowerBound, (int)(this.gen * ratio)));
+                int round2Cnt = (int)(this.gen * (1 - ratio));
+                loadInfo.loadCountAdd(round1Cnt + round2Cnt);
+
+                //分别跑两轮
+                for (int runTypeTag = 0; runTypeTag <= 1; ++runTypeTag)//0:跑所有栅格 1：去除高误差栅格 2：修正高误差栅格路经
+                {
+                    if (runTypeTag == 0)
+                    {
+                        popSizeType = this.popSize;
+                        genType = round1Cnt;
+
+                    }
+                    else
+                    {
+                        popSizeType = this.popSize;
+                        genType = round2Cnt;
+                    }
+
+                    EA.initEA(popSizeType, genType, this.sceneNum, ref dtInfoDic, ref rayDic, frequence);
+                    EA ea = new EA();
+                    ea.GaMain(runTypeTag, loadInfo);
+                }
+                loadInfo.loadFinish();
+                return new Result(true, "系数校正射线计算完成");
             }
-            #endregion
-
-            // 遗传算法
-            int frequence = 63;// EARFCN，绝对频率号，与小区工参表 cell 中的数据保持一致
-            filterWithDTInfo(ref rayAdjTb, ref tbDTTb, ref dtInfoDic, ref rayDic);
-            //根据轨迹中射线信息计算每条线段对应的转角
-            calcDefAngle(ref rayDic);
-
-            // ---------------- start ---------------------
-            bool isFilterGrids_withCondition = true;//进行筛选
-            int gridsType = 0;//筛选出只含直射的栅格 
-
-            if (isFilterGrids_withCondition) {
-                filterGrids_withCondition(ref rayDic, gridsType);
-                int test = 0;
-            }
-            else {
-                filterGrids_withCondition(ref rayDic, -1);
-            }
-
-            // ----------------- end -----------------------
-
-            int type0LowerBound = 10;//200; // 400;//控制第一轮实际代数
-            int type0HigherBound = 300;//250; // 550;
-            double ratio = 0.5;//0.5;//第一轮代数占用户输入代数的比例
-            int popSizeType;
-            int genType;
-            for (int runTypeTag = 0; runTypeTag <= 1; ++runTypeTag)//0:跑所有栅格 1：去除高误差栅格 2：修正高误差栅格路经
+            catch (Exception)
             {
-                if (runTypeTag == 0) {
-                    popSizeType = this.popSize;
-                    genType = Math.Min(type0HigherBound, Math.Max(type0LowerBound, (int)(this.gen * ratio)));
-                    
-                }
-                else  {
-                    popSizeType = this.popSize;
-                    genType = (int)(this.gen * (1-ratio));
-                }
-
-                EA.initEA(popSizeType, genType, this.sceneNum, ref dtInfoDic, ref rayDic, frequence);
-                EA ea = new EA();
-                ea.GaMain(runTypeTag);
-            }        
-
-            //if (runTypeTag == 0)//跑所有栅格
-            //{
-            //    filter(ref rayAdjTb, ref tbDTTb, ref dtPwrDic, ref rayDic);
-            //    EA.initEA(this.popSize, this.gen, this.sceneNum, ref dtPwrDic, ref rayDic, frequence);
-            //    EA ea = new EA();
-            //    ea.GaMain(runTypeTag);
-            //}
-            //else if (runTypeTag == 1)//去除高误差栅格
-            //{
-            //    filter(ref rayAdjTb, ref tbDTTb, ref dtPwrDic, ref rayDic);
-            //    EA.initEA(this.popSize, this.gen, this.sceneNum, ref dtPwrDic, ref rayDic, frequence);
-            //    EA ea = new EA();
-            //    ea.GaMain(runTypeTag);
-            //}
-            //else if (runTypeTag == 2) {//修正高误差栅格路径
-            //    filter(ref rayAdjTb, ref tbDTTb, ref dtPwrDic, ref rayDic);
-            //    EA.initEA(this.popSize, this.gen, this.sceneNum, ref dtPwrDic, ref rayDic, frequence);
-            //    EA ea = new EA();
-            //    ea.GaMain(runTypeTag);
-            //}
-
-            return new Result(true);
+                loadInfo.breakdown = true;
+                loadInfo.loadBreakDown();
+                return new Result(false, "系数校正射线计算失败");
+            }
         }
 
         //对轨迹中所有射线段的转角赋值
