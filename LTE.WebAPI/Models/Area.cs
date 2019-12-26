@@ -157,8 +157,7 @@ namespace LTE.WebAPI.Models
             }
 
             LoadInfo loadInfo = new LoadInfo();
-            loadInfo.count = cells.Count;
-
+            loadInfo.loadCountAdd(cells.Count);
             string fail = "";
             foreach (var item in cells)
             {
@@ -180,13 +179,6 @@ namespace LTE.WebAPI.Models
                     return new Result(false, "区域覆盖计算失败");
                 }
             }
-            if (loadInfo.cnt < loadInfo.count)
-            {
-                loadInfo.breakdown = true;
-                loadInfo.loadBreakDown();
-                return new Result(false, fail+"覆盖计算计算失败");
-            }
-            loadInfo.loadFinish();
             return new Result(true, "区域覆盖计算完成");
         }
     }

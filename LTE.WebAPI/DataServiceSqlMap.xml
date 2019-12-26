@@ -1065,8 +1065,16 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   </insert>
 
   <select id = "getShpByIndexName" parameterClass="string">
-    SELECT  ShpName FROM  tbShpLayer
+    SELECT  ShpName FROM  tbAreaShpLayer
     where IndexName = #IndexName#
+  </select>
+  
+  <select id = "getAreaShpByLonLat" parameterClass="Hashtable">
+    <![CDATA[
+      SELECT  ShpName FROM  tbShpLayer
+      where not ( MinLongitude>#maxLongitude# or MaxLongitude<#minLongitude# 
+                  or MinLatitude>#maxLatitude# or MaxLatitude<#minLatitude#)
+    ]]>
   </select>
 
   <select id = "getNotComputedCellByArea" parameterClass="Hashtable">
