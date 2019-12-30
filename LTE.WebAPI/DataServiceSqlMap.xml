@@ -1248,6 +1248,12 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
                 where item='ClusterShp'
     </select>
 
+    <!--矫正系数功能状态查询-->
+    <select id="GetAdjcoefficienttoDBState">
+                select State from tbDependTable
+                where item='AdjcoefficienttoDB'
+    </select>
+
     <!--更新前提条件表的聚类图层生成功能状态-->
     <update id="UpdatetbDependTableClusterShp">
                   update tbDependTable set State=1
@@ -1268,13 +1274,13 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     <!--删除渔网后前提条件表的更新-->
     <update id="UpdatetbDependTableDuetoFishnet">
                   update tbDependTable SET State=0 
-                  where item in ('FishnetShp','Building_overlaytoDB','Water_overlaytoDB','Grass_overlaytoDB','ClustertoDB','ClusterShp')
+                  where item in ('FishnetShp','Building_overlaytoDB','Water_overlaytoDB','Grass_overlaytoDB','ClustertoDB','ClusterShp','AdjcoefficienttoDB')
     </update>
 
     <!--删除建筑物叠加图层后前提条件表的更新-->
     <update id="UpdatetbDependTableDuetoBuilding_overlay">
                   update tbDependTable SET State=0 
-                  where item in ('Building_overlaytoDB','ClustertoDB','ClusterShp')
+                  where item in ('Building_overlaytoDB','ClustertoDB','ClusterShp','AdjcoefficienttoDB')
     </update>
 
     <!--删除建筑物叠加图层后加速场景表的更新-->
@@ -1285,7 +1291,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     <!--删除水面叠加图层后前提条件表的更新-->
     <update id="UpdatetbDependTableDuetoWater_overlay">
                   update tbDependTable SET State=0 
-                  where item in ('Water_overlaytoDB','ClustertoDB','ClusterShp')
+                  where item in ('Water_overlaytoDB','ClustertoDB','ClusterShp','AdjcoefficienttoDB')
     </update>
 
     <!--删除水面叠加图层后加速场景表的更新-->
@@ -1296,7 +1302,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     <!--删除草地叠加图层后前提条件表的更新-->
     <update id="UpdatetbDependTableDuetoGrass_overlay">
                   update tbDependTable SET State=0 
-                  where item in ('Grass_overlaytoDB','ClustertoDB','ClusterShp')
+                  where item in ('Grass_overlaytoDB','ClustertoDB','ClusterShp','AdjcoefficienttoDB')
     </update>
 
     <!--删除草地叠加图层后加速场景表的更新-->
@@ -1307,7 +1313,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     <!--删除聚类入库后前提条件表的更新-->
     <update id="UpdatetbDependTableDuetoClustertoDB">
                   update tbDependTable SET State=0 
-                  where item in ('ClustertoDB','ClusterShp')
+                  where item in ('ClustertoDB','ClusterShp','AdjcoefficienttoDB')
     </update>
 
     <!--删除聚类入库后加速场景表的更新-->
@@ -1318,7 +1324,24 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     <!--删除聚类图层后前提条件表的更新-->
     <update id="UpdatetbDependTableDuetoClusterShp">
                   update tbDependTable SET State=0 
-                  where item in ('ClusterShp')
+                  where item in ('ClusterShp','AdjcoefficienttoDB')
+    </update>
+
+    <!--删除矫正系数表-->
+    <update id="deleteAdjcoefficient">
+                  delete from tbAdjtest
+    </update>
+
+    <!--删除矫正系数后前提条件表的更新-->
+    <update id="UpdatetbDependTableDuetoAdjcoefficienttoDB">
+                  update tbDependTable SET State=0 
+                  where item in ('AdjcoefficienttoDB')
+    </update>
+
+    <!--矫正系数后前提条件表的更新-->
+    <update id="UpdatetbDependTableAdjcoefficienttoDB">
+                  update tbDependTable SET State=1 
+                  where item in ('AdjcoefficienttoDB')
     </update>
 
 	<!--地面栅格相关 ，by JinHJ-->

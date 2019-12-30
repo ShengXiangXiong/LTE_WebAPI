@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="gb2312"?>
+<cluster>
+    <parameter>
+        <!--场景0直射系数-->
+        <DirectCoefficient_Scene0>0.70364020611329</DirectCoefficient_Scene0>
+        <!--场景0反射系数A-->
+        <ReflectCoefficientA_Scene0>0.0373320284147803</ReflectCoefficientA_Scene0>
+        <!--场景0反射系数B-->
+        <ReflectCoefficientB_Scene0>-0.202606003658048</ReflectCoefficientB_Scene0>
+        <!--场景0反射系数C-->
+        <ReflectCoefficientC_Scene0>1.09487247289851</ReflectCoefficientC_Scene0>		
+		<!--场景0绕射系数A-->
+		<DiffracteCoefficientA_Scene0>0.0177290576501419</DiffracteCoefficientA_Scene0>		
+		<!--场景0绕射系数B-->
+		<DiffracteCoefficientB_Scene0>-0.0352658955098994</DiffracteCoefficientB_Scene0>		
+		<!--场景0绕射系数C-->
+		<DiffracteCoefficientC_Scene0>0.935327109617799</DiffracteCoefficientC_Scene0>
+		
+		
+		<!--场景1直射系数-->
+        <DirectCoefficient_Scene1>0.743107903163465</DirectCoefficient_Scene1>
+        <!--场景1反射系数A-->
+        <ReflectCoefficientA_Scene1>0.081509688437241</ReflectCoefficientA_Scene1>
+        <!--场景1反射系数B-->
+        <ReflectCoefficientB_Scene1>-0.468253953901722</ReflectCoefficientB_Scene1>
+        <!--场景1反射系数C-->
+        <ReflectCoefficientC_Scene1>1.04896397923537</ReflectCoefficientC_Scene1>		
+		<!--场景1绕射系数A-->
+		<DiffracteCoefficientA_Scene1>0.0780647157740522</DiffracteCoefficientA_Scene1>		
+		<!--场景1绕射系数B-->
+		<DiffracteCoefficientB_Scene1>-0.231217188049637</DiffracteCoefficientB_Scene1>		
+		<!--场景1绕射系数C-->
+		<DiffracteCoefficientC_Scene1>0.934419260562593</DiffracteCoefficientC_Scene1>
+		
+		<!--场景2直射系数-->
+        <DirectCoefficient_Scene2>0.0337155526660922</DirectCoefficient_Scene2>
+        <!--场景2反射系数A-->
+        <ReflectCoefficientA_Scene2>0.168705300036923</ReflectCoefficientA_Scene2>
+        <!--场景2反射系数B-->
+        <ReflectCoefficientB_Scene2>-1.11715464810433</ReflectCoefficientB_Scene2>
+        <!--场景2反射系数C-->
+        <ReflectCoefficientC_Scene2>0.992731413008986</ReflectCoefficientC_Scene2>		
+		<!--场景2绕射系数A-->
+		<DiffracteCoefficientA_Scene2>0.107194639244748</DiffracteCoefficientA_Scene2>		
+		<!--场景3绕射系数B-->
+		<DiffracteCoefficientB_Scene2>-1.20804431311967</DiffracteCoefficientB_Scene2>		
+		<!--场景3绕射系数C-->
+		<DiffracteCoefficientC_Scene2>0.91417445531775</DiffracteCoefficientC_Scene2>
+		
+		<!--场景3直射系数-->
+        <DirectCoefficient_Scene3>0.810102534857626</DirectCoefficient_Scene3>
+        <!--场景3反射系数A-->
+        <ReflectCoefficientA_Scene3>0.195879297232311</ReflectCoefficientA_Scene3>
+        <!--场景3反射系数B-->
+        <ReflectCoefficientB_Scene3>-0.781982739210233</ReflectCoefficientB_Scene3>
+        <!--场景3反射系数C-->
+        <ReflectCoefficientC_Scene3>1.0941887021969</ReflectCoefficientC_Scene3>
+		<!--场景3绕射系数A-->
+		<DiffracteCoefficientA_Scene3>0.00283653300827208</DiffracteCoefficientA_Scene3>		
+		<!--场景3绕射系数B-->
+		<DiffracteCoefficientB_Scene3>-0.635994889082236</DiffracteCoefficientB_Scene3>	
+		<!--场景3绕射系数C-->
+		<DiffracteCoefficientC_Scene3>1.0125728685933</DiffracteCoefficientC_Scene3>
+    </parameter>
+</cluster>

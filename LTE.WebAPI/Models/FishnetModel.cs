@@ -111,9 +111,6 @@ namespace LTE.WebAPI.Models
 
             }
 
-           
-            
-
             try
             {
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().makeFishnet();

@@ -11,6 +11,7 @@ using LTE.DB;
 using System.Xml;
 using System.Diagnostics;
 using System.Collections;
+using LTE.Model;
 
 namespace LTE.WebAPI.Models
 {
@@ -213,6 +214,12 @@ namespace LTE.WebAPI.Models
         }
         public Result part()
         {
+            int cnt = 0;
+            //初始化进度信息
+            LoadInfo loadInfo = new LoadInfo();
+            loadInfo.count = 3;
+            loadInfo.loadCreate();
+
             DataTable dt11 = DB.IbatisHelper.ExecuteQueryForDataTable("GetBuilding_overlayState", null);  // Ibatis 数据访问，判断用户是否做了叠加分析
             if (dt11.Rows[0][0].ToString() == "0")
             { return new Result(false, "用户未进行建筑物叠加分析"); }
@@ -431,6 +438,10 @@ namespace LTE.WebAPI.Models
                     { gseed[seednum2, 0] = pre; gseed[seednum2, 1] = next; seednum2++; }
                 }
 
+                cnt++;
+                loadInfo.cnt = cnt;
+                loadInfo.loadUpdate();
+
                 //3种地物的聚类
                 for (i = 0; i < seednum; i++)
                 {
@@ -450,6 +461,10 @@ namespace LTE.WebAPI.Models
                     meetcluster.Clear();
                     vic(gseed[i, 0], gseed[i, 1], xmax, ymax, ref a, ref b, ref tmp, ref sernum, ref meetcluster, k, area, ref c, ilength, jlength, threshold);
                 }
+
+                cnt++;
+                loadInfo.cnt = cnt;
+                loadInfo.loadUpdate();
 
                 int jjj = 0;//已经标记序号的格子数
                 meetcluster.Clear();//已经分配的簇号
@@ -650,6 +665,9 @@ namespace LTE.WebAPI.Models
 
                 //更新tbDependTabled的ClustertoDB
                 IbatisHelper.ExecuteUpdate("UpdatetbDependTableClustertoDB", null);
+                cnt++;
+                loadInfo.cnt = cnt;
+                loadInfo.loadUpdate();
                 return new Result(true, "场景划分完成");
             }
             catch (Exception ex)

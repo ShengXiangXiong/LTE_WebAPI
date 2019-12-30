@@ -2090,6 +2090,10 @@ namespace GisClient
           }
           iprot.ReadStructEnd();
         }
+        catch(Exception ex)
+                {
+                    Console.WriteLine(ex.StackTrace);
+                }
         finally
         {
           iprot.DecrementRecursionDepth();
