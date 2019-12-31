@@ -157,8 +157,7 @@ namespace LTE.WebAPI.Models
             }
 
             LoadInfo loadInfo = new LoadInfo();
-            loadInfo.count = cells.Count;
-
+            loadInfo.loadCountAdd(cells.Count);
             string fail = "";
             foreach (var item in cells)
             {

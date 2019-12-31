@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Diagnostics; // 记录程序运行时间
 using System.Data;
+using LTE.Model;
 //70--462
 
 namespace LTE.Calibration
@@ -45,6 +46,14 @@ namespace LTE.Calibration
         public double PMUTATION = 0.4;     //变异概率
         public double PSELECT = 0.9;        //选择优良个体的概率
         public static int objNum = 2;       //目标个数
+
+        public double PXOVER_MAX = 0.9; //交叉率最大
+        public double PXOVER_MIN = 0.65; //交叉率最小
+        public double PMUTATION_MAX = 0.7; //变异率最大
+        public double PMUTATION_MIN = 0.01; //变异率最小     
+        public double[] FitAvg ; //种群适应度均值
+        public double[] FitBest ;//种群最优个体适应度值
+        
 
         public int generation;     //进化到第几代
         public Entity Best;        //最终的最好个体
@@ -243,7 +252,7 @@ namespace LTE.Calibration
                     {
                         j = ThreadSafeRandom.Next(0, coeNum);
 
-                        if (r.NextDouble() < 0.4)
+                        if (r.NextDouble() < 0.2)
                         {//以一定概率不变这个系数
                             continue;
                         }
@@ -393,6 +402,25 @@ namespace LTE.Calibration
                 fitnessVec = new double[objNum];
                 for (int i = 0; i < objNum; i++)
                     fitnessVec[i] = 0;
+            }
+
+            public Entity(Entity entity, Boolean copyFit) {
+                //复制gen
+                gen = new double[scenNum, coeNum];
+                for (int i = 0; i < scenNum; i++)
+                {
+                    for (int k = 0; k < coeNum; k++)
+                    {
+                        gen[i, k] = entity.gen[i, k];
+                    }
+                }
+
+                fitnessVec = new double[objNum];
+                if (copyFit) {
+                    //复制fitnessVec
+                    for (int i = 0; i < objNum; i++)
+                    fitnessVec[i] = entity.fitnessVec[i];
+                }
             }
 
 
@@ -738,14 +766,15 @@ namespace LTE.Calibration
         Pareto pareto;            //非支配解集
         Pareto newpareto;         //新的非支配解集
         Pareto bestPareto;        //最终非支配解集
-        List<Entity> q;
+        List<Entity> q;//交叉变异出的新个体都放进来
+
 
         #endregion
 
         #region  //计算交叉概率
         public double PCross()
         {
-            double pc = PXOVER0 * Math.Exp(-0.41 * generation / MAXGENS);
+            double pc = PXOVER0 * Math.Exp(-0.4 * generation / MAXGENS);
             return pc;
         }
         #endregion
@@ -803,6 +832,9 @@ namespace LTE.Calibration
             for (i = 0; i < POPSIZE; i++) {
                 population[i].entityDiversityInit();             
             }
+
+            //更新种群适应度均值和最优值
+            updateFitAvgAndFitBest();
         }
 
         //评价函数
@@ -834,14 +866,179 @@ namespace LTE.Calibration
             }
         }
 
-        private static readonly Object mutex = new object();
+      
 
+        //返回两个体基因欧式距离
+        private double getEuclideanDistance(double[,] gen1, double[,] gen2)
+        {
+            double distance = 0;
+            for (int i = 0; i < Scen; ++i)
+            {
+                for (int j = 0; j < coeNum; ++j)
+                {
+                    distance += Math.Pow(gen1[i, j] - gen2[i, j], 2);
+                }
+            }
+            distance = Math.Sqrt(distance);
+            return distance;
+        }
+
+        private double getEuclideanDistanceZhiShe(double[,] gen1, double[,] gen2) {
+            double distance = 0;
+            for (int i = 0; i < Scen; ++i)
+            {
+                for (int j = 0; j <= 0; ++j)
+                {
+                    distance += Math.Pow(gen1[i, j] - gen2[i, j], 2);
+                }
+            }
+            distance = Math.Sqrt(distance);
+            return distance;
+        }
+
+        //返回两个体基因余弦距离
+        private double getCosDistance(double[,] gen1, double[,] gen2)
+        {
+            double dotAns = 0;//两向量点积
+            double vec1LenTemp = 0;//gen1对应的向量的模长临时变量
+            double vec2LenTemp = 0;
+            for (int i = 0; i < Scen; ++i)
+            {
+                for (int j = 0; j < coeNum; ++j)
+                {
+                    dotAns += gen1[i, j] * gen2[i, j];
+                    vec1LenTemp += gen1[i, j] * gen1[i, j];
+                    vec2LenTemp += gen2[i, j] * gen2[i, j];
+                }
+            }
+            double vec1Len = Math.Sqrt(vec1LenTemp);
+            double vec2Len = Math.Sqrt(vec2LenTemp);
+            double cosDistance = 1 - dotAns / (vec1Len * vec2Len);
+            return cosDistance;//余弦距离区间[0,2]
+        }
+
+        private double getCosDistanceZhiShe(double[,] gen1, double[,] gen2)
+        {
+            double dotAns = 0;//两向量点积
+            double vec1LenTemp = 0;//gen1对应的向量的模长临时变量
+            double vec2LenTemp = 0;
+            for (int i = 0; i < Scen; ++i)
+            {
+                for (int j = 0; j <= 0; ++j)
+                {
+                    dotAns += gen1[i, j] * gen2[i, j];
+                    vec1LenTemp += gen1[i, j] * gen1[i, j];
+                    vec2LenTemp += gen2[i, j] * gen2[i, j];
+                }
+            }
+            double vec1Len = Math.Sqrt(vec1LenTemp);
+            double vec2Len = Math.Sqrt(vec2LenTemp);
+            double cosDistance = 1 - dotAns / (vec1Len * vec2Len);
+            return cosDistance;//余弦距离区间[0,2]
+        }
+
+        //交叉函数，以交叉概率选择待交叉个体组成待交叉个体集合，选择待交叉个体中距离最远的作为交叉对象，随机选择ij作为待交换的基因片段进行两点交叉。
+        void crossoverMaxDistance()
+        {
+            List<int> crossoverList=new List<int>();
+
+            //将待交叉个体放入crossoverSet
+            Parallel.For(0, POPSIZE - 1, idx =>
+            {
+                //计算个体的交叉概率
+                double pxoverOfEntityIdx = PXOVER;
+                double fitOfEntityIdx = population[idx].fitnessVec[0];
+                if (fitOfEntityIdx <= FitAvg[0])
+                {
+                    pxoverOfEntityIdx = PXOVER - ((PXOVER - PXOVER_MIN) * (FitAvg[0] - fitOfEntityIdx)) / (FitAvg[0] - FitBest[0]);
+                }
+
+                double randomNum = ThreadSafeRandom.NextDouble();
+                if (randomNum < pxoverOfEntityIdx)
+                {
+                    crossoverList.Add(idx);
+                }
+            });
+
+            //对每个待交叉个体选择交叉对象
+            int crossoverEntityCnt = crossoverList.Count;
+            if (crossoverEntityCnt != 0) {
+                Parallel.For(0, crossoverEntityCnt, idx => {
+                    double maxDistance = -1;//与idx号个体的最远距离
+                    int idxWithMaxDistance = crossoverList[0];//与idx号个体具有最远距离的个体
+
+                    foreach (int i in crossoverList)
+                    {
+                        double distance = getEuclideanDistance(population[idx].gen, population[i].gen);//使用欧式距离
+                        if (distance > maxDistance) {
+                            maxDistance = distance;
+                            idxWithMaxDistance = i;
+                        }
+                    }
+
+                    XoverWithTowPoint(idx, idxWithMaxDistance);//将该个体与与其最远的个体进行两点交叉
+                });
+            }
+
+            crossoverList.Clear();
+            PXOVER = PCross();//更新交叉概率
+        }
+
+        void crossoverMaxDistanceZhiShe()
+        {
+            List<int> crossoverList = new List<int>();
+
+            //将待交叉个体放入crossoverSet
+            Parallel.For(0, POPSIZE - 1, idx =>
+            {
+                //计算个体的交叉概率
+                double pxoverOfEntityIdx = PXOVER;
+                double fitOfEntityIdx = population[idx].fitnessVec[0];
+                if (fitOfEntityIdx <= FitAvg[0]) {
+                    pxoverOfEntityIdx = PXOVER - ((PXOVER - PXOVER_MIN) * (FitAvg[0] - fitOfEntityIdx)) / (FitAvg[0] - FitBest[0]);
+                }
+
+                double randomNum = ThreadSafeRandom.NextDouble();
+                if (randomNum < pxoverOfEntityIdx)
+                {
+                    crossoverList.Add(idx);
+                }
+            });
+
+            //对每个待交叉个体选择交叉对象
+            int crossoverEntityCnt = crossoverList.Count;
+            if (crossoverEntityCnt != 0)
+            {
+                Parallel.For(0, crossoverEntityCnt, idx => {
+                    double maxDistance = -1;//与idx号个体的最远距离
+                    int idxWithMaxDistance = crossoverList[0];//与idx号个体具有最远距离的个体
+
+                    foreach (int i in crossoverList)
+                    {
+                        double distance = getEuclideanDistanceZhiShe(population[idx].gen, population[i].gen);//使用欧式距离
+                        if (distance > maxDistance)
+                        {
+                            maxDistance = distance;
+                            idxWithMaxDistance = i;
+                        }
+                    }
+
+                    XoverWithTowPointZhiShe(idx, idxWithMaxDistance);//将该个体与与其最远的个体进行两点交叉
+                });
+            }
+
+            crossoverList.Clear();
+            PXOVER = PCross();//更新交叉概率
+        }
+
+
+        private static readonly Object mutex = new object();//用于交叉函数的共享变量
         // 交叉函数：选择两个个体交叉
         void crossover()
         {
             int one = 0;
             int first = 0;
-            Parallel.For(0, (int)(POPSIZE * 0.1), mem =>
+            Parallel.For(0, (int)(POPSIZE * 0.1), mem => //只对前10%进行交叉
               {
                   double x = ThreadSafeRandom.NextDouble();
                   if (x < PXOVER)
@@ -867,12 +1064,13 @@ namespace LTE.Calibration
             PXOVER = PCross();
         }
 
-        // 非并行，解决两次计算cal结果不同的问题。交叉函数：选择两个个体交叉
+
+        // 交叉函数：非并行，解决两次计算cal结果不同的问题。交叉函数：选择两个个体交叉
         void crossoverNoParallel()
         {
             int one = 0;
             int first = 0;
-            for(int mem=0;mem< (int)(POPSIZE * 0.1);++mem)
+            for (int mem = 0; mem < (int)(POPSIZE * 0.1); ++mem)
             {
                 double x = ThreadSafeRandom.NextDouble();
                 if (x < PXOVER)
@@ -898,18 +1096,23 @@ namespace LTE.Calibration
             PXOVER = PCross();
         }
 
-        void crossoverNew() {
+        // 交叉函数
+        void crossoverNew()
+        {
             int i = 0;
-            for (i = 0; i < POPSIZE * 0.1; ++i) {
+            for (i = 0; i < POPSIZE * 0.1; ++i)
+            {
                 double x = ThreadSafeRandom.NextDouble();
-                if (x < PXOVER) {
+                if (x < PXOVER)
+                {
                     Xover(i, (int)(x + ThreadSafeRandom.Next(100, 200) * 0.01));
                 }
             }
 
             int one = 0;
             int first = 0;
-            for (int j = (int)(POPSIZE * 0.2); j < POPSIZE; ++j) {
+            for (int j = (int)(POPSIZE * 0.2); j < POPSIZE; ++j)
+            {
                 double x = ThreadSafeRandom.NextDouble();
                 if (x < PXOVER)
                 {
@@ -928,7 +1131,50 @@ namespace LTE.Calibration
             PXOVER = PCross();
         }
 
-        //交叉   
+        // 两个个体进行交叉,使用两点式  
+        void XoverWithTowPoint(int entityIdx1, int entityIdx2)
+        {
+            //随机获取待交叉个体的基因的起止两点坐标
+            int start = r.Next(0, Scen * coeNum);
+            int end = r.Next(0, Scen * coeNum);
+            if (end < start) {
+                int temp = start;
+                start = end;
+                end = temp;
+            }
+
+            //生成新个体并加入q
+            Entity newEntity = new Entity(population[entityIdx1],false);
+            for (int i = start; i < end; ++i) {
+                newEntity.gen[i/coeNum,i%coeNum]= population[entityIdx2].gen[i/coeNum,i%coeNum];//正确性待验证
+            }
+            newEntity.getFit();
+            q.Add(newEntity);//是否可以不加锁待验证
+        }
+
+        void XoverWithTowPointZhiShe(int entityIdx1, int entityIdx2)
+        {
+            //随机获取待交叉个体的基因的起止两点坐标
+            int start = r.Next(0, Scen );
+            int end = r.Next(0, Scen );
+            if (end < start)
+            {
+                int temp = start;
+                start = end;
+                end = temp;
+            }
+
+            //生成新个体并加入q
+            Entity newEntity = new Entity(population[entityIdx1], false);
+            for (int i = start; i < end; ++i)
+            {
+                newEntity.gen[i , 0] = population[entityIdx2].gen[i , 0];
+            }
+            newEntity.getFit();
+            q.Add(newEntity);//是否可以不加锁待验证
+        }
+
+        // 两个个体进行交叉   
         void Xover(int one, int two)
         {
             int i;
@@ -961,17 +1207,100 @@ namespace LTE.Calibration
             {
                 lock (population[i])
                 {
-                    double r1 = ThreadSafeRandom.NextDouble();  //随机选择变异个体
-                    Entity E = new Entity();
-                    Entity S = population[i];
-                    copy(ref E, ref S);
+                    double r1 = ThreadSafeRandom.NextDouble();  //随机选择变异个体                  
 
                     if (r1 < PMUTATION)   //变异
                     {
+                        Entity E = new Entity();
+                        Entity S = population[i];
+                        copy(ref E, ref S);
+
                         EA.initGens(ref E.gen, false, true);
 
+                        E.getFit();
+                        lock (q)
+                        {
+                            q.Add(E);
+                        }
+                    }
+                }
+            });
+
+            PMUTATION = PMutate();
+        }
+
+        // 变异函数新，使用个体变异率，变异基因数根据代数变化，随机选择变异的基因
+        void mutateNew()
+        {
+            Parallel.For(0, POPSIZE, i =>
+            //for(int i=0;i<POPSIZE;i++)
+            {
+                lock (population[i])
+                {
+                    double r1 = ThreadSafeRandom.NextDouble();  //随机选择变异个体                  
+
+                    //计算个体的交叉概率
+                    double pmutationOfEntityI = PMUTATION;
+                    double fitOfEntityI = population[i].fitnessVec[0];
+                    if (fitOfEntityI <= FitAvg[0])
+                    {
+                        pmutationOfEntityI = PMUTATION - ((PMUTATION - PXOVER_MIN) * (FitAvg[0] - fitOfEntityI)) / (FitAvg[0] - FitBest[0]);
+                    }
+
+                    //变异
+                    if (r1 < pmutationOfEntityI)  
+                    {
+                        Entity E = new Entity();
+                        Entity S = population[i];
+                        copy(ref E, ref S);
+
+                        EA.initGens(ref E.gen, false, true);
 
                         E.getFit();
+                        lock (q)
+                        {
+                            q.Add(E);
+                        }
+                    }
+                }
+            });
+
+            PMUTATION = PMutate();
+        }
+
+        void mutateNewZhiShe()
+        {
+            Parallel.For(0, POPSIZE, i =>
+            //for(int i=0;i<POPSIZE;i++)
+            {
+                lock (population[i])
+                {
+                    double r1 = ThreadSafeRandom.NextDouble();  //随机选择变异个体   
+
+                    //计算个体的交叉概率
+                    double pmutationOfEntityI = PMUTATION;
+                    double fitOfEntityI = population[i].fitnessVec[0];
+                    if (fitOfEntityI <= FitAvg[0])
+                    {
+                        pmutationOfEntityI = PMUTATION - ((PMUTATION - PXOVER_MIN) * (FitAvg[0] - fitOfEntityI)) / (FitAvg[0] - FitBest[0]);
+                    }
+
+                    //变异
+                    if (r1 < PMUTATION)   
+                    {
+                        Entity E = new Entity();
+                        Entity S = population[i];
+                        copy(ref E, ref S);
+
+                        for (int k = 0; k < Scen; k++)
+                        {
+                            for (int j = 0; j <= 0; j++)
+                            {
+                                    E.gen[k, 0] = r.NextDouble() * 2 ;
+                            }
+                        }
+                        E.getFit();
+
                         lock (q)
                         {
                             q.Add(E);
@@ -1017,9 +1346,7 @@ namespace LTE.Calibration
                 copy(ref E, ref S);
                 q.Add(E);
             }
-            int testbef = 1;
             pareto.quickSort1(q, 0, q.Count - 1);
-            int testafter = 2;
             //i = 0;
             //int k = 0;
             //while (i < POPSIZE && k < q.Count)
@@ -1038,8 +1365,40 @@ namespace LTE.Calibration
                 copy(ref tempNode, q[i]);
                 population.Add(tempNode);
             }
+
+            //更新种群适应度均值和最优值
+            updateFitAvgAndFitBest();
+
             //清空集合
             q.Clear();
+        }
+
+        //更新种群适应度均值和最优值
+        void updateFitAvgAndFitBest() {
+            //更新适应度均值
+            double[] fitAvgTemp=new double[objNum];
+            foreach (Entity entity in population)
+            {
+                for (int i = 0; i < objNum; ++i) {
+                    fitAvgTemp[i] += entity.fitnessVec[i];
+                }
+            }
+
+            if (FitAvg == null) {
+                FitAvg = new double[objNum];
+            }
+            for (int i = 0; i < objNum; ++i){
+                FitAvg[i]=fitAvgTemp[i] / POPSIZE;
+            }
+
+            //更新适应度最优值
+            if (FitBest == null) {
+                FitBest = new double[objNum];
+            }
+            for (int i = 0; i < objNum; ++i)
+            {
+                FitBest[i] = population[0].fitnessVec[i];
+            }
         }
 
         void copy(ref List<Entity> D, ref List<Entity> S)
@@ -1260,7 +1619,7 @@ namespace LTE.Calibration
             return gridsSet;
         }
 
-        public void GaMain(int runTypeTag)
+        public void GaMain(int runTypeTag, LoadInfo loadInfo)
         {
             Console.WriteLine("start gamain.");
 
@@ -1425,10 +1784,12 @@ namespace LTE.Calibration
 
                 generation++;
                 
-                select();     //选择函数：用于最大化合并杰出模型的标准比例选择，保证最优秀的个体得以生存
-                crossover();  //杂交函数：选择两个个体来杂交，这里用单点杂交 
-                              //crossoverNew(); //新的杂交函数，改变杂交策略
-                mutate();     //变异函数：被该函数选中后会使得某一变量被一个随机的值所取代 
+                select();     //选择：用于最大化合并杰出模型的标准比例选择，保证最优秀的个体得以生存
+               // crossover();  //交叉：选择两个个体来杂交，这里用单点杂交 
+               // mutate();     //变异：被该函数选中后会使得某一变量被一个随机的值所取代 
+
+                crossoverMaxDistanceZhiShe();  //新的交叉方法，用于直射
+                mutateNewZhiShe(); //新的变异，用于直射
 
                 //计时结束
                 reportTime.Stop();
@@ -1441,6 +1802,10 @@ namespace LTE.Calibration
                                          //evaluate();   //评价函数，可以由用户自定义，该函数取得每个基因的适应度
                                          //elitist();    //搜寻杰出个体函数：找出最好和最坏的个体。如果某代的最好个体比前一代的最好个体要坏，那么后者将会取代当前种群的最坏个体 
 
+                //更新进度信息
+                if (generation % 10 == 0) {
+                    loadInfo.loadHashAdd(10);
+                }
             }
 
             swAvg.Close();

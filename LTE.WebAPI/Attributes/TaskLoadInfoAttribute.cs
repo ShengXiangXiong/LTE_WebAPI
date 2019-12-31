@@ -58,9 +58,17 @@ namespace LTE.WebAPI.Attributes
                     taskName1 += obj5.cellName;
                     break;
                 case TaskType.RayRecordLoc:
-                    var obj6 = (RayLocRecordModel)actionContext.ActionArguments["ray"];
+                    var obj6 = (RayLocRecordModel)actionContext.ActionArguments["ray"]; 
                     layer = false;
                     taskName1 += obj6.virsource;
+                    break;
+                case TaskType.RayRecordAdjBatchMode:
+                    layer = false;
+                    taskName1 += "系数校正射线记录";
+                    break;
+                case TaskType.Calibration:
+                    layer = false;
+                    taskName1 += "系数校正";
                     break;
                 default:
                     break;

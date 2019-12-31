@@ -132,11 +132,11 @@ namespace LTE.InternalInterference
                 gzid = (int)Math.Ceiling(t_p.Z / GridHelper.getInstance().getGHeight()) + 1;
             string key = String.Format("{0},{1},{2}", gxid, gyid, 0);
 
-            int eNodeBID = this.sourceInfo.eNodeB;
+            int CI = this.sourceInfo.CI;
             double radius = this.distance;
 
             // ----------经测试 有小区所有轨迹入地栅格都不位于路测路径--------
-            if (!RayHelper.getInstance(eNodeBID, radius).ok(key)) // 入地栅格不位于路测路径中
+            if (!RayHelper.getInstance(CI, radius).ok(key)) // 入地栅格不位于路测路径中
             {
                 return;
             }
@@ -237,6 +237,8 @@ namespace LTE.InternalInterference
             this.rayCountDir++;
 
             int[] scene = new int[scenNum];
+            Grid3D accgrid = new Grid3D();
+            GridHelper.getInstance().PointXYZToAccGrid(endPoint, ref accgrid);
 
             do
             {
@@ -255,7 +257,24 @@ namespace LTE.InternalInterference
 
                 if (ray != null)
                 {
-                    ray.rayType = rayType;
+                    // 检测碰撞点是否超出终点栅格
+                    double dif = (ray.CrossPoint.X - endPoint.X) * (ray.CrossPoint.X + endPoint.X - 2 * originPoint.X) +
+                        (ray.CrossPoint.Y - endPoint.Y) * (ray.CrossPoint.Y + endPoint.Y - 2 * originPoint.Y) +
+                        (ray.CrossPoint.Z - endPoint.Z) * (ray.CrossPoint.Z + endPoint.Z - 2 * originPoint.Z);
+
+                    if (dif <= 0)
+                    {
+                        ray.rayType = rayType;
+                        break;
+                    }
+                    else
+                    {
+                        ray = null;
+                    }
+                }
+                // 终点终止
+                if (accgrid.gxid == curAccGrid.gxid && accgrid.gyid == curAccGrid.gyid)
+                {
                     break;
                 }
             } while (true);

@@ -7,6 +7,7 @@ using LTE.InternalInterference.Grid;
 using LTE.DB;
 using System.Data.SqlClient;
 using System.Data;
+using LTE.Model;
 
 namespace LTE.WebAPI.Models
 {
@@ -100,8 +101,7 @@ namespace LTE.WebAPI.Models
                 return new Result(false, "当前区域已计算覆盖率过小，请对此区域重新计算小区覆盖");
             }
 
-
-            #region 地面
+            #region 地面初始化
             DataTable tb = tb1;
             int n = tb.Rows.Count;
             //if (n < 1)
@@ -151,8 +151,76 @@ namespace LTE.WebAPI.Models
                 }
             }
 
+            #endregion
+
+            #region 立体初始化
+            int weak1 = 0;  // 弱覆盖点数
+            int pcim31 = 0;  // pci mod3 对打
+            int pcih1 = 0;  // pci 混淆数
+            int pcic1 = 0;  // pci 冲突数
+            List<Analysis> overlap1 = new List<Analysis>();  // 重叠覆盖
+            List<Analysis> exessive1 = new List<Analysis>(); // 过覆盖
+
+            tb = tb2;
+            n = tb.Rows.Count;
+            //if (n < 1)
+            //    return new Result(false, "当前区域未进行覆盖计算");
+
+            double h = GridHelper.getInstance().getGHeight();
+
+            Dictionary<string, List<Sub>> dic1 = new Dictionary<string, List<Sub>>();
+            Dictionary<string, List<double>> xy1 = new Dictionary<string, List<double>>();
+
+
+            for (int i = 0; i < n; i++)
+            {
+                int x = Convert.ToInt32(tb.Rows[i]["GXID"].ToString());
+                int y = Convert.ToInt32(tb.Rows[i]["GYID"].ToString());
+                int z = Convert.ToInt32(tb.Rows[i]["level"].ToString());
+                double minX = Convert.ToDouble(tb.Rows[i]["minX"].ToString());
+                double minY = Convert.ToDouble(tb.Rows[i]["minY"].ToString());
+                double maxX = Convert.ToDouble(tb.Rows[i]["maxX"].ToString());
+                double maxY = Convert.ToDouble(tb.Rows[i]["maxY"].ToString());
+                double p = Convert.ToDouble(tb.Rows[i]["ReceivedPowerdbm"].ToString());
+                int ci = Convert.ToInt32(tb.Rows[i]["ci"].ToString());
+                int pci = Convert.ToInt32(tb.Rows[i]["pci"].ToString());
+
+                string key = string.Format("{0},{1},{2}", x, y, z);
+
+                if (!dic1.Keys.Contains(key))
+                {
+                    xy1[key] = new List<double>();
+                    xy1[key].Add(minX);
+                    xy1[key].Add(minY);
+                    xy1[key].Add(maxX);
+                    xy1[key].Add(maxY);
+                    xy1[key].Add(z * h);
+                }
+
+                if (dic1.Keys.Contains(key))
+                {
+                    dic1[key].Add(new Sub(p, ci, pci));
+                }
+                else
+                {
+                    dic1[key] = new List<Sub>();
+                    dic1[key].Add(new Sub(p, ci, pci));
+                }
+            }
+            #endregion
+
+            LoadInfo loadInfo = new LoadInfo();
+            int count = dic.Keys.Count + dic1.Keys.Count;
+            int updateSize = (int)Math.Round(count * 0.02);
+            loadInfo.loadCountAdd(count);
+            int cnt1 = 0;
+            #region 地面
             foreach (string key in dic.Keys)
             {
+                if (updateSize==++cnt1)
+                {
+                    loadInfo.loadHashAdd(updateSize);
+                }
                 dic[key].Sort(new SubCompare());  // 按功率从大到小排序
 
                 string[] id = key.Split(',');
@@ -327,62 +395,12 @@ namespace LTE.WebAPI.Models
 
             #region  立体
 
-            int weak1 = 0;  // 弱覆盖点数
-            int pcim31 = 0;  // pci mod3 对打
-            int pcih1 = 0;  // pci 混淆数
-            int pcic1 = 0;  // pci 冲突数
-            List<Analysis> overlap1 = new List<Analysis>();  // 重叠覆盖
-            List<Analysis> exessive1 = new List<Analysis>(); // 过覆盖
-
-            tb = tb2;
-            n = tb.Rows.Count;
-            //if (n < 1)
-            //    return new Result(false, "当前区域未进行覆盖计算");
-
-            double h = GridHelper.getInstance().getGHeight();
-
-            Dictionary<string, List<Sub>> dic1 = new Dictionary<string, List<Sub>>();
-            Dictionary<string, List<double>> xy1 = new Dictionary<string, List<double>>();
-
-
-            for (int i = 0; i < n; i++)
-            {
-                int x = Convert.ToInt32(tb.Rows[i]["GXID"].ToString());
-                int y = Convert.ToInt32(tb.Rows[i]["GYID"].ToString());
-                int z = Convert.ToInt32(tb.Rows[i]["level"].ToString());
-                double minX = Convert.ToDouble(tb.Rows[i]["minX"].ToString());
-                double minY = Convert.ToDouble(tb.Rows[i]["minY"].ToString());
-                double maxX = Convert.ToDouble(tb.Rows[i]["maxX"].ToString());
-                double maxY = Convert.ToDouble(tb.Rows[i]["maxY"].ToString());
-                double p = Convert.ToDouble(tb.Rows[i]["ReceivedPowerdbm"].ToString());
-                int ci = Convert.ToInt32(tb.Rows[i]["ci"].ToString());
-                int pci = Convert.ToInt32(tb.Rows[i]["pci"].ToString());
-
-                string key = string.Format("{0},{1},{2}", x, y, z);
-
-                if (!dic1.Keys.Contains(key))
-                {
-                    xy1[key] = new List<double>();
-                    xy1[key].Add(minX);
-                    xy1[key].Add(minY);
-                    xy1[key].Add(maxX);
-                    xy1[key].Add(maxY);
-                    xy1[key].Add(z * h);
-                }
-
-                if (dic1.Keys.Contains(key))
-                {
-                    dic1[key].Add(new Sub(p, ci, pci));
-                }
-                else
-                {
-                    dic1[key] = new List<Sub>();
-                    dic1[key].Add(new Sub(p, ci, pci));
-                }
-            }
-
             foreach (string key in dic1.Keys)
             {
+                if (updateSize == ++cnt1)
+                {
+                    loadInfo.loadHashAdd(updateSize);
+                }
                 dic1[key].Sort(new SubCompare());
                 int m = dic1[key].Count - 1;
 

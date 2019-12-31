@@ -1434,12 +1434,6 @@ namespace LTE.InternalInterference
                 // 地形
                 ray = this.getInfoOfLineCrossAccGrid(originPoint, dir, curAccGrid, ref polygonPoints, ref trayType);
 
-                if (ray != null)
-                {
-                    ray.rayType = rayType;
-                    break;
-                }
-
             } while (true);
 
             //射线没有与建筑物相交且射线方向向下

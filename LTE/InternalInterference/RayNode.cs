@@ -26,7 +26,7 @@ namespace LTE.InternalInterference
         private static RayHelper instance = null;
         private static object syncRoot = new object();
 
-        public static RayHelper getInstance(int eNodeBID, double radius)
+        public static RayHelper getInstance(int CI, double radius)
         {
             if (instance == null)
             {
@@ -38,7 +38,7 @@ namespace LTE.InternalInterference
 
                         tbDTgrids = new HashSet<string>();
 
-                        getGridsForACell(eNodeBID, radius);
+                        getGridsForACell(CI, radius);
                     }
                 }
             }
@@ -92,9 +92,9 @@ namespace LTE.InternalInterference
 
 
         //从真实路测获得某个小区某个半径范围内的路测点，将经纬坐标转换为栅格id，jinhj
-        private static void getGridsForACell(int eNodeBID, double radius) {
+        private static void getGridsForACell(int CI, double radius) {
             Hashtable ht = new Hashtable();
-            ht["eNodeBID"] = eNodeBID;
+            ht["CI"] = CI;
             ht["radius"] = radius;
             DataTable tb = IbatisHelper.ExecuteQueryForDataTable("GetDTGridsOfACell", ht);
             foreach (DataRow dataRow in tb.Rows)
