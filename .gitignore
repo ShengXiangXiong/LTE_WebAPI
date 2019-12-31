@@ -11,6 +11,7 @@
 *.exe
 LTE.exe
 LTE.WebAPI.xml
+LTE.WebAPI.dll
 
 [Mm]apFiles
 
@@ -30,6 +31,7 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+LTE*
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

@@ -36,6 +36,7 @@ namespace GisClient
       Result overlaygrass();
       Result overlaywater();
       Result cluster();
+      Result refreshSPLayer(string version);
     }
 
     public interface Iface : ISync {
@@ -106,6 +107,10 @@ namespace GisClient
       #if SILVERLIGHT
       IAsyncResult Begin_cluster(AsyncCallback callback, object state);
       Result End_cluster(IAsyncResult asyncResult);
+      #endif
+      #if SILVERLIGHT
+      IAsyncResult Begin_refreshSPLayer(AsyncCallback callback, object state, string version);
+      Result End_refreshSPLayer(IAsyncResult asyncResult);
       #endif
     }
 
@@ -1350,6 +1355,75 @@ namespace GisClient
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "cluster failed: unknown result");
       }
 
+      
+      #if SILVERLIGHT
+      
+      public IAsyncResult Begin_refreshSPLayer(AsyncCallback callback, object state, string version)
+      {
+        return send_refreshSPLayer(callback, state, version);
+      }
+
+      public Result End_refreshSPLayer(IAsyncResult asyncResult)
+      {
+        oprot_.Transport.EndFlush(asyncResult);
+        return recv_refreshSPLayer();
+      }
+
+      #endif
+
+      public Result refreshSPLayer(string version)
+      {
+        #if SILVERLIGHT
+        var asyncResult = Begin_refreshSPLayer(null, null, version);
+        return End_refreshSPLayer(asyncResult);
+
+        #else
+        send_refreshSPLayer(version);
+        return recv_refreshSPLayer();
+
+        #endif
+      }
+      #if SILVERLIGHT
+      public IAsyncResult send_refreshSPLayer(AsyncCallback callback, object state, string version)
+      {
+        oprot_.WriteMessageBegin(new TMessage("refreshSPLayer", TMessageType.Call, seqid_));
+        refreshSPLayer_args args = new refreshSPLayer_args();
+        args.Version = version;
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        return oprot_.Transport.BeginFlush(callback, state);
+      }
+
+      #else
+
+      public void send_refreshSPLayer(string version)
+      {
+        oprot_.WriteMessageBegin(new TMessage("refreshSPLayer", TMessageType.Call, seqid_));
+        refreshSPLayer_args args = new refreshSPLayer_args();
+        args.Version = version;
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        oprot_.Transport.Flush();
+      }
+      #endif
+
+      public Result recv_refreshSPLayer()
+      {
+        TMessage msg = iprot_.ReadMessageBegin();
+        if (msg.Type == TMessageType.Exception) {
+          TApplicationException x = TApplicationException.Read(iprot_);
+          iprot_.ReadMessageEnd();
+          throw x;
+        }
+        refreshSPLayer_result result = new refreshSPLayer_result();
+        result.Read(iprot_);
+        iprot_.ReadMessageEnd();
+        if (result.__isset.success) {
+          return result.Success;
+        }
+        throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "refreshSPLayer failed: unknown result");
+      }
+
     }
     public class Processor : TProcessor {
       public Processor(ISync iface)
@@ -1372,6 +1446,7 @@ namespace GisClient
         processMap_["overlaygrass"] = overlaygrass_Process;
         processMap_["overlaywater"] = overlaywater_Process;
         processMap_["cluster"] = cluster_Process;
+        processMap_["refreshSPLayer"] = refreshSPLayer_Process;
       }
 
       protected delegate void ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot);
@@ -1874,6 +1949,34 @@ namespace GisClient
           Console.Error.WriteLine(ex.ToString());
           TApplicationException x = new TApplicationException        (TApplicationException.ExceptionType.InternalError," Internal error.");
           oprot.WriteMessageBegin(new TMessage("cluster", TMessageType.Exception, seqid));
+          x.Write(oprot);
+        }
+        oprot.WriteMessageEnd();
+        oprot.Transport.Flush();
+      }
+
+      public void refreshSPLayer_Process(int seqid, TProtocol iprot, TProtocol oprot)
+      {
+        refreshSPLayer_args args = new refreshSPLayer_args();
+        args.Read(iprot);
+        iprot.ReadMessageEnd();
+        refreshSPLayer_result result = new refreshSPLayer_result();
+        try
+        {
+          result.Success = iface_.refreshSPLayer(args.Version);
+          oprot.WriteMessageBegin(new TMessage("refreshSPLayer", TMessageType.Reply, seqid)); 
+          result.Write(oprot);
+        }
+        catch (TTransportException)
+        {
+          throw;
+        }
+        catch (Exception ex)
+        {
+          Console.Error.WriteLine("Error occurred in processor:");
+          Console.Error.WriteLine(ex.ToString());
+          TApplicationException x = new TApplicationException        (TApplicationException.ExceptionType.InternalError," Internal error.");
+          oprot.WriteMessageBegin(new TMessage("refreshSPLayer", TMessageType.Exception, seqid));
           x.Write(oprot);
         }
         oprot.WriteMessageEnd();
@@ -5733,6 +5836,226 @@ namespace GisClient
 
       public override string ToString() {
         StringBuilder __sb = new StringBuilder("cluster_result(");
+        bool __first = true;
+        if (Success != null && __isset.success) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Success: ");
+          __sb.Append(Success== null ? "<null>" : Success.ToString());
+        }
+        __sb.Append(")");
+        return __sb.ToString();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class refreshSPLayer_args : TBase
+    {
+      private string _version;
+
+      public string Version
+      {
+        get
+        {
+          return _version;
+        }
+        set
+        {
+          __isset.version = true;
+          this._version = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool version;
+      }
+
+      public refreshSPLayer_args() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 1:
+                if (field.Type == TType.String) {
+                  Version = iprot.ReadString();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("refreshSPLayer_args");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+          if (Version != null && __isset.version) {
+            field.Name = "version";
+            field.Type = TType.String;
+            field.ID = 1;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteString(Version);
+            oprot.WriteFieldEnd();
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("refreshSPLayer_args(");
+        bool __first = true;
+        if (Version != null && __isset.version) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Version: ");
+          __sb.Append(Version);
+        }
+        __sb.Append(")");
+        return __sb.ToString();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class refreshSPLayer_result : TBase
+    {
+      private Result _success;
+
+      public Result Success
+      {
+        get
+        {
+          return _success;
+        }
+        set
+        {
+          __isset.success = true;
+          this._success = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool success;
+      }
+
+      public refreshSPLayer_result() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 0:
+                if (field.Type == TType.Struct) {
+                  Success = new Result();
+                  Success.Read(iprot);
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("refreshSPLayer_result");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+
+          if (this.__isset.success) {
+            if (Success != null) {
+              field.Name = "Success";
+              field.Type = TType.Struct;
+              field.ID = 0;
+              oprot.WriteFieldBegin(field);
+              Success.Write(oprot);
+              oprot.WriteFieldEnd();
+            }
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("refreshSPLayer_result(");
         bool __first = true;
         if (Success != null && __isset.success) {
           if(!__first) { __sb.Append(", "); }
