@@ -1,0 +1,48 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>建筑物底边平滑</title>
+</head>
+<body>
+    <div>
+        <h2>建筑物底边平滑</h2>
+        <input type="button" id="smooth" value="确定" /><br /><br />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#smooth").click(function () {
+       
+        $.ajax
+        ({
+            url: "/api/SmoothBuildingVertex/PostSmooth",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            headers: { "auth": window.localStorage.getItem("token") },
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("建筑物底边平滑结束！");
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("建筑物底边平滑失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("建筑物底边平滑失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+</script>

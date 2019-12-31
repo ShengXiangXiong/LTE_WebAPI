@@ -1,0 +1,80 @@
+﻿@{
+    Layout = null;
+}
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>射线记录</title>
+</head>
+<body>
+    <div>
+        <h2>射线记录</h2>
+        <h3>射线跟踪参数</h3>
+        干扰源BtsName：<input type="text" id="virsource" value="绿建大厦中兴宏基站" /> <br />
+        覆盖半径：<input type="text" id="distance" value=1000 /> m<br />
+        覆盖角度：<input type="text" id="incrementAngle" value=45 /> 度<br />
+        说明：1.假设天线方位角θ=300°，覆盖角度δ=70°，则计算的覆盖范围为230°至10°（正北方向为0°）。
+        2.对于扇区，建议δ≤70°。 <br />
+        <h3>多线程参数</h3>
+        线程个数：<input type="text" id="threadNum" value=3 /><br />
+        <h3>射线跟踪控制参数</h3>
+        反射次数：<input type="text" id="reflectionNum" value=2 /> <br />
+        绕射次数：<input type="text" id="diffractionNum" value=1 /><br />
+        建筑物棱边绕射点间隔：<input type="text" id="sideSplitUnit" value=3 /> m<br />
+        计算立体覆盖：<input type="checkbox" id="computeIndoor" checked="checked" /><br />
+        计算垂直棱边：<input type="checkbox" id="computeVSide" checked="checked" /><br />
+        <h3>校正系数</h3>
+        直射校正系数：<input type="text" id="directCoefficient" value=0.3 /> <br />
+        反射校正系数：<input type="text" id="reflectCoefficient" value=1.0 /><br />
+        绕射校正系数：<input type="text" id="diffractCoefficient" value=1.0 /> m<br />
+        菲涅尔绕射校正系数：<input type="text" id="FCoefficient" value=1.0 /><br />
+        <input type="button" id="rayRecordLoc" value="确定" /><br />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#rayRecordLoc").click(function () {
+        var rt = {};
+        rt.virsource = $("#virsource").val();
+        rt.distance = parseFloat($("#distance").val()).toFixed(2);
+        rt.incrementAngle = parseFloat($("#incrementAngle").val()).toFixed(2);
+        rt.threadNum = $("#threadNum").val();
+        rt.reflectionNum = $("#reflectionNum").val();
+        rt.diffractionNum = $("#diffractionNum").val();
+        rt.sideSplitUnit = $("#sideSplitUnit").val();
+        rt.computeIndoor = $("#computeIndoor").attr('checked') ? true : false;
+        rt.computeVSide = $("#computeVSide").attr('checked') ? true : false;
+        rt.directCoefficient = parseFloat($("#directCoefficient").val()).toFixed(2);
+        rt.reflectCoefficient = parseFloat($("#reflectCoefficient").val()).toFixed(2);
+        rt.diffractCoefficient = parseFloat($("#diffractCoefficient").val()).toFixed(2);
+        rt.FCoefficient = parseFloat($("#FCoefficient").val()).toFixed(2);
+        rt.userId = window.localStorage.getItem("userId");
+        $.ajax
+        ({
+            url: "/api/RayRecord/PostRayRecordLoc",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(rt),
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("射线记录结束！");
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("射线记录失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("射线记录失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+
+</script>

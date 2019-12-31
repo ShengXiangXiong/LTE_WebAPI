@@ -1,0 +1,189 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>网内干扰图层刷新</title>
+</head>
+<body>
+    <div>
+        <h2>网内干扰图层刷新</h2>
+        最小经度：<input type="text" id="minLongitude" value=118.765631 /><br />
+        最小纬度：<input type="text" id="minLatitude" value=32.048720 /> <br />
+        最大经度：<input type="text" id="maxLongitude" value=118.781845 /><br />
+        最大纬度：<input type="text" id="maxLatitude" value=32.065631 /><br /><br />
+        <input type="button" id="weak" value="弱覆盖点" /><br /><br />
+        <input type="button" id="excessive" value="过覆盖点" /><br /><br />
+        <input type="button" id="overlapped" value="重叠覆盖点" /><br /><br />
+        <input type="button" id="PCIconflict" value="PCI冲突点" /><br /><br />
+        <input type="button" id="PCIconfusion" value="PCI混淆点" /><br /><br />
+        <input type="button" id="PCImod3" value="PCI mod3 对打点" /><br /><br />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#weak").click(function () {
+        var area = {};
+        area.minLongitude = $("#minLongitude").val();
+        area.minLatitude = $("#minLatitude").val();
+        area.maxLongitude = $("#maxLongitude").val();
+        area.maxLatitude = $("#maxLatitude").val();
+
+        $.ajax
+        ({
+            url: "/api/RefreshLayer/PostRefreshWeakLayer",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(area),
+            success: function (data, status) {
+                if (data.ok == true) {
+                    alert("弱覆盖点图层刷新结束！");
+                }
+                else
+                    alert("弱覆盖点图层刷新失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("弱覆盖点图层刷新失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+    $("#excessive").click(function () {
+        var area = {};
+        area.minLongitude = $("#minLongitude").val();
+        area.minLatitude = $("#minLatitude").val();
+        area.maxLongitude = $("#maxLongitude").val();
+        area.maxLatitude = $("#maxLatitude").val();
+
+        $.ajax
+        ({
+            url: "/api/RefreshLayer/PostRefreshExcessiveLayer",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(area),
+            success: function (data, status) {
+                if (data.ok == true) {
+                    alert("过覆盖点图层刷新结束！");
+                }
+                else
+                    alert("过覆盖点图层刷新失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("过覆盖点图层刷新失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+    $("#overlapped").click(function () {
+        var area = {};
+        area.minLongitude = $("#minLongitude").val();
+        area.minLatitude = $("#minLatitude").val();
+        area.maxLongitude = $("#maxLongitude").val();
+        area.maxLatitude = $("#maxLatitude").val();
+
+        $.ajax
+        ({
+            url: "/api/RefreshLayer/PostRefreshOverlappedLayer",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(area),
+            success: function (data, status) {
+                if (data.ok == true) {
+                    alert("重叠覆盖点图层刷新结束！");
+                }
+                else
+                    alert("重叠覆盖点图层刷新失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("重叠覆盖点图层刷新失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+    $("#PCIconflict").click(function () {
+        var area = {};
+        area.minLongitude = $("#minLongitude").val();
+        area.minLatitude = $("#minLatitude").val();
+        area.maxLongitude = $("#maxLongitude").val();
+        area.maxLatitude = $("#maxLatitude").val();
+
+        $.ajax
+        ({
+            url: "/api/RefreshLayer/PostRefreshPCIconflictLayer",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(area),
+            success: function (data, status) {
+                if (data.ok == true) {
+                    alert("PCI冲突点图层刷新结束！");
+                }
+                else
+                    alert("PCI冲突点图层刷新失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("PCI冲突点图层刷新失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+    $("#PCIconfusion").click(function () {
+        var area = {};
+        area.minLongitude = $("#minLongitude").val();
+        area.minLatitude = $("#minLatitude").val();
+        area.maxLongitude = $("#maxLongitude").val();
+        area.maxLatitude = $("#maxLatitude").val();
+
+        $.ajax
+        ({
+            url: "/api/RefreshLayer/PostRefreshPCIconfusionLayer",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(area),
+            success: function (data, status) {
+                if (data.ok == true) {
+                    alert("PCI混淆点图层刷新结束！");
+                }
+                else
+                    alert("PCI混淆点图层刷新失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("PCI混淆点图层刷新失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+    $("#PCImod3").click(function () {
+        var area = {};
+        area.minLongitude = $("#minLongitude").val();
+        area.minLatitude = $("#minLatitude").val();
+        area.maxLongitude = $("#maxLongitude").val();
+        area.maxLatitude = $("#maxLatitude").val();
+
+        $.ajax
+        ({
+            url: "/api/RefreshLayer/PostRefreshPCImod3Layer",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(area),
+            success: function (data, status) {
+                if (data.ok == true) {
+                    alert("PCI mod3 对打点图层刷新结束！");
+                }
+                else
+                    alert("PCI mod3 对打点图层刷新失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("PCI mod3 对打点图层刷新失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+</script>
+

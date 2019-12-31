@@ -1,0 +1,105 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>叠加分析</title>
+</head>
+<body>
+    <div>
+        <h2>叠加分析</h2>
+        <h4>建筑物的叠加分析</h4>
+        <input type="button" id="buildingpart" value="确定" /><br /><br />
+        <h4>水面的叠加分析</h4>
+        <input type="button" id="waterpart" value="确定" /><br /><br />
+        <h4>草地的叠加分析</h4>
+        <input type="button" id="grasspart" value="确定" /><br /><br />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#buildingpart").click(function () {
+
+        $.ajax
+        ({
+            url: "/api/Overlay/PostBuildingOverlay",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("建筑物叠加分析结束！"+data.msg);
+                    window.location.href = "@Url.Action("Home","Home")";
+                }
+                else
+                    alert("建筑物叠加分析失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("建筑物叠加分析失败！消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+</script>
+
+<script>
+
+    $("#waterpart").click(function () {
+
+        $.ajax
+        ({
+            url: "/api/Overlay/PostWaterOverlay",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("水面叠加分析结束！" + data.msg);
+                    window.location.href = "@Url.Action("Home","Home")";
+                }
+                else
+                    alert("水面叠加分析失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("水面叠加分析失败！消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+</script>
+
+<script>
+
+    $("#grasspart").click(function () {
+
+        $.ajax
+        ({
+            url: "/api/Overlay/PostGrassOverlay",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("草地叠加分析结束！" + data.msg);
+                    window.location.href = "@Url.Action("Home","Home")";
+                }
+                else
+                    alert("草地叠加分析失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("草地叠加分析失败！消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+</script>

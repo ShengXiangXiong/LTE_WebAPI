@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="gb2312"?>
+<cluster>
+    <parameter>
+        <!--每次栅格扩展的个数-->
+        <range>5</range>
+
+        <!--簇的密度阈值-->
+        <threshold>0.85</threshold>
+
+        <!--簇最小的栅格数量-->
+        <area>20</area>
+
+        <!--建筑物栅格密度阈值-->
+        <building_threshold>0.1</building_threshold>
+
+        <!--建筑物扩展种子栅格密度阈值-->
+        <buildingseed_threshold>0.99</buildingseed_threshold>
+
+        <!--建筑物栅格向外扩展高度阈值-->
+        <buildingheight_threshold>80</buildingheight_threshold>
+
+        <!--水面栅格密度阈值-->
+        <water_threshold>0.4</water_threshold>
+
+        <!--水面扩展种子栅格密度阈值-->
+        <waterseed_threshold>0.99</waterseed_threshold>
+
+        <!--草地栅格密度阈值-->
+        <grass_threshold>0.4</grass_threshold>
+
+        <!--草地扩展种子栅格密度阈值-->
+        <grassseed_threshold>0.99</grassseed_threshold>
+    </parameter>
+</cluster>

@@ -1,0 +1,57 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Login</title>
+</head>
+<body>
+    <div>
+        <section>
+            <h2>用户登录</h2>
+            用户名：<input type="text" id="userName" value="admin" />
+            <br /><br />
+            密码：<input type="password" id="userPwd" value="admin" />
+            <br /><br />
+            <input type="button" id="login" value="登录" /><br />
+        </section>
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#login").click(function (){
+        var user = {};
+        user.userName = $("#userName").val();
+        user.userPwd = $("#userPwd").val();
+
+        $.ajax
+        ({
+            url: "/api/Login/PostLogin",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(user),
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    window.localStorage.setItem("token", data.token);
+                    window.localStorage.setItem("userId", data.obj.userId);
+                    window.location.href = "@Url.Action("Home","Home")";
+                }
+                else
+                    alert("登录失败，消息：" +  data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("登录失败，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+</script>

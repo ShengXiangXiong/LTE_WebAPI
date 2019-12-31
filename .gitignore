@@ -31,7 +31,8 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
-LTE*
+LTE*.dll
+LTE*.config
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

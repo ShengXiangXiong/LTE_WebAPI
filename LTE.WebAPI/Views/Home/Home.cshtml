@@ -1,0 +1,96 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Home</title>
+</head>
+<body>
+    <div>
+        <ul id="mainMenu">
+            <li>
+                场景建模
+                <ol> @Html.ActionLink("建筑物底边平滑", "SmoothBuildingVertex", "Home")</ol>
+                <ol> @Html.ActionLink("网格划分", "Grid", "Home")</ol>
+                <ol> @Html.ActionLink("小区理论覆盖半径计算", "CellRadius", "Home")</ol>
+                <ol> @Html.ActionLink("渔网生成", "Fishnet", "Home")</ol>
+                <ol> @Html.ActionLink("叠加分析", "Overlay", "Home")</ol>
+                <ol> @Html.ActionLink("场景划分", "ScenePart", "Home")</ol>
+                <!-- @Html.ActionLink("数据导入", "", "Home")-->
+                <ol> @Html.ActionLink("路测管理", "DTdata", "Home")</ol>
+            </li>
+            <li>
+                小区覆盖计算
+                <ol> @Html.ActionLink("小区覆盖计算", "CellRayTracing", "Home")</ol>
+            </li>
+            <li>
+                单射线跟踪
+                <ol> @Html.ActionLink("指定地面交点", "SingleRayTracingPt", "Home")</ol>
+                <ol> @Html.ActionLink("指定射线方向", "SingleRayTracingDir", "Home")</ol>
+            </li>
+            <li>
+                网内干扰分析
+                <ol> @Html.ActionLink("网内干扰分析", "AreaCoverDefect", "Home")</ol>
+            </li>
+            <li>
+                网外干扰源定位
+                <ol> @Html.ActionLink("网外干扰源定位1", "InterferenceLocate", "Home")</ol>
+                <ol> @Html.ActionLink("记录用于网外干扰定位的射线", "RayRecordLoc", "Home")</ol>
+                <ol> @Html.ActionLink("基于射线路径分析网外干扰源定位", "ExternalInfLocate", "Home")</ol>
+            </li>
+            <li>
+                系数校正
+                <ol> @Html.ActionLink("记录用于系数校正的射线", "RayRecordAdj", "Home")</ol>
+                <ol> @Html.ActionLink("系数校正", "Calibration", "Home")</ol>
+            </li>
+            <li>
+                图层刷新
+                <ol> @Html.ActionLink("建筑物图层", "RefreshLayerBuilding", "Home")</ol>
+                <ol> @Html.ActionLink("建筑物底边平滑图层", "RefreshLayerBuildingSmooth", "Home")</ol>
+                <ol> @Html.ActionLink("地形 TIN 图层", "RefreshLayerTIN", "Home")</ol>
+                <ol> @Html.ActionLink("小区图层", "RefreshLayerCell", "Home")</ol>
+                <ol> @Html.ActionLink("小区覆盖图层", "RefreshLayerCellCover", "Home")</ol>
+                <ol> @Html.ActionLink("区域覆盖图层", "RefreshLayerAreaCover", "Home")</ol>
+                <ol> @Html.ActionLink("虚拟路测图层", "RefreshLayerVDT", "Home")</ol>
+                <ol> @Html.ActionLink("网内干扰图层", "RefreshLayerAreaCoverDefect", "Home")</ol>
+                <ol> @Html.ActionLink("网外干扰图层", "RefreshLayerInterference", "Home")</ol>
+            </li>
+            <li>
+                多进程调试
+                <ol> @Html.ActionLink("小区覆盖计算", "DebugCellRayTracing", "Home")</ol>
+                <ol> @Html.ActionLink("记录用于系数校正的射线", "DebugRayRecordAdj", "Home")</ol>
+                <ol> @Html.ActionLink("记录用于网外干扰定位的射线", "DebugRayRecordLoc", "Home")</ol>
+            </li>
+            <li>
+                3D 栅格场强查询
+                <ol> @Html.ActionLink("3D 栅格场强查询", "Grid3DStrengthQuery", "Home")</ol>
+            </li>
+
+            <li>
+                路测数据分析
+                <ol> @Html.ActionLink("路测数据导入", "", "Home")</ol>
+                <ol> @Html.ActionLink("路测数据预处理", "", "Home")</ol>
+                <ol> @Html.ActionLink("反向跟踪起点选取", "PointsSelect", "Home")</ol>
+            </li>
+            <li>
+                基于射线路径定位
+                <ol> @Html.ActionLink("生成射线路径", "RayRecordLoc", "Home")</ol>
+                <ol> @Html.ActionLink("干扰源定位", "ExternalInfLocate", "Home")</ol>
+            </li>
+            <li>
+                定位结果呈现
+                <ol> @Html.ActionLink("反向跟踪点集呈现", "", "Home")</ol>
+                <ol> @Html.ActionLink("定位结果栅格呈现", "", "Home")</ol>
+                <ol> @Html.ActionLink("单起点生成的射线路径呈现", "", "Home")</ol>
+            </li>
+
+
+        </ul>
+    </div>
+</body>
+</html>
+
