@@ -22,6 +22,7 @@ namespace LTE.WebAPI.Models
                 try//更新加速场景表，前提条件表
                 {
                     IbatisHelper.ExecuteDelete("UpdatetbDependTableDuetoWater_overlay", null);
+                    IbatisHelper.ExecuteDelete("deleteAdjcoefficient", null);
                     IbatisHelper.ExecuteUpdate("UpdatetbAccelerateGridSceneDuetoWater_overlay", null);
                 }
                 catch (Exception ex)
