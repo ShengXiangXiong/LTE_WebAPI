@@ -48,6 +48,7 @@ namespace LTE.CalcProcess
         //loading control
         private int userId;
         private string taskName;
+        private bool notUpdateCoverLoad;
         private LoadInfo loadInfo = new LoadInfo();
 
         //Http
@@ -156,6 +157,7 @@ namespace LTE.CalcProcess
             }
             LoadInfo.UserId.Value = userId;
             LoadInfo.taskName.Value = taskName;
+            notUpdateCoverLoad = taskName.Contains("区域覆盖分析");
         }
 
         private bool dealParams(string[] args)
@@ -535,10 +537,13 @@ namespace LTE.CalcProcess
 
             //init load
             int count = gray + bray + vray;
-
-            LoadInfo.UserId.Value = userId;
-            LoadInfo.taskName.Value = taskName;
-            loadInfo.loadCountAdd(count);
+            notUpdateCoverLoad = taskName.Contains("区域覆盖分析");
+            if (!notUpdateCoverLoad)
+            {
+                LoadInfo.UserId.Value = userId;
+                LoadInfo.taskName.Value = taskName;
+                loadInfo.loadCountAdd(count);
+            }
             //doPostLoading(loadInfo, "addCountByMulti");
 
 
@@ -1437,7 +1442,7 @@ namespace LTE.CalcProcess
             List<LTE.InternalInterference.NodeInfo> rayList = new List<InternalInterference.NodeInfo>();
             foreach (var endp in points)
             {
-                if (++rayCounter % 1000 == 1)
+                if (++rayCounter % 1000 == 1&&!notUpdateCoverLoad)
                 {
                     loadInfo.loadHashAdd(1000);
                     this.updateProgress(rayCounter);
@@ -1491,7 +1496,7 @@ namespace LTE.CalcProcess
             List<LTE.InternalInterference.NodeInfo> rayList = new List<InternalInterference.NodeInfo>();
             foreach (var sp in points)
             {
-                if (++rayCounter % 1000 == 1)
+                if (++rayCounter % 1000 == 1&&notUpdateCoverLoad)
                 {
                     loadInfo.loadHashAdd(1000);
                     this.updateProgress(rayCounter);

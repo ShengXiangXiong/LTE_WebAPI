@@ -19,7 +19,15 @@ namespace LTE.WebAPI.Models
         AreaCoverCompu = 8,
         AreaInterference = 9,
         RayRecordAdj = 10,
-        RayRecordLoc = 11
-
+        RayRecordLoc = 11,
+        Fishnet=30,
+        BuildingOverlay=31,
+        WaterOverlay=32,
+        GrassOverlay=33,
+        ScenePart=34,
+        ClusterShp=35,
+        AdjCoefficient=36,
+        RayRecordAdjBatchMode = 12,
+        Calibration =13
     }
 }

@@ -11,6 +11,7 @@
 *.exe
 LTE.exe
 LTE.WebAPI.xml
+LTE.WebAPI.dll
 
 [Mm]apFiles
 
@@ -30,6 +31,8 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+LTE*.dll
+LTE*.config
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -336,3 +339,14 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+/LTE/Calibration/result.txt
+/LTE/Calibration/pointLog.txt
+/LTE/Calibration/maxDiffPoint.txt
+/LTE/Calibration/GridsStaticsFirst.txt
+/LTE/Calibration/galog_avg.txt
+/LTE/Calibration/galog.txt
+/LTE/Calibration/galog - 副本.txt
+/LTE/Calibration/gridsErrorStaticJin.txt
+/LTE/Calibration/gridsHeighORLow.txt
+/LTE/Calibration/GridsStaticsSecond.txt
+/LTE/Calibration/result.GuiJiTongJi.txt

@@ -25,6 +25,7 @@
             url: "/api/RefreshLayer/PostRefreshCell",
             type: "POST",
             contentType: "application/json; charset=utf-8",
+            headers: { "auth": window.localStorage.getItem("token") },
             success: function (data, status) {
                 if (data.ok == true) {
                     alert("小区图层刷新结束！");

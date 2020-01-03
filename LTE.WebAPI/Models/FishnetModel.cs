@@ -104,15 +104,13 @@ namespace LTE.WebAPI.Models
                 try//删除加速场景表，重置前提条件表
                 {
                     IbatisHelper.ExecuteDelete("DeleteFishnet", null);
+                    IbatisHelper.ExecuteDelete("deleteAdjcoefficient", null);
                     IbatisHelper.ExecuteUpdate("UpdatetbDependTableDuetoFishnet", null);
                 }
                 catch (Exception ex)
                 { return new Result(false, ex.ToString()); }
 
             }
-
-           
-            
 
             try
             {

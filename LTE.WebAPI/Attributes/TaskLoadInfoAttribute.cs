@@ -32,7 +32,7 @@ namespace LTE.WebAPI.Attributes
                     break;
                 case TaskType.AreaCoverLayer:
                     var obj1 = (RefreshAreaCoverLayerModel)actionContext.ActionArguments["layer"];
-                    taskName1 += String.Format("%_%_%_%", obj1.minLongitude, obj1.minLatitude, obj1.maxLongitude, obj1.maxLatitude);
+                    taskName1 += String.Format("{0}_{1}_{2}_{3}", obj1.minLongitude, obj1.minLatitude, obj1.maxLongitude, obj1.maxLatitude);
                     break;
                 case TaskType.AreaGSMLayer:
                     taskName1 += "南京";
@@ -45,12 +45,12 @@ namespace LTE.WebAPI.Attributes
                 case TaskType.AreaCoverCompu:
                     var obj3 = (Area)actionContext.ActionArguments["area"];
                     layer = false;
-                    taskName1 += String.Format("%_%_%_%", obj3.minLongitude, obj3.minLatitude, obj3.maxLongitude, obj3.maxLatitude);
+                    taskName1 += String.Format("{0}_{1}_{2}_{3}", obj3.minLongitude, obj3.minLatitude, obj3.maxLongitude, obj3.maxLatitude);
                     break;
                 case TaskType.AreaInterference:
                     var obj4 = (AreaCoverDefectModel)actionContext.ActionArguments["defect"];
                     layer = false;
-                    taskName1 += String.Format("%_%_%_%", obj4.minLongitude, obj4.minLatitude, obj4.maxLongitude, obj4.maxLatitude);
+                    taskName1 += String.Format("{0}_{1}_{2}_{3}", obj4.minLongitude, obj4.minLatitude, obj4.maxLongitude, obj4.maxLatitude);
                     break;
                 case TaskType.RayRecordAdj:
                     var obj5 = (RayRecordAdjModel)actionContext.ActionArguments["ray"];
@@ -58,9 +58,17 @@ namespace LTE.WebAPI.Attributes
                     taskName1 += obj5.cellName;
                     break;
                 case TaskType.RayRecordLoc:
-                    var obj6 = (RayLocRecordModel)actionContext.ActionArguments["ray"];
+                    var obj6 = (RayLocRecordModel)actionContext.ActionArguments["ray"]; 
                     layer = false;
                     taskName1 += obj6.virsource;
+                    break;
+                case TaskType.RayRecordAdjBatchMode:
+                    layer = false;
+                    taskName1 += "系数校正射线记录";
+                    break;
+                case TaskType.Calibration:
+                    layer = false;
+                    taskName1 += "系数校正";
                     break;
                 default:
                     break;
@@ -70,10 +78,10 @@ namespace LTE.WebAPI.Attributes
             if (layer)
             {
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().setLoadInfo(LoadInfo.UserId.Value, taskName1);
+                GisClient.ServiceApi.CloseConn();
             }
             loadInfo.loadCreate();
-            ////清空AOP的描述型字段值，否则它会一直保持，导致下一次请求带有上一次的描述值
-            //taskName = null;
+            
         }
         public override void OnActionExecuted(HttpActionExecutedContext actionExecutedContext)
         {

@@ -22,7 +22,7 @@ namespace GisClient
         {
             this.url = url;
             this.port = port;
-            TTransport transport = new TSocket(url, port);
+            TTransport transport = new TSocket(url, port,1000*60*60);
             protocol = new TBinaryProtocol(transport);
             transport.Open();
             client = new OpreateGisLayer.Client(protocol);
@@ -54,7 +54,7 @@ namespace GisClient
             {
                 if (client == null)
                 {
-                    transport = new TSocket(url, port);
+                    transport = new TSocket(url, port,1000*60*60*60);
                     protocol = new TBinaryProtocol(transport);
                     transport.Open();
                     client = new OpreateGisLayer.Client(protocol);

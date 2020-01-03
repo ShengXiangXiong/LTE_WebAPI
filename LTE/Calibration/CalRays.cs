@@ -171,7 +171,7 @@ namespace LTE.Calibration
                 int gxid = -1;
                 int gyid = -1;
                 GridHelper.getInstance().XYToGGrid(x, y, ref gxid, ref gyid);
-                string cellId = dtTb.Rows[i]["eNodeBID"].ToString();
+                string cellId = dtTb.Rows[i]["CI"].ToString();
                 string key = string.Format("{0},{1},{2}", cellId, gxid, gyid);
 
                 //if (key == "35653633,4045,4427") {
@@ -206,7 +206,7 @@ namespace LTE.Calibration
                 int gxid = -1;
                 int gyid = -1;
                 GridHelper.getInstance().XYToGGrid(x, y, ref gxid, ref gyid);
-                string cellId = dtTb.Rows[i]["eNodeBID"].ToString();
+                string cellId = dtTb.Rows[i]["CI"].ToString();
                 string key = string.Format("{0},{1},{2}", cellId, gxid, gyid);
 
                 //if (key == "35653633,4045,4427") {

@@ -30,17 +30,23 @@ namespace LTE.InternalInterference.Grid
         public GridCover()
         {
             ng = nb = 0;
-            DataColumn[] keys = new DataColumn[4];
+            DataColumn[] keys = new DataColumn[5];
+            //keys[0] = new DataColumn("GXID", System.Type.GetType("System.Int16"));
+            //keys[1] = new DataColumn("GYID", System.Type.GetType("System.Int16"));
+            //keys[2] = new DataColumn("eNodeB", System.Type.GetType("System.Int32"));
+            //keys[3] = new DataColumn("CI", System.Type.GetType("System.Int32"));
             keys[0] = new DataColumn("GXID", System.Type.GetType("System.Int16"));
             keys[1] = new DataColumn("GYID", System.Type.GetType("System.Int16"));
-            keys[2] = new DataColumn("eNodeB", System.Type.GetType("System.Int32"));
-            keys[3] = new DataColumn("CI", System.Type.GetType("System.Int32"));
+            keys[2] = new DataColumn("Level", System.Type.GetType("System.Byte"));
+            keys[3] = new DataColumn("eNodeB", System.Type.GetType("System.Int32"));
+            keys[4] = new DataColumn("CI", System.Type.GetType("System.Int32"));
 
             this.groundCover = new DataTable();
             this.groundCover.Columns.Add(keys[0]);
             this.groundCover.Columns.Add(keys[1]);
             this.groundCover.Columns.Add(keys[2]);
             this.groundCover.Columns.Add(keys[3]);
+            this.groundCover.Columns.Add(keys[4]);
             this.groundCover.Columns.Add("FieldIntensity", System.Type.GetType("System.Double"));
             this.groundCover.Columns.Add("DirectPwrNum", System.Type.GetType("System.Int32"));
             this.groundCover.Columns.Add("DirectPwrW", System.Type.GetType("System.Double"));
@@ -169,7 +175,33 @@ namespace LTE.InternalInterference.Grid
         {
             DataRow dr;
             GridStrength gs;
+            // 获得最高点地形场强 .xsx
+            Dictionary<string, GridStrength> dic = new Dictionary<string, GridStrength>();
             foreach (KeyValuePair<string, GridStrength> kv in GridStrengths)
+            {
+                gs = kv.Value;
+                if (gs.ground)
+                {
+                    string key = String.Format("{0},{1}", gs.GXID, gs.GYID);
+                    if (dic.ContainsKey(key))
+                    {
+                        if (dic[key].Level < gs.Level)
+                        {
+                            dic[key] = gs;
+                        }
+                    }
+                    else
+                    {
+                        dic.Add(key, gs);
+                    }
+                }
+                else
+                {
+                    string key = String.Format("{0},{1},{2}", gs.GXID, gs.GYID,gs.Level);
+                    dic.Add(key, gs);
+                }
+            }
+            foreach (KeyValuePair<string, GridStrength> kv in dic)
             {
                 gs = kv.Value;
                 if (gs.ground)
@@ -178,6 +210,7 @@ namespace LTE.InternalInterference.Grid
                     dr = groundCover.NewRow();
                     dr["GXID"] = gs.GXID;
                     dr["GYID"] = gs.GYID;
+                    dr["Level"] = gs.Level;
                     dr["eNodeB"] = gs.eNodeB;
                     dr["CI"] = gs.CI;
                     dr["DirectPwrNum"] = gs.DirectNum;

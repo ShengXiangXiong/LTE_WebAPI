@@ -216,6 +216,7 @@
     <Compile Include="Controllers\CellRadiusController.cs" />
     <Compile Include="Controllers\CellRayTracingController.cs" />
     <Compile Include="Controllers\DebugController.cs" />
+    <Compile Include="Controllers\CalibrationRangeController.cs" />
     <Compile Include="Controllers\DTdataController.cs" />
     <Compile Include="Controllers\DTHandlerController.cs" />
     <Compile Include="Controllers\ExternalInfLocateController.cs" />
@@ -237,11 +238,13 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\AdjCoefficientModel.cs" />
     <Compile Include="Models\Area.cs" />
     <Compile Include="Models\AreaCoverDefectModel.cs" />
     <Compile Include="Models\AuthInfo.cs" />
     <Compile Include="Models\BuildingOverlayModel.cs" />
     <Compile Include="Models\CalibrationModel.cs" />
+    <Compile Include="Models\CalibrationRangeModel.cs" />
     <Compile Include="Models\CellRadiusModel.cs" />
     <Compile Include="Models\ClusterShpModel.cs" />
     <Compile Include="Models\DebugModel.cs" />
@@ -252,6 +255,7 @@
     <Compile Include="Models\Grid3DStrengthQueryModel.cs" />
     <Compile Include="Models\LayerNames.cs" />
     <Compile Include="Models\PointsSelectModel.cs" />
+    <Compile Include="Models\RayRecordAdjBatchModeModel.cs" />
     <Compile Include="Models\RayRecordModel.cs" />
     <Compile Include="Models\CellRayTracingModel.cs" />
     <Compile Include="Models\DTdataModel.cs" />

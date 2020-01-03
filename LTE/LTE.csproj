@@ -201,6 +201,8 @@
     <Compile Include="Utils\MaxHeap.cs" />
     <Compile Include="Utils\MemoryHelper.cs" />
     <Compile Include="Utils\MinHeap.cs" />
+    <Compile Include="Utils\DataCheck.cs" />
+    <Compile Include="Utils\DT\PTHandler.cs" />
     <Compile Include="Utils\PointConvertByProj.cs" />
     <Compile Include="Utils\RedisHelper.cs" />
     <Compile Include="Win32Lib\ConsoleShow.cs" />

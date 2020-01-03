@@ -196,13 +196,6 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshGroundCoverLayer(minXid, minYid, maxXid, maxYid);
                 if (res.Ok)
                 {
-                    Hashtable ht = new Hashtable();
-                    ht["IndexName"] = String.Format("%_%_%_%",minLongitude,minLatitude,maxLongitude,maxLatitude);
-                    ht["ShpName"] = res.ShpName;
-                    ht["Type"] = "AreaGroundCover";
-                    ht["DateTime"] = DateTime.Now;
-                    IbatisHelper.ExecuteInsert("insShp", ht);
-
                     return new Result(true, "区域地面覆盖图层刷新成功");
                 }
                 else
@@ -237,13 +230,6 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refresh3DCoverLayer(minXid, minYid, maxXid, maxYid);
                 if (res.Ok)
                 {
-                    Hashtable ht = new Hashtable();
-                    ht["IndexName"] = String.Format("%_%_%_%", minLongitude, minLatitude, maxLongitude, maxLatitude);
-                    ht["ShpName"] = res.ShpName;
-                    ht["Type"] = "AreaGround3DCover";
-                    ht["DateTime"] = DateTime.Now;
-                    IbatisHelper.ExecuteInsert("insShp", ht);
-
                     return new Result(true, "区域立体覆盖图层刷新成功");
                 }
                 else
@@ -381,13 +367,6 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshDefectLayer(minXid, minYid, maxXid, maxYid,type);
                 if (res.Ok)
                 {
-                    Hashtable ht = new Hashtable();
-                    ht["IndexName"] = String.Format("%_%_%_%", minLongitude, minLatitude, maxLongitude, maxLatitude);
-                    ht["ShpName"] = res.ShpName;
-                    ht["Type"] = type;
-                    ht["DateTime"] = DateTime.Now;
-                    IbatisHelper.ExecuteInsert("insShp", ht);
-
                     return new Result(true, "网内干扰图层图层刷新成功");
                 }
                 else

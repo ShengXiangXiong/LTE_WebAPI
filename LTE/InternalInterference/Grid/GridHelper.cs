@@ -366,16 +366,16 @@ namespace LTE.InternalInterference.Grid
         /// <param name="gxid"></param>
         /// <param name="gyid"></param>
         /// <returns></returns>
-        public bool XYZToGGrid(double x, double y, double z, ref int gxid, ref int gyid, ref int gzid)
+        public bool XYZToGGrid(Point p, ref Grid3D grid3D)
         {
-            if (checkXYZInGrid(x, y, 0))
+            if (checkXYZInGrid(p.X, p.Y, 0))
             {
                 //同划分网格一致
-                double dy = y - oY;
-                double dx = x - oX;
-                gxid = (int)Math.Floor(dx / ggridsize);
-                gyid = (int)Math.Floor(dy / ggridsize);
-                gzid = (int)Math.Floor(z / gheight);
+                double dy = p.Y - oY;
+                double dx = p.X - oX;
+                grid3D.gxid = (int)Math.Floor(dx / ggridsize);
+                grid3D.gyid = (int)Math.Floor(dy / ggridsize);
+                grid3D.gzid = (int)Math.Floor(p.Z / gheight);
                 return true;
             }
             return false;
@@ -461,7 +461,61 @@ namespace LTE.InternalInterference.Grid
             y = oY + gyid * ggridsize + half;
             z = 0 + (gzid - 1) * ggridsize + half;
         }
-
+        /// <summary>
+        /// 返回网格中心点对应的地理坐标
+        /// </summary>
+        /// <param name="gxid"></param>
+        /// <param name="gyid"></param>
+        /// <param name="gzid"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        public Point GridToGeo(int gxid, int gyid)
+        {
+            double half = 0.5 * ggridsize;
+            double x = oX + gxid * ggridsize + half;
+            double y = oY + gyid * ggridsize + half;
+            LTE.Geometric.Point p = new LTE.Geometric.Point();
+            p.X = x;
+            p.Y = y;
+            return PointConvertByProj.Instance.GetGeoPoint(p);
+        }
+        /// <summary>
+        /// 返回5*5网格左下角对应的地理坐标
+        /// </summary>
+        /// <param name="gxid"></param>
+        /// <param name="gyid"></param>
+        /// <param name="gzid"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        public Point GridToLeftDownGeo(int gxid, int gyid)
+        {
+            double x = oX + gxid * ggridsize;
+            double y = oY + gyid * ggridsize;
+            LTE.Geometric.Point p = new LTE.Geometric.Point();
+            p.X = x;
+            p.Y = y;
+            return PointConvertByProj.Instance.GetGeoPoint(p);
+        }
+        /// <summary>
+        /// 返回5*5网格右上角对应的地理坐标
+        /// </summary>
+        /// <param name="gxid"></param>
+        /// <param name="gyid"></param>
+        /// <param name="gzid"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        public Point GridToRightUpGeo(int gxid, int gyid)
+        {
+            double x = oX + gxid * (ggridsize + 1);
+            double y = oY + gyid * (ggridsize + 1);
+            LTE.Geometric.Point p = new LTE.Geometric.Point();
+            p.X = x;
+            p.Y = y;
+            return PointConvertByProj.Instance.GetGeoPoint(p);
+        }
 
         /// <summary>
         /// 返回空间点所在的加速网格坐标

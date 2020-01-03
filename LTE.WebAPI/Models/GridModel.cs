@@ -57,8 +57,8 @@ namespace LTE.WebAPI.Models
         {
             try//更新加速场景表，重置前提条件表
             {
-                IbatisHelper.ExecuteDelete("DeleteFishnet", null);
-                IbatisHelper.ExecuteUpdate("UpdatetbDependTableDuetoGridRange", null);
+                //IbatisHelper.ExecuteDelete("DeleteFishnet", null);
+                //IbatisHelper.ExecuteUpdate("UpdatetbDependTableDuetoGridRange", null);
             }
             catch (Exception ex)
             { return new Result(false, ex.ToString()); }
@@ -874,7 +874,7 @@ namespace LTE.WebAPI.Models
                     {
                         //string key = string.Format("{0},{1}", gxid,gyid);
                         gridKey key = new gridKey(gxid, gyid);
-                        CELL cELL = new CELL { ID = Convert.ToInt32(cell["ID"]), x = (decimal)p.X, y = (decimal)p.Y };
+                        CELL cELL = new CELL { ID = Convert.ToInt32(cell["ID"]), x = (decimal)p.X, y = (decimal)p.Y, BtsName=(string)cell["BtsName"] };
 
                         if (grid2cell.ContainsKey(key))
                         {
@@ -1009,8 +1009,12 @@ namespace LTE.WebAPI.Models
                     cELL.MaxDis = vs[k - 1];
                     cELL.MinDis = vs[0];
                     res.Add(cELL);
+                    if (res.Count >= 300) {
+                        IbatisHelper.ExecuteUpdate("CELLBatchUpdateKDis", res);
+                        res.Clear();
+                    }
                 }
-
+                // 最后一批
                 int rows1 = IbatisHelper.ExecuteUpdate("CELLBatchUpdateKDis", res);
 
                 //update alititude
@@ -1064,10 +1068,16 @@ namespace LTE.WebAPI.Models
                                 double alt = Geometric.PointHeight.getPointHeight(point[0], point[1], point[2], x, y);
                                 cell.Altitude = Convert.ToDecimal(alt);
                                 res.Add(cell);
+                                if (res.Count >= 300)
+                                {
+                                    IbatisHelper.ExecuteUpdate("CELLBatchUpdateAltitude", res);
+                                    res.Clear();
+                                }
                             }
                         }
                     }
                 }
+                // 最后一批
                 int rows2 = IbatisHelper.ExecuteUpdate("CELLBatchUpdateAltitude", res);
                 #region batch operate
                 //int minAgxid = minGxid;
