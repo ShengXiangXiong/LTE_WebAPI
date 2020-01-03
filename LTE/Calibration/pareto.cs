@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows;
 
 namespace LTE.Calibration
 {
@@ -37,17 +38,32 @@ namespace LTE.Calibration
         */
         public int domain(EA.Entity A, EA.Entity B)
         {
+            double epison = 0.000001;
+
             int i;
             HashSet<int> set = new HashSet<int>();
             for (i = 0; i < objNum; i++)
             {
-                if (A.fitnessVec[i] == B.fitnessVec[i])
+                if (Math.Abs(A.fitnessVec[i] - B.fitnessVec[i] )<epison)
                     set.Add(0);
                 else if (A.fitnessVec[i] < B.fitnessVec[i])
                     set.Add(1);
                 else
                     set.Add(-1);
             }
+
+            ////判断支配关系
+            //if (A.EqualsEntity(B)) {// 两个个体相同
+            //    return 0;
+            //}
+            //if (set.Contains(1) && !set.Contains(-1)) {// A支配B
+            //    return 1;
+            //}
+            //if (set.Contains(-1) & !set.Contains(1)) {// A被B支配
+            //    return -1;
+            //}
+            //return 11;// A和B互相非支配。特别的，若A和B的各个指标相同（因为取浮点数后六位比较，概率极小），但校正系数不同，也认为互相非支配。
+
             if (set.Contains(0) && set.Count() == 1)
                 return 0;
             else if (!set.Contains(-1))
@@ -69,13 +85,16 @@ namespace LTE.Calibration
             bool non_domminated_sign = true;
             int flag;
             EA.Entity E;
+
             while (i < j)
             {
-                while (i < j && ((flag = domain(x, E = population[j])) == 1 || flag == 0))
+                flag = domain(x, E = population[j]);
+                while ( (i < j) && ( flag == 1 || flag == 0))
                 {
                     j--;
                     if ((flag = domain(E = population[j], x)) == 1)
                         non_domminated_sign = false;
+                    flag = domain(x, E = population[j]);
                 }
                 population[i] = population[j];
                 while (i < j && (flag = domain(E = population[i], x)) != -1)
@@ -97,12 +116,23 @@ namespace LTE.Calibration
         }
 
         //构造优胜集的快速排序法
-        public void quickSort(List<EA.Entity> population, int start, int end)
+        public void quickSort(List<EA.Entity> population, int start, int end, int countCalls)
         {
+            countCalls++;
+
+            //调试用
+            if (countCalls > 500 && countCalls <= 1000) {
+                int test1 = 0;
+            }
+            if (countCalls > 1000)
+            {
+                int test1 = 0;
+            }
+
             if (start <= end)
             {
                 int k = quickPass(population, start, end);
-                quickSort(population, start, k-1);
+                quickSort(population, start, k-1, countCalls);
             }
         }
 
@@ -116,12 +146,13 @@ namespace LTE.Calibration
             EA.Entity x = population[start];
             while (i < j)
             {
+                
                 while (i < j && (domain(x, population[j]) == 1 || domain(x, population[j]) == 0))
                 {
                     j--;
                 }
                 population[i] = population[j];
-                while (i < j && domain(population[i], x) != -1)
+                while (i < j && domain(population[i], x) != -1)//即domain(x,population[i]==1||domain(x,population[i]==0)||domain(x,population[i]))
                 {
                     i++;
                 }
@@ -131,12 +162,51 @@ namespace LTE.Calibration
             return i;
         }
 
+        public int partitionOnetarget(List<EA.Entity> population, int low, int high) {
+            EA.Entity key = population[low];
+            int i = low;
+            int j = high;
+            while (i < j)
+            {
+                while (i < j)
+                {//
+                    if (!(compareSingle(population[j], key) == 1 || compareSingle(population[j], key) == 0)) {
+                        break;
+                    }
+                    --j;
+                }
+                population[i] = population[j];
+                while (i < j)
+                {
+                    if (!(compareSingle(population[i], key) == -1 || compareSingle(population[i], key) == 0)) {
+                        break;
+                    }
+                    ++i;
+                }
+                population[j] = population[i];
+            }
+            population[i] = key;
+            return i;
+        }
+
+        //x>y   1; x<y  -1;  x==y  0
+        public int compareSingle(EA.Entity x, EA.Entity y) {
+            double epison = 0.000001;
+            if (Math.Abs(x.fitnessVec[0] - y.fitnessVec[0]) < epison) {
+                return 0;
+            }
+            if (x.fitnessVec[0] > y.fitnessVec[0]) return 1;
+            return -1;
+        }
+
+
         //对整体的快速排序法
         public void quickSort1(List<EA.Entity> population, int start, int end)
         {
             if (start < end)
             {
-                int k = quickPass1(population, start, end);
+                //int k = quickPass1(population, start, end);
+                int k = partitionOnetarget(population, start, end);
                 quickSort1(population, start, k - 1);
                 quickSort1(population, k + 1, end);
             }

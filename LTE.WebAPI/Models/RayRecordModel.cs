@@ -12,6 +12,8 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Management;
+using LTE.Utils;
 namespace LTE.WebAPI.Models
 {
     // 记录用于系数校正的射线
@@ -32,35 +34,40 @@ namespace LTE.WebAPI.Models
             CellInfo cellInfo = new CellInfo(this.cellName, eNodeB, CI, this.directCoeff, this.reflectCoeff, this.diffractCoeff, this.diffractCoeff2);
             double fromAngle = cellInfo.Azimuth - this.incrementAngle;
             double toAngle = cellInfo.Azimuth + this.incrementAngle;
-
-            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, false, true,userId,"射线记录Adj");
+            
+            return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, false, false, false, true, LoadInfo.UserId.Value, "射线记录Adj");
         }
     }
     // 记录用于干扰定位的射线
     public class RayLocRecordModel
     {
+
+        private LoadInfo loadInfo = new LoadInfo();
+
+        private int threadNum;
+        
         //
         // GET: /RayLocRecordModel/
         #region 变量定义
-        public int userId { get; set; }
+        //public int userId { get; set; }
         /// <summary>
         /// 干扰源点
         /// </summary>
         public string virsource { get; set; }
-        /// <summary>
-        /// 反向发射点发射半径
-        /// </summary>
-        public double distance { get; set; }
+        ///// <summary>
+        ///// 反向发射点发射半径
+        ///// </summary>
+        //public double distance { get; set; }
 
         /// <summary>
         /// 以方位角为中心，两边扩展的角度
         /// </summary>
         public double incrementAngle { get; set; }
 
-        /// <summary>
-        /// 线程个数
-        /// </summary>
-        public int threadNum { get; set; }
+        ///// <summary>
+        ///// 线程个数
+        ///// </summary>
+        //public int threadNum { get; set; }
 
         /// <summary>
         /// 反射次数
@@ -80,32 +87,32 @@ namespace LTE.WebAPI.Models
         /// <summary>
         /// 计算立体覆盖
         /// </summary>
-        public bool computeIndoor { get; set; }
+        private bool computeIndoor = false;
 
         /// <summary>
         /// 计算棱边绕射
         /// </summary>
-        public bool computeVSide { get; set; }
+        private bool computeVSide = true;
 
-        /// <summary>
-        /// 直射校正系数
-        /// </summary>
-        public double directCoefficient { get; set; }
+        ///// <summary>
+        ///// 直射校正系数
+        ///// </summary>
+        //public double directCoefficient { get; set; }
 
-        /// <summary>
-        /// 反射校正系数
-        /// </summary>
-        public double reflectCoefficient { get; set; }
+        ///// <summary>
+        ///// 反射校正系数
+        ///// </summary>
+        //public double reflectCoefficient { get; set; }
 
-        /// <summary>
-        /// 绕射校正系数
-        /// </summary>
-        public double diffractCoefficient { get; set; }
+        ///// <summary>
+        ///// 绕射校正系数
+        ///// </summary>
+        //public double diffractCoefficient { get; set; }
 
-        /// <summary>
-        /// 菲涅尔绕射校正系数
-        /// </summary>
-        public double FCoefficient { get; set; }
+        ///// <summary>
+        ///// 菲涅尔绕射校正系数
+        ///// </summary>
+        //public double FCoefficient { get; set; }
 
 
         #endregion
@@ -115,6 +122,7 @@ namespace LTE.WebAPI.Models
         /// <returns></returns>
         public Result RecordRayLoc(int way)
         {
+            threadNum = Environment.ProcessorCount - 2;
             Hashtable ht = new Hashtable();
             ht["fromName"] = virsource;
             //读取selectPoint 表信息
@@ -125,9 +133,11 @@ namespace LTE.WebAPI.Models
                 return new Result(false, "该干扰源未完成选点操作，请重新选取干扰源"); ;
             }
             //清除表中tbRayLoc当前cellname对应的selectpoint对应的CI的数据
+            
             IbatisHelper.ExecuteDelete("deletetbRayLoc", ht);
             DateTime t1, t2;
             t1 = DateTime.Now;
+            loadInfo.loadCountAdd(tb.Rows.Count);
             for (int i = 0; i < tb.Rows.Count; i++)
             {
                 CellInfo cellInfo = new CellInfo();
@@ -141,29 +151,31 @@ namespace LTE.WebAPI.Models
 
                 cellInfo.EIRP = 53;
                 cellInfo.Inclination = 7;
-                cellInfo.diffracteCoefficient = (float)this.diffractCoefficient;
-                cellInfo.reflectCoefficient = (float)this.reflectCoefficient;
-                cellInfo.directCoefficient = (float)this.directCoefficient;
-                cellInfo.diffracteCoefficient2 = (float)this.FCoefficient;
+                cellInfo.diffracteCoefficient = (float)1;
+                cellInfo.reflectCoefficient = (float)1;
+                cellInfo.directCoefficient = (float)0.3;
+                cellInfo.diffracteCoefficient2 = (float)1;
                 cellInfo.Azimuth = Convert.ToDouble(tb.Rows[i]["Azimuth"]);
                 double fromAngle = cellInfo.Azimuth - this.incrementAngle;
                 double toAngle = cellInfo.Azimuth + this.incrementAngle;
                 double dis = Convert.ToDouble(tb.Rows[i]["Distance"]);
                 Result res = new Result();
-                if (way == 0)
-                {
-                    res = parallelComputing(cellInfo, fromAngle, toAngle);
-                }
-                else
-                {
-                    res = parallelComputing(cellInfo, fromAngle, toAngle,dis);
-                }
-                Debug.WriteLine("fromAngle " + fromAngle + "   toAngle" + toAngle);
+                Debug.WriteLine(i + "     " + tb.Rows[i]["CI"] + "      fromAngle " + fromAngle + "   toAngle" + toAngle);
+                //if (way == 0)
+                //{
+                //    res = parallelComputing(cellInfo, fromAngle, toAngle);
+                //}
+                //else
+                //{
+                //    res = parallelComputing(cellInfo, fromAngle, toAngle,dis);
+                //}
+                res = parallelComputing(cellInfo, fromAngle, toAngle, dis);
                 if (res.ok == false)
                 {
                     IbatisHelper.ExecuteDelete("deletetbRayLoc", ht);
                     return res;
                 }
+                loadInfo.loadHashAdd(1);
             }
             t2 = DateTime.Now;
             Debug.WriteLine("计算时长：" + (t2 - t1));
@@ -171,44 +183,45 @@ namespace LTE.WebAPI.Models
             return new Result(true, "完成" + tb.Rows.Count + "个点的反向射线跟踪计算");
         }
 
-        private Result parallelComputing(CellInfo cellInfo, double fromAngle, double toAngle)
-        {
-            string bidstext = "-1";
+        //private Result parallelComputing(CellInfo cellInfo, double fromAngle, double toAngle)
+        //{
+        //    string bidstext = "-1";
 
-            LTE.Geometric.Point p = cellInfo.SourcePoint;
-            ProcessArgs pa = new ProcessArgs();
-            ProcessStartInfo psi = new ProcessStartInfo();
-            psi.UseShellExecute = true;
-            psi.ErrorDialog = true;
+        //    LTE.Geometric.Point p = cellInfo.SourcePoint;
+        //    ProcessArgs pa = new ProcessArgs();
+        //    ProcessStartInfo psi = new ProcessStartInfo();
+        //    psi.UseShellExecute = true;
+        //    psi.ErrorDialog = true;
 
-            psi.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            psi.FileName = "LTE.MultiProcessController.exe";
-            psi.Arguments = string.Format("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19} {20} {21} {22} {23} {24} {25} {26} {27} {28} {29} {30} {31} {32}",
-                cellInfo.SourceName, p.X, p.Y, 0, 0, p.Z, cellInfo.eNodeB, cellInfo.CI,
-                cellInfo.Azimuth, cellInfo.Inclination, cellInfo.cellType, cellInfo.frequncy, cellInfo.EIRP,
-                cellInfo.directCoefficient, cellInfo.reflectCoefficient, cellInfo.diffracteCoefficient, cellInfo.diffracteCoefficient,
-                fromAngle, toAngle, this.distance, this.reflectionNum, this.diffractionNum, this.computeIndoor,
-                this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false, userId, "射线记录Loc");
+        //    psi.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory;
+        //    psi.FileName = "LTE.MultiProcessController.exe";
+        //    psi.Arguments = string.Format("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14} {15} {16} {17} {18} {19} {20} {21} {22} {23} {24} {25} {26} {27} {28} {29} {30} {31} {32}",
+        //        cellInfo.SourceName, p.X, p.Y, 0, 0, p.Z, cellInfo.eNodeB, cellInfo.CI,
+        //        cellInfo.Azimuth, cellInfo.Inclination, cellInfo.cellType, cellInfo.frequncy, cellInfo.EIRP,
+        //        cellInfo.directCoefficient, cellInfo.reflectCoefficient, cellInfo.diffracteCoefficient, cellInfo.diffracteCoefficient,
+        //        fromAngle, toAngle, this.distance, this.reflectionNum, this.diffractionNum, this.computeIndoor,
+        //        this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false, LoadInfo.UserId.Value, LoadInfo.taskName.Value);
 
-            try
-            {
-                pa.pro = Process.Start(psi);
-                pa.pro.WaitForExit();
-            }
-            catch (InvalidOperationException exception)
-            {
-                return new Result(false, "多进程计算启动失败，原因： " + exception.Message);
-            }
-            catch (Exception ee)
-            {
-                return new Result(false, "多进程计算启动失败，原因： " + ee.Message);
-            }
-            return new Result(true);
-        }
+        //    try
+        //    {
+        //        pa.pro = Process.Start(psi);
+        //        pa.pro.WaitForExit();
+        //    }
+        //    catch (InvalidOperationException exception)
+        //    {
+        //        return new Result(false, "多进程计算启动失败，原因： " + exception.Message);
+        //    }
+        //    catch (Exception ee)
+        //    {
+        //        return new Result(false, "多进程计算启动失败，原因： " + ee.Message);
+        //    }
+        //    return new Result(true);
+        //}
 
 
         private Result parallelComputing(CellInfo cellInfo, double fromAngle, double toAngle,double dis)
         {
+            
             string bidstext = "-1";
 
             LTE.Geometric.Point p = cellInfo.SourcePoint;
@@ -224,7 +237,7 @@ namespace LTE.WebAPI.Models
                 cellInfo.Azimuth, cellInfo.Inclination, cellInfo.cellType, cellInfo.frequncy, cellInfo.EIRP,
                 cellInfo.directCoefficient, cellInfo.reflectCoefficient, cellInfo.diffracteCoefficient, cellInfo.diffracteCoefficient,
                 fromAngle, toAngle, dis, this.reflectionNum, this.diffractionNum, this.computeIndoor,
-                this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false, userId, "射线记录Loc");
+                this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false, LoadInfo.UserId.Value, LoadInfo.taskName.Value);
 
             try
             {

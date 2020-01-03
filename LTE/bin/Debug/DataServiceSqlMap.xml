@@ -1,0 +1,717 @@
+<?xml version="1.0" encoding="gb2312" ?>
+<sqlMap xmlns="http://ibatis.apache.org/mapping" namespace="Wellcomm.Model"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SqlMap.xsd">
+<statements>
+	
+	<!--获取数据库表名称-->
+	<select id="GetTableNames">
+      		select name from sys.tables
+	</select>
+
+	<!--获取数据库表中的列名称-->
+	<select id="GetAttrNames">
+      		select a.name from sys.columns a where a.object_id=object_id('$tableName$')
+	</select>
+
+	<!--获取CELL属性值-->
+	<select id="GETPropertyCELL" resultClass="LTE.Model.PropertyCELL" parameterClass="string">
+      		select top 1 ID, CellName, CellNameChs, eNodeB, CI, Longitude, Latitude, Azimuth, AntHeight, Tilt, EARFCN, EIRP from cell where CellName = '$CellName$'
+    	</select>
+
+		<!--获取网格信息-->
+		<select id="GetGroundGrids" >
+		select distinct GXID, GYID, CX, CY, MinX, MinY, MaxX, MaxY, Dem from tbGridDem
+		</select>
+		<!-- 获取范围内的加速栅格 -->
+		<select id="GetAccelerateStruct" parameterClass="HashTable">
+      select GXID,GYID,GZID,BuildingID from tbAccelerateGridBuilding where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$' order by GXID, GYID, GZID
+    </select>
+		
+		<delete id="DeleteBuildingVertex">
+			delete from tbBuildingVertex
+		</delete>
+    <select id="GetBuildingVertexOriginal">
+            select a.BuildingID, a.VertexX, a.VertexY from tbBuildingVertexOriginal as a
+	    order by a.BuildingID, a.VIndex
+		   
+    </select>
+		<select id="GetOneBuildingVertex" parameterClass="string">
+            select a.VertexLong, a.VertexLat from tbBuildingVertex a
+			where a.BuildingID = '$buildingid$' order by a.VIndex
+		</select>
+		<select id="GetOneBuildingHeight" parameterClass="string">
+            select a.BHeight from tbBuilding a where a.BuildingID = '$buildingid$'
+		</select>
+		<!--删除网格表记录-->
+		<delete id="DeleteGroundGrids">
+			delete from tbGridDem
+		</delete>
+		<select id="getGridRange" parameterClass="Hashtable">
+			select AreaMinLong, AreaMinLat, AreaMaxLong, AreaMaxLat, AreaMinX, AreaMinY, AreaMaxX, AreaMaxY, GGridSize, MaxGGXID, MaxGGYID, GHeight, GBaseHeight, AGridSize, AGridVSize, MaxAGXID, MaxAGYID, MinX, MinY, MinGGXID, MinGGYID, MinAGXID, MinAGYID from tbGridRange
+                where id = $id$
+		</select>
+                <!--网格范围-->
+		<insert id="insertGridRange" parameterClass="Hashtable">
+		delete from tbGridRange;
+		insert into tbGridRange
+		values('$id$', '$AreaMinLong$', '$AreaMinLat$', '$AreaMaxLong$','$AreaMaxLat$', '$AreaMinX$', '$AreaMinY$', 
+'$AreaMaxX$', '$AreaMaxY$', '$GGridSize$', '$MaxGGXID$', '$MaxGGYID$', '$GHeight$', '$GBaseHeight$', '$AGridSize$', 
+'$AGridVSize$','$MaxAGXID$', '$MaxAGYID$', '$MinX$', '$MinY$', '$MinGGXID$', '$MinGGYID$', '$MinAGXID$', '$MinAGYID$');
+		</insert>
+		<!--获取GSM900小区的信息-->
+		<select id="GetGSM900CellLayerData" resultClass="LTE.Model.CELL">
+      		select distinct ID, eNodeB, CI, CellName, CellNameChs, x, y, AntHeight + altitude as AntHeight, Altitude, Azimuth, Tilt, Longitude, Latitude, EARFCN, EIRP, CoverageRadius from CELL
+		</select>
+		<!--获取GSM1800小区的信息-->
+		<select id="GetGSM1800CellLayerData" resultClass="LTE.Model.CELL">
+      		select distinct ID, eNodeB, CI, CellName, CellNameChs, Longitude, Latitude, AntHeight, Azimuth, Tilt from CELL
+      		where Longitude between (select AreaMinLong from tbGridRange) and (select AreaMaxLong from tbGridRange) and Latitude between (select AreaMinLat from tbGridRange) and (select AreaMaxLat from tbGridRange)
+      		and NetType = 'GSM1800';
+    		</select>
+
+		<select id="GetBaseStationLayerData">
+      select distinct BtsName, Longitude, Latitude, AntHeight from CELL
+      where Longitude between (select AreaMinLong from tbGridRange) and (select AreaMaxLong from tbGridRange) and Latitude between (select AreaMinLat from tbGridRange) and (select AreaMaxLat from tbGridRange)
+    </select>
+		<!--覆盖分析-->
+		<!--单射线跟踪-->
+		<select id="SingleGetCellType" parameterClass="string">
+			select top 1 eNodeB, CI, NetType from CELL where CellName = '$cellname$'
+		</select>
+		<!--获取包含地面一点的网格-->
+		<select id="Get_CrossWithGround_Grid" parameterClass="Hashtable">
+			select MinLong,MinLat,MaxLong,MaxLat from tbGridDem where GXID = '$gxid$' and GYID = '$gyid$'
+		</select>
+		<!--获取GSM小区信息,构造CellInfo-->
+		<select id="GetGSMCellInfo" parameterClass="Hashtable">
+			select  Azimuth, Tilt, EIRP, x, y, AntHeight, Altitude, NetType, EARFCN from CELL where cellName = '$cellName$'
+		</select>
+		<!--获取TD小区信息,构造CellInfo-->
+		<select id="GetTDCellInfo" parameterClass="string">
+		</select>
+
+		<!--获取指定小区名称的网格-->
+		<select id="GetSpecifiedCellGridsPre" parameterClass="Hashtable">
+			select a.GXID, a.GYID, b.Minx, b.Miny, b.Maxx, b.Maxy, 
+			a.ReceivedPowerdbm, 0 as PathLoss from 
+			tbGridDem b,
+			(select GXID, GYID, max(ReceivedPowerdbm) ReceivedPowerdbm 
+			from tbGridPathloss  where eNodeB = '$eNodeB$' and CI = '$CI$' 
+			group by gxid, gyid) as a(gxid, gyid, ReceivedPowerdbm)
+			where a.gxid = b.gxid and a.gyid = b.gyid 
+			and a.gxid = b.gxid and a.gyid = b.gyid
+			and a.ReceivedPowerdbm > -130
+		</select>
+
+		<select id="GetSpecifiedCellGrids" parameterClass="Hashtable">
+			select a.GXID, a.GYID, b.MinX, b.MinY, b.MaxX, b.MaxY, a.ReceivedPowerdbm, a.PathLoss 
+			from tbGridPathloss a, tbGridDem b 
+			where a.GXID = b.GXID and a.GYID = b.GYID and a.eNodeB = '$eNodeB$' 
+			and a.CI = '$CI$' and a.ReceivedPowerdbm > -130
+		</select>
+	        
+                <!--获取指定小区的网格-->
+		<select id="GetSpecifiedCellGrid3DsPre" parameterClass="Hashtable">
+			select a.GXID, a.GYID, a.[Level], b.MinX, b.MinY, b.MaxX, b.MaxY, a.ReceivedPowerdbm, 0 as PathLoss
+			from tbGridDem b, 
+			(select GXID, GYID, [Level], max(ReceivedPowerdbm) 
+			from tbBuildingGridPathloss where eNodeB = '$eNodeB$' and CI = '$CI$'
+			group by gxid, gyid, [Level]) as a(GXID, GYID, [Level], ReceivedPowerdbm)
+			where a.gxid = b.gxid and a.gyid = b.gyid 
+			and a.ReceivedPowerdbm > -130
+		</select>
+
+		<select id="GetSpecifiedCellGrid3Ds" parameterClass="Hashtable">
+			select a.GXID, a.GYID, b.MinX, b.MinY, b.MaxX, b.MaxY, a.ReceivedPowerdbm, a.PathLoss, a.Level
+			from tbBuildingGridPathloss a, tbGridDem b where a.GXID = b.GXID and a.GYID = b.GYID 
+			and a.eNodeB = '$eNodeB$' and a.CI = '$CI$' and a.ReceivedPowerdbm > -130 
+		</select>
+
+		<select id="GetSpecifiedCellGrid3Ds1" parameterClass="Hashtable">
+			select a.GXID, a.GYID, a.[Level], b.CX, b.CY, a.ReceivedPowerdbm, 0 as PathLoss
+			from tbGridDem b, 
+			(select GXID, GYID, [Level], max(ReceivedPowerdbm) 
+			from tbBuildingGridPathloss where eNodeB = '$eNodeB$' and CI = '$CI$'
+			group by gxid, gyid, [Level]) as a(GXID, GYID, [Level], ReceivedPowerdbm)
+			where a.gxid = b.gxid and a.gyid = b.gyid 
+			and a.ReceivedPowerdbm > -130
+		</select>
+
+		<select id="GetSpecifiedCellGrid3Dtops" parameterClass="Hashtable">
+			select a.GXID, a.GYID, a.[Level], b.MinX, b.MinY, b.MaxX, b.MaxY, a.ReceivedPowerdbm, 0 as PathLoss
+			from tbGridDem b, 
+			(select GXID, GYID, [Level], max(ReceivedPowerdbm) 
+			from tbBuildingGridPathloss where eNodeB = '$eNodeB$' and CI = '$CI$'
+			group by gxid, gyid, [Level]) as a(GXID, GYID, [Level], ReceivedPowerdbm)
+			where a.gxid = b.gxid and a.gyid = b.gyid 
+			and a.ReceivedPowerdbm > -130
+		</select>
+		
+		<select id="GetSpecifiedAreaGrids" parameterClass="Hashtable">
+	
+			select a.GXID, a.GYID, b.Minx, b.Miny, b.Maxx, b.Maxy, 
+			a.ReceivedPowerdbm, 0 as PathLoss from 
+			tbGridDem b,
+			(select GXID, GYID, max(ReceivedPowerdbm) ReceivedPowerdbm 
+			from tbGridPathloss  where GXID between '$MinGXID$' and '$MaxGXID$' 
+			and GYID between '$MinGYID$' and '$MaxGYID$'  group by gxid, gyid
+			) as a(gxid, gyid, ReceivedPowerdbm)
+			where a.gxid = b.gxid and a.gyid = b.gyid 
+			and a.gxid = b.gxid and a.gyid = b.gyid
+			and a.ReceivedPowerdbm > -130
+		</select>
+
+		<select id="GetSpecifiedAreaGrid3Ds" parameterClass="Hashtable">
+			select a.GXID, a.GYID, a.[Level], b.MinX, b.MinY, b.MaxX, b.MaxY, a.ReceivedPowerdbm, 0 as PathLoss
+			from tbGridDem b, 
+			(select GXID, GYID, [Level], max(ReceivedPowerdbm) 
+			from tbBuildingGridPathloss where GXID between '$MinGXID$' and '$MaxGXID$'
+			and GYID between '$MinGYID$' and '$MaxGYID$' group by gxid, gyid, [Level]) as a(GXID, GYID, [Level], ReceivedPowerdbm)
+			where a.gxid = b.gxid and a.gyid = b.gyid 
+			and a.ReceivedPowerdbm > -130
+		</select>
+
+		<!--获取区域网格-->
+		<select id="GetAreaGrids" parameterClass="Hashtable">
+		
+		select a.GXID, a.GYID, b.MinX, b.MinY, b.MaxX, b.MaxY, a.ReceivedPowerdbm, 0 as PathLoss
+		from tbGridDem b, (select GXID, GYID, max(ReceivedPowerdbm)
+				   from tbGridPathloss where ci != 5
+				   group by GXID, gyid) as a(gxid, gyid, receivedPowerdbm)
+		where a.GXID = b.GXID and a.GYID = b.GYID 
+		and a.ReceivedPowerdbm > -130 
+		order by a.gxid, a.gyid
+
+		</select>
+
+		<select id="GetAreaGrid3Ds" parameterClass="Hashtable">
+			
+		select a.GXID, a.GYID, b.MinX, b.MinY, b.MaxX, b.MaxY, a.ReceivedPowerdbm, 0 as PathLoss, a.Level
+		from tbGridDem b, (select GXID, GYID, Level, max(ReceivedPowerdbm)
+				   from tbBuildingGridPathloss where ci != 5
+				   group by GXID, gyid, Level) as a(gxid, gyid, Level, receivedPowerdbm)
+		where a.GXID = b.GXID and a.GYID = b.GYID 
+		and a.ReceivedPowerdbm > -130
+		order by a.gxid, a.gyid
+		</select>
+
+		<select id="CoverAnalysis3D" parameterClass="Hashtable">
+			select a.GXID, a.GYID, a.[Level], a.CI, pci, b.MinX, b.MinY, b.MaxX, b.MaxY, a.ReceivedPowerdbm
+			from tbGridDem b, cell,
+			(select GXID, GYID, [Level], CI, max(ReceivedPowerdbm) 
+			from tbBuildingGridPathloss where GXID between '$MinGXID$' and '$MaxGXID$'
+			and GYID between '$MinGYID$' and '$MaxGYID$' group by gxid, gyid, [Level], CI) as a(GXID, GYID, [Level], CI, ReceivedPowerdbm)
+			where a.gxid = b.gxid and a.gyid = b.gyid 
+			and cell.CI = a.ci
+			and a.ReceivedPowerdbm > -130
+		</select>
+
+		<select id="CoverAnalysis" parameterClass="Hashtable">
+			select a.GXID, a.GYID, a.CI, pci, b.Minx, b.Miny, b.Maxx, b.Maxy, a.ReceivedPowerdbm
+			from tbGridDem b, cell,
+			(select GXID, GYID, CI, max(ReceivedPowerdbm) ReceivedPowerdbm 
+			from tbGridPathloss  where GXID between '$MinGXID$' and '$MaxGXID$' 
+			and GYID between '$MinGYID$' and '$MaxGYID$' group by gxid, gyid, CI
+			having max(ReceivedPowerdbm) > -130 ) as a(gxid, gyid, CI, ReceivedPowerdbm)
+			where a.gxid = b.gxid and a.gyid = b.gyid 
+			and a.gxid = b.gxid and a.gyid = b.gyid
+			and cell.ci = a.ci
+		</select>
+
+		<select id="getTopGrid" parameterClass="">    
+			select GXID, GYID, max(gzid) as gzid
+			from tbBuildingGrid3D 
+			where GXID between '$MinGXID$' and '$MaxGXID$' 
+			and GYID between '$MinGYID$' and '$MaxGYID$'
+			group  by GXID, gyid
+    		</select>
+		
+		<select id="GetGridStrengthPwToSync">
+			select  GXID, GYID, ReceivedPowerW, PathLoss from tbGridPathloss
+		</select>
+		<delete id="deleteSpecifiedCelltbGrids" parameterClass="Hashtable">
+			delete from tbGridPathloss where eNodeB='$eNodeB$' and CI='$CI$'
+		</delete>
+		<delete id="deleteSpecifiedCelltbBuildingGrid3Ds" parameterClass="Hashtable">
+			delete from tbBuildingGridPathloss where eNodeB='$eNodeB$' and CI='$CI$'
+		</delete>
+		<!--覆盖分析-->
+		<select id="GetSpecifiedCellInterGrids" parameterClass="Hashtable">
+			select distinct GXID,GYID,MinLong,MinLat,MaxLong,MaxLat,InterferenceValue from tbGridInterference where cellName='$cellname$' and InterCellName='$intername$'
+		</select>
+		<select id="GetSpecifiedCellInterGrids2" parameterClass="string">
+			select distinct GXID,GYID,MinLong,MinLat,MaxLong,MaxLat,InterferenceValue from tbGridInterference where cellName='$cellname$'
+		</select>
+
+     <!-- 建筑物所在网格临时表 -->
+    <delete id="DeleteBuildingGrid">
+	delete from tbBuildingGrid3D
+    </delete>
+
+    <!-- 建筑物所在网格临时表 -->
+    <delete id="tmpDeleteBuildingGrid">
+	delete from tmp_BuildingGrid3D
+    </delete>
+    
+
+    <!-- 建筑物所在加速网格正式表 -->
+    <delete id="DeleteBuildingAccrelate">
+	delete from tbAccelerationGridBuildingOverlap
+    </delete>
+    <select id="getBuildingVertex1" parameterClass="">
+       select tbBuildingVertexOriginal.BuildingID, Bheight,
+             min(VertexX) as minX, min(VertexY) as minY, 
+             max(VertexX) as maxX, max(VertexY) as maxY
+	from tbBuildingVertexOriginal, tbBuilding
+	where tbBuildingVertexOriginal.BuildingID = tbBuilding.BuildingID
+	and Bheight > 0
+	group by tbBuildingVertexOriginal.BuildingID, BHeight
+    </select>
+    
+    <delete id="DeleteBuildingAccrelate1">
+	delete from tbAccelerateGridBuilding
+    </delete>
+
+    <insert id ="InsertBuildingAccelerate1" parameterClass="hashtable">
+     	insert into tbAccelerateGridBuilding
+	select distinct gxid ,gyid, ceiling(buildingheight/30.0) gzid, 	buildingid 
+        from  tbAccelerationGridBuildingOverlap
+    </insert>
+    <update id="UpdateBuildingAccelerate2">
+	update tbAccelerateGridBuilding set gzid = 3 where gzid>3;
+    </update>
+    <insert id="InsertBuildingAccelerate3">
+        insert into tbAccelerateGridBuilding
+	select gxid, gyid, 2 gzid, buildingid from tbAccelerateGridBuilding where gzid=3
+    </insert>
+    <insert id="InsertBuildingAccelerate4">
+	insert into tbAccelerateGridBuilding
+	select gxid, gyid, 1 gzid, buildingid from tbAccelerateGridBuilding where gzid=2
+    </insert>
+
+    <!-- 建筑物所在加速网格临时表 -->
+    <delete id="tmpDeleteBuildingAccrelate">
+	delete from tmp_accelerate
+    </delete>
+    <delete id="tmpDeleteBuildingAccrelate1">
+	delete from tmp_accelerateGridBuilding
+    </delete>
+    <insert id ="tmpInsertBuildingAccelerate1" parameterClass="hashtable">
+     	insert into tmp_accelerateGridBuilding
+	select distinct gxid ,gyid, ceiling(buildingheight/30.0) gzid, 	buildingid 
+        from  tmp_accelerate
+    </insert>
+    <update id="tmpUpdateBuildingAccelerate2">
+	update tmp_accelerateGridBuilding set gzid = 3 where gzid>3
+    </update>
+    <insert id="tmpInsertBuildingAccelerate3">
+        insert into tmp_accelerateGridBuilding
+	select gxid, gyid, 2 gzid, buildingid from tmp_accelerateGridBuilding where gzid=3
+    </insert>
+    <insert id="tmpInsertBuildingAccelerate4">
+	insert into tmp_accelerateGridBuilding
+	select gxid, gyid, 1 gzid, buildingid from tmp_accelerateGridBuilding where gzid=2
+    </insert>
+
+    <!-- 更新路测数据   -->
+    <update id="UpdateDT">
+	update tbDT
+	set RecePowerDbm = tbGridPathloss.ReceivedPowerdbm
+	from tbDT, tbGridPathloss 
+	where tbDT.gxid = tbGridPathloss.GXID
+	and tbDT.gyid = tbGridPathloss.GYID 
+    </update>
+	
+    <!-- 更新路测数据1-->
+    <update id="UpdateDT1">  
+	update tbDT
+	set RecePowerDbm = a.recePower
+	from tbDT, (select gxid, gyid,  MAX(ReceivedPowerdbm) from tbGridPathloss 
+		    group by GXID, gyid) as a(gxid, gyid, recePower)
+	where tbDT.gxid = a.GXID
+	and tbDT.gyid = a.GYID 
+    </update>
+
+    <update id="UpdateDT2">  
+	update tbDT
+	set RecePowerDbm = -130
+	where RecePowerDbm = 0;
+    </update>
+
+    <!-- 获得路测数据，用于显示  -->
+    <select id="getDTdisplay" parameterClass="">      
+	select distinct tbDT.gxid, tbDT.gyid, MinX, MinY, MaxX, MaxY, a.RecePower
+	from tbDT, tbGridDem, (select gxid, gyid, MAX(recepowerDbm) as recepower 
+						   from tbDT 
+						   where gxid = tbdt.gxid and gyid = tbdt.gyid
+						   group by gxid, gyid) as a
+	where tbDT.gxid = tbGridDem.GXID 
+	and tbDT.gyid = tbGridDem.GYID
+	and tbdt.gxid = a.gxid
+	and tbdt.gyid = a.gyid
+	--and roadid = 0
+    </select>
+
+    <!-- 获得路测数据-->
+    <select id="getDT" parameterClass="Hashtable">    
+	select distinct tbDT.gxid, tbDT.gyid, id, roadid, tbdt.x, tbdt.y, tbdt.longtitude, tbdt.latitude, a.RecePowerDbm
+	from tbDT,(select gxid, gyid, MAX(recepowerDbm) as RecePowerDbm
+			   from tbDT 
+			   where gxid = tbdt.gxid and gyid = tbdt.gyid
+			   group by gxid, gyid) as a
+	where tbdt.gxid = a.gxid
+	and tbdt.gyid = a.gyid
+	and roadid between $RoadID1$ and $RoadID2$
+	order by id
+    </select>
+
+    <select id="getDT1" parameterClass="Hashtable">      
+	select * 
+	from tbDT
+	order by id
+    </select>
+
+    <delete id="DeleteDT">
+	delete from tbDT
+    </delete>
+
+    <!-- 获得道路数据-->
+    <select id="GetStreet" parameterClass="Hashtable">      
+	select * 
+	from tbRoad
+	where streetX between '$minX$' and '$maxX$' 
+	and streetY between '$minY$' and '$maxY$'
+	order by roadID, pointID
+    </select>
+
+    <select id="GetNear" parameterClass="Hashtable">      
+	select * from tbRoad
+	where streetX between '$minX$' and '$maxX$' 
+	and streetY between '$minY$' and '$maxY$'
+	order by roadID, pointid
+    </select>
+
+    <select id="GetNear1" parameterClass="Hashtable">      
+	select * from tbSubRoad
+	where x between '$minX$' and '$maxX$' 
+	and y between '$minY$' and '$maxY$'
+        and roadID != '$roadID$'
+	order by roadID, pointid
+    </select>
+
+
+    <select id="GetAllStreet" parameterClass="Hashtable">      
+	select * from tbRoad
+	order by roadID, pointid
+    </select>
+
+    <select id="GetAllSubStreet" parameterClass="Hashtable">      
+	select * from tbSubRoad
+	order by roadID, pointid
+    </select>
+
+    <select id="GetSubNear" parameterClass="Hashtable">      
+	select roadID, pointid from tbSubRoad
+	where x between '$minX$' and '$maxX$' 
+	and y between '$minY$' and '$maxY$'
+        and roadID != '$roadID$'
+	order by roadID, pointid
+    </select>
+
+    <select id="GetSubNear1" parameterClass="Hashtable">      
+	select distinct roadid, x, y, pointgid from tbSubRoad
+	where x between '$minX$' and '$maxX$' 
+	and y between '$minY$' and '$maxY$'
+	and PointGID >= 0
+    </select>
+
+
+    <delete id="DeleteSubRoad">
+	delete from tbSubRoad
+    </delete>
+
+
+    <select id="GetDbmByGrid" parameterClass="Hashtable">      
+	select max(ReceivedPowerdbm) as ReceivedPowerdbm
+	from tbGridPathloss
+	where gxid = $gxid$ and gyid = $gyid$
+    </select>
+
+
+    <select id="GetFork" parameterClass="">       
+	select distinct x, y from tbSubRoad
+	where PointGID >= 0
+    </select>
+
+    <select id="getBuildingVertex22" parameterClass="">
+        select tbBuildingVertexOriginal.BuildingID, VertexX, VertexY, BHeight, VIndex
+	from tbBuildingVertexOriginal, tbBuilding 
+	where tbBuildingVertexOriginal.BuildingID = tbBuilding.BuildingID
+	order by tbBuildingVertexOriginal.BuildingID, Vindex
+    </select>
+
+    <select id="getCells" parameterClass="">    
+	select distinct x, y from cell
+    </select>
+
+    <select id="GetDTgrids" parameterClass="">    
+	select gxid, gyid from tbdt
+    </select>
+
+    <select id="getAllCells" parameterClass="">  
+	select * from cell order by id
+    </select>
+    
+    <delete id="deleteAllCells">
+	delete from cell
+    </delete>
+
+    <select id="GetMaxRayID" parameterClass="">    
+	select max(trajID) as id from tbRayAdj
+    </select>
+
+     <select id="GetMaxRayLocID" parameterClass="">    
+	select max(trajID) as id from tbRayLoc
+    </select>
+
+    <!-- 获取范围内的空间网格 -->
+	<select id="GetBuildingGrid3D1" parameterClass="HashTable">
+	select BuildingID, GXID,GYID,GZID 
+	from tbBuildingGrid3D b
+	where   ($x1$-b.GXID)*($y2$-b.GYID)-($x2$ - b.GXID)*($y1$-b.GYID) > 0
+	and     ($x2$-b.GXID)*($y3$-b.GYID)-($x3$ - b.GXID)*($y2$-b.GYID) > 0
+	and     ($x3$-b.GXID)*($y4$-b.GYID)-($x4$ - b.GXID)*($y3$-b.GYID) > 0
+	and     ($x4$-b.GXID)*($y1$-b.GYID)-($x1$ - b.GXID)*($y4$-b.GYID) > 0
+	order by BuildingID, GXID, GYID, GZID
+	</select>
+	
+	<select id="GetBuildingGrid3D" parameterClass="HashTable">
+           	 select BuildingID, GXID,GYID,GZID from tbBuildingGrid3D where GXID between '$minGXID$' and '$maxGXID$' and GYID 
+	between '$minGYID$' and '$maxGYID$' order by BuildingID, GXID, GYID, GZID
+      	</select>
+
+	<select id="GetBuildingCenter" parameterClass="Hashtable">
+	select distinct a.BuildingID, a.BCenterX, a.BCenterY, a.BHeight 
+	from tbBuilding a, tbBuildingGrid3D b 
+	where a.BuildingID = b.BuildingID
+	and ($x1$-b.GXID)*($y2$-b.GYID)-($x2$ - b.GXID)*($y1$-b.GYID) > 0
+	and ($x2$-b.GXID)*($y3$-b.GYID)-($x3$ - b.GXID)*($y2$-b.GYID) > 0
+	and ($x3$-b.GXID)*($y4$-b.GYID)-($x4$ - b.GXID)*($y3$-b.GYID) > 0
+	and ($x4$-b.GXID)*($y1$-b.GYID)-($x1$ - b.GXID)*($y4$-b.GYID) > 0
+	</select>
+
+	<select id="GetBuildingVertex" parameterClass="HashTable">
+        select a.BuildingID, a.VertexX, a.VertexY from tbBuildingVertex a
+	where a.BuildingID in 
+	(
+		select distinct b.BuildingID from tbBuildingGrid3D b 
+		where  	    ($x1$-b.GXID)*($y2$-b.GYID)-($x2$ - b.GXID)*($y1$-b.GYID) > 0
+			and ($x2$-b.GXID)*($y3$-b.GYID)-($x3$ - b.GXID)*($y2$-b.GYID) > 0
+			and ($x3$-b.GXID)*($y4$-b.GYID)-($x4$ - b.GXID)*($y3$-b.GYID) > 0
+			and ($x4$-b.GXID)*($y1$-b.GYID)-($x1$ - b.GXID)*($y4$-b.GYID) > 0
+	)
+	</select>
+
+	<select id="getBuildingTopVertex" parameterClass="Hashtable">      
+	select BuildingID, tbGridDem.CX, tbGridDem.CY
+	from tbGridDem, tbBuildingGrid3D b
+	where gzid = 1
+	and tbGridDem.GXID = b.GXID 
+	and tbGridDem.GYID = b.GYID
+	and ($x1$-b.GXID)*($y2$-b.GYID)-($x2$ - b.GXID)*($y1$-b.GYID) > 0
+	and ($x2$-b.GXID)*($y3$-b.GYID)-($x3$ - b.GXID)*($y2$-b.GYID) > 0
+	and ($x3$-b.GXID)*($y4$-b.GYID)-($x4$ - b.GXID)*($y3$-b.GYID) > 0
+	and ($x4$-b.GXID)*($y1$-b.GYID)-($x1$ - b.GXID)*($y4$-b.GYID) > 0
+	group by BuildingID, tbGridDem.CX, tbGridDem.CY 
+    	</select>
+
+	<select id="getGroundGridsCenter" parameterClass="Hashtable">
+	select GXID, GYID, CX, CY from tbGridDem b
+	where ($x1$-b.GXID)*($y2$-b.GYID)-($x2$ - b.GXID)*($y1$-b.GYID) > 0
+	and ($x2$-b.GXID)*($y3$-b.GYID)-($x3$ - b.GXID)*($y2$-b.GYID) > 0
+	and ($x3$-b.GXID)*($y4$-b.GYID)-($x4$ - b.GXID)*($y3$-b.GYID) > 0
+	and ($x4$-b.GXID)*($y1$-b.GYID)-($x1$ - b.GXID)*($y4$-b.GYID) > 0
+	</select>
+
+	<select id="GetBuildingGrid3DPre" parameterClass="HashTable">
+            	select BuildingID, GXID,GYID,GZID from tbBuildingGrid3D 
+	where GXID between '$minGXID$' and '$maxGXID$' 
+	and GYID between '$minGYID$' and '$maxGYID$' 
+	order by BuildingID, GXID, GYID, GZID
+	</select>
+
+	<select id="GetBuildingCenterPre" parameterClass="HashTable">
+            select distinct a.BuildingID, a.BCenterX, a.BCenterY, a.BHeight from tbBuilding a, tbBuildingGrid3D b where a.BuildingID = b.BuildingID and b.GXID between '$minGXID$' and '$maxGXID$' and b.GYID between '$minGYID$' and '$maxGYID$'
+	</select>
+
+	<select id="GetBuildingVertexPre" parameterClass="HashTable">
+            	   select a.BuildingID, a.VertexX, a.VertexY from tbBuildingVertex a
+	    where a.BuildingID in 
+	    (
+		select distinct b.BuildingID from tbBuildingGrid3D b where b.GXID between '$minGXID$' and '$maxGXID$' 
+		and b.GYID between '$minGYID$' and '$maxGYID$'
+	    )
+	   order by a.BuildingID, a.VIndex
+	</select>
+
+	<select id="getBuildingTopVertexPre" parameterClass="Hashtable">      
+	select BuildingID, tbGridDem.CX, tbGridDem.CY
+	from tbGridDem, tbBuildingGrid3D b
+	where gzid = 1
+ 	and b.GXID between '$minGXID$' and '$maxGXID$' 
+        and b.GYID between '$minGYID$' and '$maxGYID$'
+	and tbGridDem.GXID = b.GXID 
+	and tbGridDem.GYID = b.GYID
+	group by BuildingID, tbGridDem.CX, tbGridDem.CY 
+    	</select>
+
+	<select id="getGroundGridsCenterPre" parameterClass="Hashtable">
+	    select GXID, GYID, CX, CY from tbGridDem 
+	    where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$'
+	</select>
+
+	<select id="getPwrGround" parameterClass="Hashtable">
+	    select * from tbGridPathloss where ci = $CI$
+	    order by gxid, gyid
+	</select>
+
+	<select id="getPwrBuilding" parameterClass="Hashtable">
+	    select * from tbBuildingGridPathloss where ci = $CI$
+	    order by gxid, gyid, level
+	</select>
+
+	<delete id="deleteSpecifiedReRay" parameterClass="Hashtable">
+		delete from tbReRay where ci = $CI$
+    	</delete>
+	
+	<select id="getReRay" parameterClass="Hashtable">
+	    select * from tbReRay
+	</select>
+
+	<select id="getUser" parameterClass="Hashtable">
+	    select * from userInfo
+	    where USERNAME = '$name$' and PASSWORD= '$pwd$'
+	</select>
+
+	<delete id="DeleteDefect">
+		delete from tbDefect
+	</delete>
+
+	<select id="getDefect" parameterClass="Hashtable">
+		select tbDefect.GXID, tbDefect.GYID, tbDefect.GZID, 
+		MinX, MinY, MaxX, MaxY, ReceivedPowerdbm
+		from tbGridDem b, tbDefect
+		where type = $type$
+		and tbDefect.GXID between $minGXID$ and $maxGXID$
+		and tbDefect.GYID between  $minGYID$ and $maxGYID$
+		and tbDefect.GXID = b.GXID 
+		and tbDefect.GYID = b.GYID 
+	</select>
+
+	<!-- 参数校正计算路径 -->
+	<select id="getRays" parameterClass=""> 
+		select *
+		from tbRayAdj
+		order by trajID,rayLevel 
+	</select>
+
+  <!-- 参数校正计算路径 -->
+  <select id="getRays1" parameterClass="Hashtable">
+    select *
+    from tbRayAdj
+    where gxid % $mod$ = 0
+    order by trajID,rayLevel
+  </select>
+
+  <select id="getGridsNum" parameterClass="Hashtable">
+    select count(*) from tbDT
+    where dateTime between '$startDateTime$' and '$endDateTime$'
+  </select>
+
+	<!-- 路测数据 -->
+	<select id="getAtuData" parameterClass=""> 
+		select CellID,RSRP,Longitude,Latitude 
+		from dbo.tbATUData group by Longitude,Latitude,CellID,RSRP 
+		order by CellID,Longitude,Latitude 
+	</select>
+
+  <select id="getAccelerateGrids" parameterClass="">
+    select * from tbAccelerateGridBuilding
+  </select>
+
+	<!--网格范围-->
+	<insert id="insertATUDATA" parameterClass="Hashtable"> 
+		delete from tbPreATU insert into tbPreATU(gxid, gyid, CellID, AllRsrp，maxRSRP，NumofAtu，avgRSRP, Scen) values('$gxid$', '$gyid$', '$CellID$', '$AllRsrp$','$maxRSRP$', '$NumofAtu$', '$avgRSRP$', '$Scen$'); 
+	</insert>
+
+	<delete id="DeleteInfSource">
+		delete from tbInfSource
+	</delete>
+
+	<delete id="DeleteRays">
+		delete from tbRayAdj
+	</delete>
+
+  <delete id="DeleteAccrelateGridScene">
+    delete from tbAccelerateGridScene
+  </delete>
+
+  <select id="getAGridZ" parameterClass="">
+    select min(gzid), max(gzid) from tbAccelerateGridBuilding
+  </select>
+
+  <select id="getAdjCoeff" parameterClass="">
+    select * from tbAdjCoefficient
+  </select>
+
+  <select id="GetAgridScene" parameterClass="HashTable">
+    select GXID,GYID,GZID,Scene from tbAccelerateGridScene where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$' order by GXID, GYID, GZID
+  </select>
+
+  <delete id="DeleteAdjCoefficient">
+    delete from tbAdjCoefficient
+  </delete>
+  
+  <select id="GetInfSource" parameterClass="">
+    select x, y, z from tbInfSource
+  </select>
+
+   <delete id="DeleteInfArea">
+    delete from tbInfArea
+  </delete>
+
+   <select id="getTIN" parameterClass="">
+    select TINID, VertexX, VertexY, VertexHeight
+    from tbTIN
+    order by TINID, vindex
+  </select>
+
+   <delete id="DeleteAccrelateTIN">
+    delete from tbAccelerateGridTIN
+   </delete>
+
+   <!-- 获取范围内的加速栅格中的 TIN -->
+    <select id="GetAccelerateStructTIN" parameterClass="HashTable">
+	select GXID,GYID,GZID,TINID from tbAccelerateGridTIN 
+	where GXID between $minGXID$ and $maxGXID$
+	and GYID between $minGYID$  and $maxGYID$
+	order by GXID, GYID, GZID
+    </select>
+
+   <select id="GetTINVertexPre" parameterClass="HashTable">
+	select a.TINID, a.VertexX, a.VertexY, a.VertexHeight from tbTIN a
+	where a.TINID in 
+	(
+		select distinct b.TINID from tbTIN b where b.VertexX between $minX$ and $maxX$ 
+		and b.VertexY between $minY$ and $maxY$
+	)
+	order by a.TINID, a.VIndex 
+    </select>
+
+    <select id="GetAllTIN" parameterClass="">
+	select * from tbTIN
+	order by TINID, VIndex
+    </select>
+
+  </statements>
+</sqlMap>

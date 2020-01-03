@@ -25,7 +25,8 @@ namespace LTE.WebAPI
             // 有关详细信息，请参阅: http://www.asp.net/web-api
             //config.EnableSystemDiagnosticsTracing();
 
-            //config.Filters.Add(new WebAPI.Attributes.ApiAuthorizeAttribute());
+            config.Filters.Add(new WebAPI.Attributes.ParamsCheckAttribute());
+            config.Filters.Add(new WebAPI.Attributes.ApiAuthorizeAttribute());
         }
     }
 }

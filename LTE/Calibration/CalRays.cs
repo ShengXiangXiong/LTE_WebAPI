@@ -16,26 +16,18 @@ using LTE.InternalInterference;
 
 using System.IO;
 using Excel = Microsoft.Office.Interop.Excel;
+using Point = LTE.Geometric.Point;
 
 namespace LTE.Calibration
 {
     public class CalRays
     {
-        public static double convertw2dbm(double w)
-        {
-            return 10 * (Math.Log10(w) + 3);
-        }
-
-        public static double convertdbm2w(double dbm)
-        {
-            return Math.Pow(10, (dbm / 10 - 3));
-        }
-
         public CalRays()
         {
 
         }
 
+        //轨迹数据字典
         // key："cellid,gxid,gyid"
         // value: TrajInfo{ key: "trajID", value: List<NodeInfo> }
         public static Dictionary<string, TrajInfo> buildingGrids(ref DataTable tb)
@@ -68,6 +60,18 @@ namespace LTE.Calibration
                     string scen = tb.Rows[i]["proportion"].ToString();
                     int ptScen = Convert.ToInt32(tb.Rows[i]["endPointScen"].ToString());
 
+                    //射线段读入内存结构时，将射线段的起点和终点也读进来，jinhj
+                    double pointOfIncidenceX= Convert.ToDouble(tb.Rows[i]["rayStartPointX"].ToString());
+                    double pointOfIncidenceY = Convert.ToDouble(tb.Rows[i]["rayStartPointY"].ToString());
+                    double pointOfIncidenceZ = Convert.ToDouble(tb.Rows[i]["rayStartPointZ"].ToString());
+                    Point pointOfIncidence = new Point(pointOfIncidenceX, pointOfIncidenceY, pointOfIncidenceZ);
+
+                    double crossPointX = Convert.ToDouble(tb.Rows[i]["rayEndPointX"].ToString());
+                    double crossPointY = Convert.ToDouble(tb.Rows[i]["rayEndPointY"].ToString());
+                    double crossPointZ = Convert.ToDouble(tb.Rows[i]["rayEndPointZ"].ToString());
+                    Point crossPoint = new Point(crossPointX, crossPointY, crossPointZ);
+
+
                     RayType rayT = new RayType();
                     switch (rayType)
                     {
@@ -87,7 +91,9 @@ namespace LTE.Calibration
                             rayT = RayType.VDiffraction;
                             break;
                     }
-                    NodeInfo ni = new NodeInfo(cellID, Gxid, Gyid, trajID, rayT, distance, Angle, attenuation, RecePwrW);
+
+                    // //射线段读入内存结构时，将射线段的起点和终点也读进来，jinhj
+                    NodeInfo ni = new NodeInfo(cellID, Gxid, Gyid, trajID, rayT, distance, Angle, attenuation, RecePwrW, pointOfIncidence, crossPoint);
 
                     // 射线经过各场景的距离
                     string[] scenArr = scen.Split(';');
@@ -144,17 +150,89 @@ namespace LTE.Calibration
             }
 
             foreach (string key in rayDic.Keys)
-                rayDic[key].sumPwrDbm = convertw2dbm(rayDic[key].sumReceivePwrW);
+                rayDic[key].sumPwrDbm = ConvertUtil.convertw2dbm(rayDic[key].sumReceivePwrW);
 
             return rayDic;
         }
 
-        // 真实路测，这里是根据射线轨迹得到的路测加上随机扰动的结果，为模拟路测，后续应该直接从 tbDT 读取真实路测
+        //路测数据字典,by jinhj
+        //key：“cellid,gxid,gyid”
+        //value: List<double> cellIdList
+        public static Dictionary<string, List<double>> getMeaPwrFromtbDT(ref DataTable dtTb)
+        {
+            Dictionary<string, List<double>> dtDic = new Dictionary<string, List<double>>();
+            for (int i = 0; i < dtTb.Rows.Count; i++) {
+                //拼接key
+                if (dtTb.Rows[i]["x"] == System.DBNull.Value || dtTb.Rows[i]["y"] == System.DBNull.Value) {
+                    continue;
+                }
+                double x = double.Parse(dtTb.Rows[i]["x"].ToString());
+                double y = double.Parse(dtTb.Rows[i]["y"].ToString());
+                int gxid = -1;
+                int gyid = -1;
+                GridHelper.getInstance().XYToGGrid(x, y, ref gxid, ref gyid);
+                string cellId = dtTb.Rows[i]["eNodeBID"].ToString();
+                string key = string.Format("{0},{1},{2}", cellId, gxid, gyid);
+
+                //if (key == "35653633,4045,4427") {
+                //    int a = 1;
+                //}
+
+                //路测接收信号强度放入value
+                double pwrDbm = double.Parse(dtTb.Rows[i]["RSRP"].ToString());
+                if (!dtDic.ContainsKey(key)) {
+                    dtDic[key] = new List<double>();
+                }
+                dtDic[key].Add(pwrDbm);
+            }
+            return dtDic;
+        }
+
+        //路测数据字典,by jinhj
+        //key：“cellid,gxid,gyid”
+        //value: List<DTInfo> cellIdList
+        public static Dictionary<string, List<DTInfo>> getDTInfoFromtbDT(ref DataTable dtTb)
+        {
+            Dictionary<string, List<DTInfo>> dtDic = new Dictionary<string, List<DTInfo>>();
+            for (int i = 0; i < dtTb.Rows.Count; i++)
+            {
+                //拼接key
+                if (dtTb.Rows[i]["x"] == System.DBNull.Value || dtTb.Rows[i]["y"] == System.DBNull.Value)
+                {
+                    continue;
+                }
+                double x = double.Parse(dtTb.Rows[i]["x"].ToString());
+                double y = double.Parse(dtTb.Rows[i]["y"].ToString());
+                int gxid = -1;
+                int gyid = -1;
+                GridHelper.getInstance().XYToGGrid(x, y, ref gxid, ref gyid);
+                string cellId = dtTb.Rows[i]["eNodeBID"].ToString();
+                string key = string.Format("{0},{1},{2}", cellId, gxid, gyid);
+
+                //if (key == "35653633,4045,4427") {
+                //    int a = 1;
+                //}
+
+                //路测接收信号强度放入value
+                double pwrDbm = double.Parse(dtTb.Rows[i]["RSRP"].ToString());
+                double distance = double.Parse(dtTb.Rows[i]["SCell_Dist"].ToString());
+                DTInfo dtInfo = new DTInfo(pwrDbm,distance);
+
+                if (!dtDic.ContainsKey(key))
+                {
+                    dtDic[key] = new List<DTInfo>();
+                }
+                dtDic[key].Add(dtInfo);
+            }
+            return dtDic;
+        }
+
+        // 模拟路测，是根据射线轨迹得到的路测加上随机扰动的结果
         // coef：第一维为场景，第二维为各校正系数，依次为直射、反射、绕射
-        public static Dictionary<string, double> getMeaPwr(ref Dictionary<string, TrajInfo> rayDic, int scenNum)
+        public static Dictionary<string, List<double>> getMeaPwr(ref Dictionary<string, TrajInfo> rayDic, int scenNum)
         {
             int cnt = rayDic.Count;  // 路测点数量
-            Dictionary<string, double> meaPwrNopt = new Dictionary<string, double>();  // 模拟的真实路测
+            Dictionary<string, List<double>> meaPwrNopt = new Dictionary<string, List<double>>();  // 模拟的真实路测
             double[] BigObj = new double[cnt];  // 整体目标
             double[] SmaObj = new double[cnt];  // 局部目标
             RandomToND rtnd = new RandomToND();
@@ -164,7 +242,8 @@ namespace LTE.Calibration
 
             foreach (string key in rayDic.Keys)
             {
-                meaPwrNopt[key] = rayDic[key].sumPwrDbm + BigObj[indexB++];
+                meaPwrNopt[key] = new List<double>();
+                meaPwrNopt[key].Add(rayDic[key].sumPwrDbm + BigObj[indexB++]);
             }
 
             return meaPwrNopt;

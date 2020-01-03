@@ -11,15 +11,37 @@ namespace LTE.ExternalInterference.Struct
         private bool isLocated;
         private string reslocation;
         private string realocation;
+        public double lon;//经度
+        public double lat;//纬度
         private double precise;
         private string msg;
 
-        public ResultRecord(bool ans,string res,string real,double dis,string tips)
+        public ResultRecord(bool ans,double tlon,double tlat, string res, string real,double dis,string tips)
+        {
+            isLocated = ans;
+            reslocation = res;
+            realocation = real;
+            lon = Math.Round(tlon,4);
+            lat = Math.Round(tlat,4);
+            precise = dis;
+            msg = tips;
+        }
+        public ResultRecord(bool ans, string res, string real, double dis, string tips)
         {
             isLocated = ans;
             reslocation = res;
             realocation = real;
             precise = dis;
+            msg = tips;
+        }
+        public ResultRecord(bool ans, double tlon, double tlat, string tips)
+        {
+            isLocated = ans;
+            reslocation = "";
+            realocation = "";
+            lon = Math.Round(tlon, 4);
+            lat = Math.Round(tlat, 4);
+            precise = -1;
             msg = tips;
         }
 

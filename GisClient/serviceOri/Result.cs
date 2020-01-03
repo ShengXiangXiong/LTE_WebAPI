@@ -25,6 +25,7 @@ namespace GisClient
   {
     private string _code;
     private string _token;
+    private string _shpName;
 
     public bool Ok { get; set; }
 
@@ -56,6 +57,19 @@ namespace GisClient
       }
     }
 
+    public string ShpName
+    {
+      get
+      {
+        return _shpName;
+      }
+      set
+      {
+        __isset.shpName = true;
+        this._shpName = value;
+      }
+    }
+
 
     public Isset __isset;
     #if !SILVERLIGHT
@@ -64,6 +78,7 @@ namespace GisClient
     public struct Isset {
       public bool code;
       public bool token;
+      public bool shpName;
     }
 
     public Result() {
@@ -117,6 +132,13 @@ namespace GisClient
             case 4:
               if (field.Type == TType.String) {
                 Token = iprot.ReadString();
+              } else { 
+                TProtocolUtil.Skip(iprot, field.Type);
+              }
+              break;
+            case 5:
+              if (field.Type == TType.String) {
+                ShpName = iprot.ReadString();
               } else { 
                 TProtocolUtil.Skip(iprot, field.Type);
               }
@@ -176,6 +198,14 @@ namespace GisClient
           oprot.WriteString(Token);
           oprot.WriteFieldEnd();
         }
+        if (ShpName != null && __isset.shpName) {
+          field.Name = "shpName";
+          field.Type = TType.String;
+          field.ID = 5;
+          oprot.WriteFieldBegin(field);
+          oprot.WriteString(ShpName);
+          oprot.WriteFieldEnd();
+        }
         oprot.WriteFieldStop();
         oprot.WriteStructEnd();
       }
@@ -198,6 +228,10 @@ namespace GisClient
       if (Token != null && __isset.token) {
         __sb.Append(", Token: ");
         __sb.Append(Token);
+      }
+      if (ShpName != null && __isset.shpName) {
+        __sb.Append(", ShpName: ");
+        __sb.Append(ShpName);
       }
       __sb.Append(")");
       return __sb.ToString();

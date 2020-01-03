@@ -8,8 +8,9 @@
 *.user
 *.userosscache
 *.sln.docstates
-
 *.exe
+LTE.exe
+LTE.WebAPI.xml
 
 [Mm]apFiles
 
@@ -24,10 +25,11 @@
 x64/
 x86/
 bld/
-[Bb]in/
+[Bb]in/!*.dll
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -63,6 +65,7 @@ artifacts/
 StyleCopReport.xml
 
 # Files built by Visual Studio
+*.exe
 *_i.c
 *_p.c
 *_i.h

@@ -48,7 +48,7 @@ namespace LTE.InternalInterference
         public double distance;
         bool isRayLoc, isRayAdj;
 
-        public int scenNum = 3;  // 场景数量 2019.3.25
+        public int scenNum = 4;  // 场景数量 2019.3.25
 
         /// 计算场强函数
         /// </summary>
@@ -75,7 +75,7 @@ namespace LTE.InternalInterference
             rayCountRef1 = 0;
             rayCountRef2 = 0;
             rayCountRef3 = 0;
-            this.distance = distance;
+            this.distance = distance; 
 
             if ((toAngle - fromAngle + 360) % 360 > deltaA)
                 toAngle = fromAngle + deltaA;
@@ -130,11 +130,18 @@ namespace LTE.InternalInterference
                 return;
             if (t_p.Z > 1)
                 gzid = (int)Math.Ceiling(t_p.Z / GridHelper.getInstance().getGHeight()) + 1;
-            string key = String.Format("{0},{1},{2}", gxid, gyid, gzid);
+            string key = String.Format("{0},{1},{2}", gxid, gyid, 0);
 
-            if (!RayHelper.getInstance().ok(key)) // 入地栅格不位于路测路径中
+            int eNodeBID = this.sourceInfo.eNodeB;
+            double radius = this.distance;
+
+            // ----------经测试 有小区所有轨迹入地栅格都不位于路测路径--------
+            if (!RayHelper.getInstance(eNodeBID, radius).ok(key)) // 入地栅格不位于路测路径中
             {
                 return;
+            }
+            else {
+                int test = 1;//断点调试用
             }
 
             Geometric.Point endPoint = rayList[0].CrossPoint;
@@ -142,7 +149,8 @@ namespace LTE.InternalInterference
 
             double varAzimuth = 0, varInclination = 0;
             GeometricUtilities.getAzimuth_Inclination(originPoint, endPoint, out varAzimuth, out varInclination);
-            double[] ret = this.calcStrength.calcRayStrength(varAzimuth, varAzimuth, ref rayList);
+
+            double[] ret = this.calcStrength.calcRayStrength(varAzimuth, varInclination, ref rayList);
 
             double recvPwrDbm = this.calcStrength.convertw2dbm(ret[0]);
             if (recvPwrDbm > -130)
@@ -263,6 +271,12 @@ namespace LTE.InternalInterference
                         ray = new NodeInfo(originPoint, endPoint, new Point(-1, -1, -1), new Point(-1, -1, -1), -1, 0, null, rayType, Vector3D.getAngle(ref dir, ref normal) - Math.PI / 2.0);
                         rayScene(ref ray, ref scene);  // 2019.3.25 场景记录
                         rayList.Add(ray);
+
+                        //调试用，找指定angle的初级直射线，jin
+                        double threshold = 0.00000000000001;
+                        if (Math.Abs(ray.Angle - 0.334752152476177) < threshold) {
+                            int test = 1;
+                        }
 
                         addToRayAdj(ref rayList);
                     }
@@ -549,7 +563,7 @@ namespace LTE.InternalInterference
 
             double varAzimuth = 0, varInclination = 0;
             GeometricUtilities.getAzimuth_Inclination(originPoint, endPoint, out varAzimuth, out varInclination);
-            double[] ret = this.calcStrength.calcRayStrength(varAzimuth, varAzimuth, ref rayList);
+            double[] ret = this.calcStrength.calcRayStrength(varAzimuth, varInclination, ref rayList);
 
             double recvPwrDbm = this.calcStrength.convertw2dbm(ret[0]);
             if (recvPwrDbm > -130)
@@ -593,29 +607,27 @@ namespace LTE.InternalInterference
             this.rayCount++;
             this.rayCountDir++;
 
-            int[] scene = null;
+            int[] scene = null;//记录每个场景的数目
             if (this.scenNum > 0)
                 scene = new int[scenNum];
             do
             {
                 curAccGrid = lineCrossGrid.getNextCrossAccGrid();  // 得到射线当前走到了哪个均匀栅格
 
-                if (curAccGrid == null)
+                if (curAccGrid == null)//执行结束
                 {
                     break;
                 }
 
                 if (this.scenNum > 0)
                 {
-                    // 2019.4.25 场景记录
+                    // 2019.4.25 场景记录，记录经过的栅格的场景
                     string grid = string.Format("{0},{1},{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid);
                     scene[AccelerateStruct.gridScene[grid]]++;
                 }
-
-                // 地形
                 ray = this.getInfoOfLineCrossAccGrid(originPoint, dir, curAccGrid, ref polygonPoints, ref trayType);  // 射线与当前均匀栅格内的建筑进行碰撞检测
 
-                if (ray != null)
+                if (ray != null)//若发生碰撞，跳出循环
                 {
                     ray.rayType = rayType;
                     break;
@@ -624,9 +636,8 @@ namespace LTE.InternalInterference
 
             switch (type)
             {
-                case 1:
-                    // 射线没有与建筑物相交，直接到达地面
-                    if (ray == null)
+                case 1://1：连向顶面
+                    if (ray == null)// 射线没有与建筑物相交，直接到达顶面
                     {
                         Vector3D normal = new Vector3D(0, 0, 1);
                         this.rayCountDirG++;
@@ -634,7 +645,6 @@ namespace LTE.InternalInterference
                         if (this.scenNum > 0)
                             rayScene(ref ray, ref scene);  // 2019.4.25 场景记录
                         rayList.Add(ray);
-
                         addToRayLoc(ref rayList);
                     }
                     // 2019.5.30 可能与地形碰撞
@@ -646,7 +656,7 @@ namespace LTE.InternalInterference
                     }
                     break;
 
-                case 3:
+                case 3://连向可见侧面
                     if (ray == null)
                         break;
 
@@ -656,7 +666,7 @@ namespace LTE.InternalInterference
                         if (this.scenNum > 0)
                             rayScene(ref ray, ref scene);  // 2019.4.25 场景记录
                         rayList.Add(ray);
-                        addToRayLoc(ref rayList);
+                        addToRayLoc(ref rayList);//单次跟踪结束
                     }
                     else
                     {

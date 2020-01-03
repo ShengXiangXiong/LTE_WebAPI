@@ -33,7 +33,7 @@
         rt.RSRPCons = parseFloat($("#RSRPCons").val()).toFixed(2);
         $.ajax
         ({
-                url: "/api/PointsSelect/SelectPoints",
+            url: "/api/PointsSelect/SelectPoints",
             type: "POST",
             contentType: "application/json; charset=utf-8",
             data: JSON.stringify(rt),

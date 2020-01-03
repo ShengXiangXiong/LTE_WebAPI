@@ -124,6 +124,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		<select id="GetGSMCellInfo" parameterClass="Hashtable">
 			select  Azimuth, Tilt, EIRP, x, y, AntHeight, Altitude, NetType, EARFCN from CELL where cellName = '$cellName$'
 		</select>
+		<!--获取GSM小区信息,构造CellInfo-->
+		<select id="GetGSMCellInfoByLongLat" parameterClass="Hashtable">
+			select  Azimuth, Tilt, EIRP, Longitude, Latitude, AntHeight, Altitude, NetType, EARFCN from CELL where cellName = '$cellName$'
+		</select>
 		<!--获取TD小区信息,构造CellInfo-->
 		<select id="GetTDCellInfo" parameterClass="string">
 		</select>
@@ -500,20 +504,32 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 	select gxid, gyid from tbdt
     </select>
 
-    <select id="getAllCells" parameterClass="">  
+	<select id="GetDTGridsOfACell" parameterClass="HashTable">
+		select x,y from tbdt
+		where eNodeBID=$eNodeBID$
+		and SCell_Dist between 0 and $radius$
+	</select>
+
+	<select id="GetAllDTGridsOfACell" parameterClass="HashTable">
+		select x,y from tbdt
+		where cellIndex=$cellIndex$
+	</select>
+
+	<select id="getAllCells" parameterClass="">  
 	select * from cell order by id
     </select>
     
     <delete id="deleteAllCells">
-	delete from cell
+	      delete from cell
     </delete>
 
     <select id="GetMaxRayID" parameterClass="">    
-	select max(trajID) as id from tbRayAdj
+	      select max(trajID) as id from tbRayAdj
     </select>
 
-     <select id="GetMaxRayLocID" parameterClass="">    
-	select max(trajID) as id from tbRayLoc
+     <select id="GetMaxRayLocID" parameterClass="HashTable">    
+	      select max(trajID) as id from tbRayLoc
+        where cellid = $cellid$
     </select>
 
     <!-- 获取范围内的空间网格 -->
@@ -568,11 +584,11 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     	</select>
 
 	<select id="getGroundGridsCenter" parameterClass="Hashtable">
-	select GXID, GYID, CX, CY from tbGridDem b
-	where ($x1$-b.GXID)*($y2$-b.GYID)-($x2$ - b.GXID)*($y1$-b.GYID) > 0
-	and ($x2$-b.GXID)*($y3$-b.GYID)-($x3$ - b.GXID)*($y2$-b.GYID) > 0
-	and ($x3$-b.GXID)*($y4$-b.GYID)-($x4$ - b.GXID)*($y3$-b.GYID) > 0
-	and ($x4$-b.GXID)*($y1$-b.GYID)-($x1$ - b.GXID)*($y4$-b.GYID) > 0
+		select GXID, GYID, CX, CY, Dem from tbGridDem b
+		where ($x1$-b.GXID)*($y2$-b.GYID)-($x2$ - b.GXID)*($y1$-b.GYID) > 0
+		and ($x2$-b.GXID)*($y3$-b.GYID)-($x3$ - b.GXID)*($y2$-b.GYID) > 0
+		and ($x3$-b.GXID)*($y4$-b.GYID)-($x4$ - b.GXID)*($y3$-b.GYID) > 0
+		and ($x4$-b.GXID)*($y1$-b.GYID)-($x1$ - b.GXID)*($y4$-b.GYID) > 0
 	</select>
 
 	<select id="GetBuildingGrid3DPre" parameterClass="HashTable">
@@ -625,8 +641,8 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     	</select>
 
 	<select id="getGroundGridsCenterPre" parameterClass="Hashtable">
-	    select GXID, GYID, CX, CY from tbGridDem 
-	    where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$'
+		select GXID, GYID, CX, CY, Dem from tbGridDem
+		where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$'
 	</select>
 
 	<select id="getPwrGround" parameterClass="Hashtable">
@@ -667,25 +683,67 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		and tbDefect.GYID = b.GYID 
 	</select>
 
-	<!-- 参数校正计算路径 -->
+	<!-- 用于系数矫正的轨迹信息 -->
 	<select id="getRays" parameterClass=""> 
 		select *
 		from tbRayAdj
 		order by trajID,rayLevel 
 	</select>
 
-  <!-- 参数校正计算路径 -->
-  <select id="getRays1" parameterClass="Hashtable">
+	<!-- 用于系数校正的部分轨迹信息 -->
+	<select id="getSomeRaysByMod" parameterClass="Hashtable">
     select *
     from tbRayAdj
     where gxid % $mod$ = 0
     order by trajID,rayLevel
   </select>
 
-  <select id="getGridsNum" parameterClass="Hashtable">
-    select count(*) from tbDT
-    where dateTime between '$startDateTime$' and '$endDateTime$'
-  </select>
+	<!--获得轨迹对应的小区集合-->
+	<select id="getRayAdjCells" >
+		SELECT distinct cellID
+		FROM tbRayAdj
+	</select>
+
+	<select id="getRayAdjNum" parameterClass="">
+		select count(*) from tbRayAdj
+	</select>
+
+	<!--获得所有路测xy坐标及信号强度-->
+	<select id="getCellDT" parameterClass="">
+		select *
+		from tbDT
+	</select>
+
+	<select id="getCellDTTest" parameterClass="">
+		select *
+		from tbDT
+		where RSRP>-100
+	</select>
+
+	<select id="getDTNum" parameterClass="">
+		select count(*) from tbDT
+	</select>
+
+	<!--获得所选区域内所有有路测点的主小区名，jin-->
+	<select id="getAreaDTMainCellName" parameterClass="">
+		select CellName
+		from Cell
+		where cellName in(
+		select distinct CellName
+		from tbDT
+		where Lon between (select MinLon from tbRayAdjRange) and (select MaxLon from tbRayAdjRange)
+		and Lat between (select MinLat from tbRayAdjRange) and (select MaxLat from tbRayAdjRange)
+		)
+		order by CellName
+	</select>
+
+	<!--获得每个小区路测数据条数-->
+	<select id="getDtCntOfCell" parameterClass="">
+		SELECT cellName,count(*) as cnt
+		FROM tbDT
+		group by cellName
+		order by cnt
+	</select>
 
 	<!-- 路测数据 -->
 	<select id="getAtuData" parameterClass=""> 
@@ -726,6 +784,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   <select id="GetAgridScene" parameterClass="HashTable">
     select GXID,GYID,GZID,Scene from tbAccelerateGridScene where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$' order by GXID, GYID, GZID
   </select>
+
+	<select id="GetAllGridScene">
+		select GXID,GYID,GZID,Scene from tbAccelerateGridScene order by GXID, GYID, GZID
+	</select>
 
   <delete id="DeleteAdjCoefficient">
     delete from tbAdjCoefficient
@@ -862,46 +924,26 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 		where GainType = '$gainType$' and Direction = $direction$ and Degree = $degree$
 	</select>
 
-  <!--获取渔网位置-->
-  <select id="GetFishnetPosition">
-    select fileindex from tbDataPosition where filename='fishnet'
-  </select>
-
-  <!--获取渔网覆盖范围和栅格大小-->
-  <select id="GetFishnetRange">
-    select AreaMinX,AreaMinY,AreaMaxX,AreaMaxY,AGridSize from tbGridRange where id=1
-  </select>
-
-  <!--获取建筑物图层文件位置-->
-  <select id="GetBuildingPosition">
-    select fileindex from tbDataPosition where filename='building'
-  </select>
-
-  <!--获取建筑物叠加结果图层文件位置-->
-  <select id="GetBuildingOverlayPosition">
-    select fileindex from tbDataPosition where filename='building_overlay'
-  </select>
-
-  <!--获取水面图层文件位置-->
-  <select id="GetWaterPosition">
-    select fileindex from tbDataPosition where filename='water'
-  </select>
-
-  <!--获取水面叠加结果图层文件位置-->
-  <select id="GetWaterOverlayPosition">
-    select fileindex from tbDataPosition where filename='water_overlay'
-  </select>
-
   <!--获取路测信息，用于路测信息填充-->
   <select id="SelectTbDTData">
     select ID,Lon,Lat,PCI
     from tbDTData
     where Lon between 118.401 and 119.192 and  Lat between 31.2864 and 32.5508
   </select>
-
+  <delete id="deleteNousetbDTData" parameterClass="Hashtable">
+    delete from tbDTData
+    where ID is null or Lon is null or Lat is null or PCI is null
+  </delete>
+  
   <delete id="deletetbtmpDTData" parameterClass="Hashtable">
     delete from tbtmpDTData
   </delete>
+
+  <!--获取cell表信息-->
+  <select id="SelectCellInfo">
+    select CellID,Longitude,Latitude,eNodeB,PCI
+    from CELL
+  </select>
 
   <!--路测数据批量更新相关操作，包含借助临时表批量表更新，临时表删除-->
   <update id="UpdatetbDTDataByTmp">
@@ -910,15 +952,22 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     tbDTData.y=tbtmpDTData.y,
     tbDTData.eNodeBID = tbtmpDTData.eNodeBID,
     tbDTData.CellID=tbtmpDTData.CellID,
-    tbDTData.BtsName=tbtmpDTData.BtsName,
     tbDTData.SCell_Dist = tbtmpDTData.SCell_Dist
     from tbDTData,tbtmpDTData
     where tbDTData.ID = tbtmpDTData.ID
   </update>
 
+  <!--更新扇区，防止全部写入内存导致溢出-->
+  <update id="UpdatetbDTDataByCell">
+    update tbDTData
+    set tbDTData.BtsName=CELL.BtsName,
+    tbDTData.CellName = CELL.CellName
+    from tbDTData,CELL
+    where tbDTData.eNodeBID = CELL.eNodeB and tbDTData.CellID = CELL.CellID
+  </update>
   <!--网外干扰定位选点相关-->
   <select id="GetDTSet" parameterClass="Hashtable">
-    select ID,x, y, RSRP,SINR
+    select ID,Lon,Lat, RSRP
     from tbDTData
     where  RSRP>$RSRP$ and BtsName='$BtsName$' and 3000>SCell_Dist
     order by RSRP desc
@@ -936,6 +985,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     from CELL
     where BtsName = '$BtsName$'
   </select>
+
+  <delete id="deletbLocResult" parameterClass="Hashtable">
+    delete from tbLocResults where Version = '$Version$'
+  </delete>
   <!--插入到设定的干扰源表中tbVirSource-->
   <insert id="insertVirSource" parameterClass="Hashtable">
     insert into tbVirSource
@@ -976,6 +1029,364 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     from tbRayLoc
     where cellid = $CI$
   </select>
+
+  <insert id ="insShp" parameterClass="Hashtable">
+    INSERT INTO [dbo].[tbShpLayer] (IndexName,ShpName,Type,DateTime)
+    VALUES (#IndexName#,#ShpName#,#Type#,#DateTime#)
+  </insert>
+
+  <select id = "getShpByIndexName" parameterClass="string">
+    SELECT  ShpName FROM  tbShpLayer
+    where IndexName = #IndexName#
+  </select>
+
+  <select id = "getNotComputedCellByArea" parameterClass="Hashtable">
+    <!--SELECT  CellName,x,y,CoverageRadius FROM  CELL
+    where x between $minX and $maxX and y between $minY and $maxY-->
+
+    SELECT  distinct CellName,x,y,CoverageRadius FROM  CELL a
+    where x between $minX$ and $maxX$ and y between $minY$ and $maxY$ and
+    not Exists( select ci from tbGridPathloss b where a.CI=b.CI)
+  </select>
+  
+<!--获取渔网位置-->
+    <select id="GetFishnetPosition">
+                select fileindex from tbDataPosition where filetype='fishnet'
+    </select>
+
+    <!--获取渔网覆盖范围和栅格大小-->
+    <select id="GetFishnetRange">
+                select AreaMinX,AreaMinY,AreaMaxX,AreaMaxY,AGridSize from tbGridRange where id=1
+    </select>
+
+    <!--获取建筑物图层文件位置-->
+    <select id="GetBuildingPosition">
+                select fileindex from tbDataPosition where filetype='building'
+    </select>
+
+    <!--获取建筑物叠加结果图层文件位置-->
+    <select id="GetBuildingOverlayPosition">
+                select fileindex from tbDataPosition where filetype='building_overlay'
+    </select>
+
+    <!--批量更新建筑物叠加结果-->
+    <update id="UpdatetbAccelerateGridBuildingByTmp">
+                  update tbAccelerateGridScene1
+                  set tbAccelerateGridScene1.BuildingRatio=tbAccelerateGridSceneTmpBuilding.BuildingRatio
+                  from tbAccelerateGridScene1,tbAccelerateGridSceneTmpBuilding
+                  where tbAccelerateGridScene1.GXID=tbAccelerateGridSceneTmpBuilding.GXID
+                  and tbAccelerateGridScene1.GYID=tbAccelerateGridSceneTmpBuilding.GYID
+    </update>
+
+    <!--删除更新建筑物数据使用的临时表中的数据-->
+    <delete id="DeletetbAccelerateGridSceneTmpBuilding">
+	 delete from tbAccelerateGridSceneTmpBuilding
+    </delete>
+
+    <!--获取水面图层文件位置-->
+    <select id="GetWaterPosition">
+                select fileindex from tbDataPosition where filetype='water'
+    </select>
+
+    <!--获取水面叠加结果图层文件位置-->
+    <select id="GetWaterOverlayPosition">
+                select fileindex from tbDataPosition where filetype='water_overlay'
+    </select>
+
+    <!--批量更新水面叠加结果-->
+    <update id="UpdatetbAccelerateGridWaterByTmp">
+                  update tbAccelerateGridScene1
+                  set tbAccelerateGridScene1.WaterRatio=tbAccelerateGridSceneTmpWater.WaterRatio
+                  from tbAccelerateGridScene1,tbAccelerateGridSceneTmpWater
+                  where tbAccelerateGridScene1.GXID=tbAccelerateGridSceneTmpWater.GXID
+                  and tbAccelerateGridScene1.GYID=tbAccelerateGridSceneTmpWater.GYID
+    </update>
+
+    <!--删除更新水面数据使用的临时表中的数据-->
+    <delete id="DeletetbAccelerateGridSceneTmpWater">
+	 delete from tbAccelerateGridSceneTmpWater
+    </delete>
+
+    <!--获取草地图层文件位置-->
+    <select id="GetGrassPosition">
+                select fileindex from tbDataPosition where filetype='grass'
+    </select>
+
+    <!--获取草地叠加结果图层文件位置-->
+    <select id="GetGrassOverlayPosition">
+                select fileindex from tbDataPosition where filetype='grass_overlay'
+    </select>
+
+    <!--批量更新草地叠加结果-->
+    <update id="UpdatetbAccelerateGridGrassByTmp">
+                  update tbAccelerateGridScene1
+                  set tbAccelerateGridScene1.GrassRatio=tbAccelerateGridSceneTmpGrass.GrassRatio
+                  from tbAccelerateGridScene1,tbAccelerateGridSceneTmpGrass
+                  where tbAccelerateGridScene1.GXID=tbAccelerateGridSceneTmpGrass.GXID
+                  and tbAccelerateGridScene1.GYID=tbAccelerateGridSceneTmpGrass.GYID
+    </update>
+
+    <!--删除更新草地数据使用的临时表中的数据-->
+    <delete id="DeletetbAccelerateGridSceneTmpGrass">
+	 delete from tbAccelerateGridSceneTmpGrass
+    </delete>
+
+    <!--聚类分析建筑物百分比查询-->
+    <select id="GetBuildingRatio">
+                select GXID,GYID,BuildingRatio from tbAccelerateGridScene1 
+                where GZID=1 and BuildingRatio>0
+    </select>
+
+    <!-- 聚类分析建筑物扩展 -->
+    <select id="GetBuildingHeight" parameterClass="HashTable">
+	            select Bheight,VertexX,VertexY from tbBuilding 
+				join tbBuildingVertexOriginal on tbBuilding.BuildingID=tbBuildingVertexOriginal.BuildingID 
+				where Bheight> '$height$' 
+				and VertexX between '$minGXID$' and '$maxGXID$' and VertexY between '$minGYID$' and '$maxGYID$' 
+				and VIndex=0
+	</select>
+
+    <!--聚类分析水面百分比查询-->
+    <select id="GetWaterRatio">
+                select GXID,GYID,WaterRatio from tbAccelerateGridScene1 
+                where GZID=1 and WaterRatio>0
+    </select>
+
+    <!--聚类分析草地百分比查询-->
+    <select id="GetGrassRatio">
+                select GXID,GYID,GrassRatio from tbAccelerateGridScene1 
+                where GZID=1 and GrassRatio>0
+    </select>
+
+    <!--批量更新聚类结果-->
+    <update id="UpdatetbAccelerateGridClusterByTmp">
+                  update tbAccelerateGridScene1
+                  set tbAccelerateGridScene1.Scene=tbAccelerateGridSceneTmpCluster.Scene,
+                  tbAccelerateGridScene1.ClusterID=tbAccelerateGridSceneTmpCluster.ClusterID
+                  from tbAccelerateGridScene1,tbAccelerateGridSceneTmpCluster
+                  where tbAccelerateGridScene1.GXID=tbAccelerateGridSceneTmpCluster.GXID
+                  and tbAccelerateGridScene1.GYID=tbAccelerateGridSceneTmpCluster.GYID
+    </update>
+
+    <!--删除更新聚类结果使用的临时表中的数据-->
+    <delete id="DeletetbAccelerateGridSceneTmpCluster">
+	 delete from tbAccelerateGridSceneTmpCluster
+    </delete>
+
+<!--获取聚类图层文件位置-->
+    <select id="GetClusterPosition">
+                select fileindex from tbDataPosition where filetype='cluster'
+    </select>
+
+    <!--获取聚类结果-->
+    <select id="GetClusterResult">
+                select GXID,GYID,Scene from tbAccelerateGridScene1
+                where GZID=1
+    </select>
+
+    <!--更新前提条件表的网格划分功能状态-->
+    <update id="UpdatetbDependTableGridRange">
+                  update tbDependTable set State=1
+                  where item='GridRange'
+    </update>
+
+    <!--网格划分功能状态查询-->
+    <select id="GetGridRangeState">
+                select State from tbDependTable
+                where item='GridRange'
+    </select>
+
+    <!--更新前提条件表的渔网生成功能状态-->
+    <update id="UpdatetbDependTableFishnetShp">
+                  update tbDependTable set State=1
+                  where item='FishnetShp'
+    </update>
+
+    <!--渔网生成功能状态查询-->
+    <select id="GetFishnetShpState">
+                select State from tbDependTable
+                where item='FishnetShp'
+    </select>
+
+    <!--更新前提条件表的建筑物叠加分析功能状态-->
+    <update id="UpdatetbDependTableBuilding_overlay">
+                  update tbDependTable set State=1
+                  where item='Building_overlaytoDB'
+    </update>
+
+    <!--更新前提条件表的水面叠加分析功能状态-->
+    <update id="UpdatetbDependTableWater_overlay">
+                  update tbDependTable set State=1
+                  where item='Water_overlaytoDB'
+    </update>
+
+    <!--更新前提条件表的草地叠加分析功能状态-->
+    <update id="UpdatetbDependTableGrass_overlay">
+                  update tbDependTable set State=1
+                  where item='Grass_overlaytoDB'
+    </update>
+
+    <!--建筑物叠加分析功能状态查询-->
+    <select id="GetBuilding_overlayState">
+                select State from tbDependTable
+                where item='Building_overlaytoDB'
+    </select>
+
+    <!--水面叠加分析功能状态查询-->
+    <select id="GetWater_overlayState">
+                select State from tbDependTable
+                where item='Water_overlaytoDB'
+    </select>
+
+    <!--草地叠加分析功能状态查询-->
+    <select id="GetGrass_overlayState">
+                select State from tbDependTable
+                where item='Grass_overlaytoDB'
+    </select>
+   
+    <!--更新前提条件表的聚类分析功能状态-->
+    <update id="UpdatetbDependTableClustertoDB">
+                  update tbDependTable set State=1
+                  where item='ClustertoDB'
+    </update>
+
+    <!--聚类分析功能状态查询-->
+    <select id="GetClustertoDBState">
+                select State from tbDependTable
+                where item='ClustertoDB'
+    </select>
+
+     <!--聚类图层功能状态查询-->
+    <select id="GetClusterShpState">
+                select State from tbDependTable
+                where item='ClusterShp'
+    </select>
+
+    <!--更新前提条件表的聚类图层生成功能状态-->
+    <update id="UpdatetbDependTableClusterShp">
+                  update tbDependTable set State=1
+                  where item='ClusterShp'
+    </update>  
+
+    <!--删除网格划分后前提条件表的更新-->
+    <update id="UpdatetbDependTableDuetoGridRange">
+                  update tbDependTable SET State=0 
+                  where item in ('GridRange','FishnetShp','Building_overlaytoDB','Water_overlaytoDB','Grass_overlaytoDB','ClustertoDB','ClusterShp')
+    </update>
+
+    <!--删除渔网图层附带的所有数据-->
+    <delete id="DeleteFishnet">
+	 delete from tbAccelerateGridScene1
+    </delete>
+
+    <!--删除渔网后前提条件表的更新-->
+    <update id="UpdatetbDependTableDuetoFishnet">
+                  update tbDependTable SET State=0 
+                  where item in ('FishnetShp','Building_overlaytoDB','Water_overlaytoDB','Grass_overlaytoDB','ClustertoDB','ClusterShp')
+    </update>
+
+    <!--删除建筑物叠加图层后前提条件表的更新-->
+    <update id="UpdatetbDependTableDuetoBuilding_overlay">
+                  update tbDependTable SET State=0 
+                  where item in ('Building_overlaytoDB','ClustertoDB','ClusterShp')
+    </update>
+
+    <!--删除建筑物叠加图层后加速场景表的更新-->
+    <update id="UpdatetbAccelerateGridSceneDuetoBuilding_overlay">
+                  update tbAccelerateGridScene1 set Scene=null,ClusterID=null,BuildingRatio=null
+    </update>
+
+    <!--删除水面叠加图层后前提条件表的更新-->
+    <update id="UpdatetbDependTableDuetoWater_overlay">
+                  update tbDependTable SET State=0 
+                  where item in ('Water_overlaytoDB','ClustertoDB','ClusterShp')
+    </update>
+
+    <!--删除水面叠加图层后加速场景表的更新-->
+    <update id="UpdatetbAccelerateGridSceneDuetoWater_overlay">
+                  update tbAccelerateGridScene1 set Scene=null,ClusterID=null,WaterRatio=null
+    </update>
+
+    <!--删除草地叠加图层后前提条件表的更新-->
+    <update id="UpdatetbDependTableDuetoGrass_overlay">
+                  update tbDependTable SET State=0 
+                  where item in ('Grass_overlaytoDB','ClustertoDB','ClusterShp')
+    </update>
+
+    <!--删除草地叠加图层后加速场景表的更新-->
+    <update id="UpdatetbAccelerateGridSceneDuetoGrass_overlay">
+                  update tbAccelerateGridScene1 set Scene=null,ClusterID=null,GrassRatio=null
+    </update>
+
+    <!--删除聚类入库后前提条件表的更新-->
+    <update id="UpdatetbDependTableDuetoClustertoDB">
+                  update tbDependTable SET State=0 
+                  where item in ('ClustertoDB','ClusterShp')
+    </update>
+
+    <!--删除聚类入库后加速场景表的更新-->
+    <update id="UpdatetbAccelerateGridSceneDuetoClustertoDB">
+                  update tbAccelerateGridScene1 set Scene=null,ClusterID=null
+    </update>
+
+    <!--删除聚类图层后前提条件表的更新-->
+    <update id="UpdatetbDependTableDuetoClusterShp">
+                  update tbDependTable SET State=0 
+                  where item in ('ClusterShp')
+    </update>
+
+	<!--地面栅格相关 ，by JinHJ-->
+	<select id="getGroundGridsCenterByArea" parameterClass="HashTable">
+		select GXID, GYID, CX, CY, Dem
+		from tbGridDem
+		where CX between $minGXID$ and $maxGXID$
+		and CY between $minGYID$ and $maxGYID$
+	</select>
+
+	<select id="getGroudGridsByArea" parameterClass="HashTable">
+		select * from tbGridDem where CX between $minGX$ and $maxGX$
+		and CY between $minGY$ and $maxGY$
+	</select>
+
+	<delete id="DeleteGroudGridsByArea" parameterClass="HashTable" timeout="600">
+		delete from tbGridDem where CX between $minGX$ and $maxGX$
+		and CY between $minGY$ and $maxGY$
+	</delete>
+
+	<!--获得RRU经纬度在最大范围内的小区名称-->
+	<select id="getCellsInMaxArea" parameterClass="">
+		SELECT CellName
+		FROM CELL
+		where Longitude between (select AreaMinLong from tbGridRange) and (select AreaMaxLong from tbGridRange) and Latitude between (select AreaMinLat from tbGridRange) and (select AreaMaxLat from tbGridRange)
+	</select>
+
+	<select id="getmaxRange" parameterClass="">
+		SELECT TOP (1) *
+		FROM tbGridRange
+	</select>
+
+  <select id="getDTNoInf" parameterClass="">
+    select ID,Lon,Lat,SINR,RSRP,CI
+    from tbDTNoInf
+    where RSRP is not null and SINR is not null
+  </select>
+  <select id="getDTInf" parameterClass="">
+    select ID,Lon,Lat,SINR,RSRP,CI
+    from tbDTInf
+    where RSRP is not null and SINR is not null
+  </select>
+  <delete id="deleteNouseDTNoInf" parameterClass="">
+    delete from tbDTNoInf
+    where ID is null or Lon is null or Lat is null or SINR is null or RSRP is null or CI is null
+  </delete>
+  <delete id="deleteNouseDTInf" parameterClass="">
+    delete from tbDTInf
+    where ID is null or Lon is null or Lat is null or SINR is null or RSRP is null or CI is null
+  </delete>
+
+  <delete id="deleteUINTF" parameterClass="">
+    delete from tbUINTF
+  </delete>
   
   </statements>
 </sqlMap>

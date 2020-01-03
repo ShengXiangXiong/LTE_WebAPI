@@ -1,0 +1,57 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>路测图层刷新</title>
+</head>
+<body>
+    <div>
+        <h3>路测数据限制(可选)</h3>
+        路测指定单版本/基站：<input type="text" id="version" value="新集变中兴宏基站" /> <br />
+        路测与对应基站/距离约束：<input type="text" id="distance" value=0 /><br />
+        路测最小地理x坐标：<input type="text" id="minx" value=0 /> <br />
+        路测最小地理y坐标：<input type="text" id="miny" value=0 /> <br />
+        路测最大地理x坐标：<input type="text" id="maxx" value=0 /> <br />
+        路测最大地理y坐标：<input type="text" id="maxy" value=0 /> <br />
+        <input type="button" id="ComfirmRefresh" value="确定" /><br />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+    $("#ComfirmRefresh").click(function () {
+        var rt = {};
+        rt.version = $("#version").val();
+        rt.distance = parseInt($("#distance").val());
+        rt.minx = parseFloat($("#minx").val()).toFixed(2);
+        rt.miny = parseFloat($("#miny").val()).toFixed(2);
+        rt.maxx = parseFloat($("#maxx").val()).toFixed(2);
+        rt.maxy = parseFloat($("#maxy").val()).toFixed(2);
+        $.ajax
+        ({
+            url: "/api/RefreshLayer/PostRefreshDTLayer",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(rt),
+            headers: { "auth": window.localStorage.getItem("token") },
+            success: function (data, status) {
+                if (data.ok == true) {
+                    alert("路测图层刷新成功！");
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("虚拟路测图层刷新失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("虚拟路测图层刷新失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+</script>

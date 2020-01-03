@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using LTE.WebAPI.Attributes;
 using LTE.WebAPI.Models;
 
 namespace LTE.WebAPI.Controllers
@@ -15,6 +16,7 @@ namespace LTE.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "小区基站图层", type = TaskType.AreaGSMLayer)]
         public Result PostRefreshCell()
         {
             return RefreshCellLayerModel.RefreshCell();
@@ -26,6 +28,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">小区名称</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName="小区地面覆盖图层",type = TaskType.CellCoverLayer)]
         public Result PostRefreshCellGroundCover([FromBody]RefreshCellCoverLayerModel layer)
         {
             return layer.refreshGroundCover();
@@ -37,6 +40,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">小区名称</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "小区立体覆盖图层", type = TaskType.CellCoverLayer)]
         public Result PostRefreshCell3DCover([FromBody]RefreshCellCoverLayerModel layer)
         {
             return layer.refresh3DCover();
@@ -48,6 +52,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "区域地面覆盖图层", type = TaskType.AreaCoverLayer)]
         public Result PostRefreshAreaGroundCover([FromBody]RefreshAreaCoverLayerModel layer)
         {
             return layer.refreshGroundCoverLayer();
@@ -59,6 +64,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "区域立体覆盖图层", type = TaskType.AreaCoverLayer)]
         public Result PostRefreshArea3DCover([FromBody]RefreshAreaCoverLayerModel layer)
         {
             return layer.refresh3DCoverLayer();
@@ -68,11 +74,11 @@ namespace LTE.WebAPI.Controllers
         /// 刷新虚拟路测图层
         /// </summary>
         /// <returns></returns>
-        [HttpPost]
-        public Result PostRefreshDTdataLayer()
-        {
-            return RefreshDTdataLayerModel.refreshDTLayer();
-        }
+        //[HttpPost]
+        //public Result PostRefreshDTdataLayer()
+        //{
+        //    return RefreshDTdataLayerModel.refreshDTLayer();
+        //}
 
         /// <summary>
         /// 刷新弱覆盖点图层
@@ -80,6 +86,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "弱覆盖点图层", type = TaskType.AreaCoverLayer)]
         public Result PostRefreshWeakLayer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshWeakLayer();
@@ -91,6 +98,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "过覆盖点图层", type = TaskType.AreaCoverLayer)]
         public Result PostRefreshExcessiveLayer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshExcessiveLayer();
@@ -102,6 +110,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "重叠覆盖点图层", type = TaskType.AreaCoverLayer)]
         public Result PostRefreshOverlappedLayer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshOverlappedLayer();
@@ -113,6 +122,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "PCI冲突点图层", type = TaskType.AreaCoverLayer)]
         public Result PostRefreshPCIconflictLayer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshPCIconflictLayer();
@@ -124,6 +134,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "PCI混淆点图层", type = TaskType.AreaCoverLayer)]
         public Result PostRefreshPCIconfusionLayer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshPCIconfusionLayer();
@@ -135,6 +146,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "PCI mod3 对打点图层", type = TaskType.AreaCoverLayer)]
         public Result PostRefreshPCImod3Layer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshPCImod3Layer();
@@ -155,6 +167,7 @@ namespace LTE.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = " TIN 图层 ", type = TaskType.AreaTinLayer)]
         public Result PostRefreshTINLayer()
         {
             return RefreshTINLayer.refreshTINLayer();
@@ -165,6 +178,7 @@ namespace LTE.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "建筑物图层", type = TaskType.AreaBuildingLayer)]
         public Result PostRefreshBuildingLayer()
         {
             return RefreshBuildingLayer.refreshBuildingLayer();
@@ -175,9 +189,22 @@ namespace LTE.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "建筑物底边平滑图层", type = TaskType.AreaBuildingLayer)]
         public Result PostRefreshBuildingSmoothLayer()
         {
             return RefreshBuildingSmoothLayer.refreshBuildingSmoothLayer();
+        }
+
+        [HttpPost]
+        [TaskLoadInfo(taskName = "路测刷新", type = TaskType.RoadTestLayer)]
+        public Result PostRefreshDTLayer([FromBody]RefreshDTLayerModel layer)
+        {
+            return layer.refreshDTLayer();
+        }
+
+        public Result PostRefreshSPLayer([FromBody]RefreshSPLayerModel layer)
+        {
+            return layer.refreshSPLayer();
         }
     }
 }

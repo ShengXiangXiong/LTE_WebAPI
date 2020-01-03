@@ -1,0 +1,47 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>反向跟踪起点集图层刷新</title>
+</head>
+<body>
+    <div>
+        <h3>指定version</h3>
+        路测指定单版本/基站：<input type="text" id="version" value="新集变中兴宏基站" /> <br />
+        <input type="button" id="ComfirmRefresh" value="确定" /><br />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+    $("#ComfirmRefresh").click(function () {
+        var rt = {};
+        rt.version = $("#version").val();
+        
+        $.ajax
+        ({
+            url: "/api/RefreshLayer/PostRefreshSPLayer",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(rt),
+            headers: { "auth": window.localStorage.getItem("token") },
+            success: function (data, status) {
+                if (data.ok == true) {
+                    alert("反向跟踪起点集图层刷新成功！");
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("反向跟踪起点集图层刷新失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("反向跟踪起点集图层刷新失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+</script>

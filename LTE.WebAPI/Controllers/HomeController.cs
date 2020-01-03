@@ -24,7 +24,15 @@ namespace LTE.WebAPI.Controllers
         {
             return View();
         }
+        public ActionResult Fishnet()
+        {
+            return View();
+        }
 
+        public ActionResult Overlay()
+        {
+            return View();
+        }
         public ActionResult CellRayTracing()
         {
             return View();
@@ -163,7 +171,25 @@ namespace LTE.WebAPI.Controllers
         {
             return View();
         }
-       
+
+        public ActionResult RefreshLayerDT()
+        {
+            return View();
+        }
+        public ActionResult RefreshLayerSP()
+        {
+            return View();
+        }
+
+        public ActionResult UpdateDT()
+        {
+            return View();
+        }
+
+        public ActionResult ComputeInf()
+        {
+            return View();
+        }
 
     }
 }

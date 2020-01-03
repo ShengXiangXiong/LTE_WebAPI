@@ -481,6 +481,13 @@
             </summary>
             <param name="documentPath">The physical path to XML document.</param>
         </member>
+        <member name="M:LTE.WebAPI.Attributes.TaskLoadInfoAttribute.GetResponseValues(System.Web.Http.Filters.HttpActionExecutedContext)">
+            <summary>
+            读取action返回的result
+            </summary>
+            <param name="actionExecutedContext"></param>
+            <returns></returns>
+        </member>
         <member name="M:LTE.WebAPI.Controllers.AreaCoverDefectController.PostAreaCoverDefect(LTE.WebAPI.Models.AreaCoverDefectModel)">
             <summary>
             网内干扰分析：分析给定区域中的网内干扰点，如过覆盖点、重叠覆盖点等
@@ -547,6 +554,24 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="M:LTE.WebAPI.Controllers.DTHandlerController.PostComputeInfRSRP">
+            <summary>
+            根据两个表sinr计算干扰点信号强度
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Controllers.DTHandlerController.PostUpdateDTData">
+            <summary>
+            更新处理路测信息
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Controllers.FishnetController.PostFishnet">
+            <summary>
+            生成渔网
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:LTE.WebAPI.Controllers.Grid3DStrengthQueryController.PostStrengthQuery(LTE.WebAPI.Models.Grid3DStrengthQueryModel)">
             <summary>
             因无法呈现 3D 覆盖，因此给定栅格二维坐标，查询建筑物高度内的所有栅格场强
@@ -581,6 +606,24 @@
             <param name="user">用户信息</param>
             <returns>失败时返回错误提示</returns>
         </member>
+        <member name="M:LTE.WebAPI.Controllers.OverlayController.PostBuildingOverlay">
+            <summary>
+            建筑物叠加分析
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Controllers.OverlayController.PostWaterOverlay">
+            <summary>
+            水面叠加分析
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Controllers.OverlayController.PostGrassOverlay">
+            <summary>
+            水面叠加分析
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:LTE.WebAPI.Controllers.PointsSelectController.SelectPoints(LTE.WebAPI.Models.PointsSelectModel)">
             <summary>
             
@@ -602,6 +645,7 @@
             <param name="ray">界面输入参数</param>
             <returns></returns>
         </member>
+        <!-- 对于成员“M:LTE.WebAPI.Controllers.RayRecordController.PostRayRecordAdjBatchMode(LTE.WebAPI.Models.RayRecordAdjModel)”忽略有格式错误的 XML 注释 -->
         <member name="M:LTE.WebAPI.Controllers.RefreshLayerController.PostRefreshCell">
             <summary>
             刷新小区图层
@@ -634,12 +678,6 @@
             刷新区域立体覆盖图层
             </summary>
             <param name="layer">区域范围</param>
-            <returns></returns>
-        </member>
-        <member name="M:LTE.WebAPI.Controllers.RefreshLayerController.PostRefreshDTdataLayer">
-            <summary>
-            刷新虚拟路测图层
-            </summary>
             <returns></returns>
         </member>
         <member name="M:LTE.WebAPI.Controllers.RefreshLayerController.PostRefreshWeakLayer(LTE.WebAPI.Models.RefreshAreaCoverDefectLayerModel)">
@@ -714,6 +752,12 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="M:LTE.WebAPI.Controllers.ScenePartController.PostClusterShp">
+            <summary>
+            聚类图层生成
+            </summary>
+            <returns></returns>
+        </member>
         <member name="M:LTE.WebAPI.Controllers.SingleRayTracingController.PostSingleRayTracing1(LTE.WebAPI.Models.SingleRayTracingModel1)">
             <summary>
             单射线跟踪：指定射线终点
@@ -733,6 +777,81 @@
             建筑物底边平滑
             </summary>
             <returns></returns>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.minLongitude">
+            <summary>
+            最小经度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.minLatitude">
+            <summary>
+            最小纬度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.maxLongitude">
+            <summary>
+            最大经度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.maxLatitude">
+            <summary>
+            最大纬度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.incrementAngle">
+            <summary>
+            以方位角为中心，两边扩展的角度
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.threadNum">
+            <summary>
+            线程个数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.reflectionNum">
+            <summary>
+            反射次数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.diffractionNum">
+            <summary>
+            绕射次数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.diffPointsMargin">
+            <summary>
+            建筑物棱边绕射点间隔
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.computeIndoor">
+            <summary>
+            计算立体覆盖
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.computeDiffrac">
+            <summary>
+            计算棱边绕射
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.directCoeff">
+            <summary>
+            直射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.reflectCoeff">
+            <summary>
+            反射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.diffractCoeff">
+            <summary>
+            绕射校正系数
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.Area.diffractCoeff2">
+            <summary>
+            菲涅尔绕射校正系数
+            </summary>
         </member>
         <member name="P:LTE.WebAPI.Models.AreaCoverDefectModel.minLongitude">
             <summary>
@@ -795,6 +914,15 @@
             多场景系数校正
             </summary>
             <returns></returns>
+        </member>
+        <member name="M:LTE.WebAPI.Models.CalibrationModel.filter(System.Data.DataTable@,System.Data.DataTable@,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.Double}}@,System.Collections.Generic.Dictionary{System.String,LTE.InternalInterference.TrajInfo}@)">
+            <summary>
+                    选择射线跟踪计算结果和真实路测的公共部分
+            </summary>
+            <param name="rayAdjTb">计算值的轨迹数据表（经内存控制）</param>
+            <param name="DTTb">路测数据表（经内存控制）</param>
+            <param name="meaPwr">路测数据字典</param>
+            <param name="rayDic">计算值字典</param>
         </member>
         <member name="M:LTE.WebAPI.Models.CalibrationModel.MemoryInfo">
             <summary>
@@ -909,6 +1037,18 @@
             方位角中心线末端 y 坐标
             </summary>
         </member>
+        <member name="M:LTE.WebAPI.Models.DTHandlerModel.writeFinalResultToDB(System.Data.DataTable,System.String)">
+            <summary>
+            写入数据库
+            </summary>
+            <param name="dt"></param>
+            <param name="tbname"></param>
+        </member>
+        <member name="M:LTE.WebAPI.Models.DTHandlerModel.InitCellInfo">
+            <summary>
+            获取小区信息
+            </summary>
+        </member>
         <member name="P:LTE.WebAPI.Models.Grid3DStrengthQueryModel.gxid">
             <summary>
             网格 x 坐标
@@ -925,6 +1065,86 @@
             </summary>
             <param name="rt">栅格二维坐标</param>
             <returns></returns>
+        </member>
+        <member name="T:LTE.WebAPI.Models.LayerNames">
+            <summary>
+            图层名称，用常量表示
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.GSM900BTS">
+            <summary>
+            GSM900基站
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.GSM900Cell">
+            <summary>
+            GSM900小区
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.GSM1800BTS">
+            <summary>
+            GSM1800基站
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.GSM1800Cell">
+            <summary>
+            GSM1800小区
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.RoadTest">
+            <summary>
+            扫频
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.Projecton">
+            <summary>
+            底面
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.Buildings">
+            <summary>
+            建筑物
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.CoverGrids">
+            <summary>
+            覆盖
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.CoverGrid3Ds">
+            <summary>
+            立体覆盖
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.AreaCoverGrids">
+            <summary>
+            区域覆盖
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.AreaCoverGrid3Ds">
+            <summary>
+            区域立体覆盖
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.InterferenceGrids">
+            <summary>
+            干扰
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.GroundGrids">
+            <summary>
+            地面网格
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.Rays">
+            <summary>
+            射线
+            </summary>
+        </member>
+        <member name="F:LTE.WebAPI.Models.LayerNames.TDDriverTest">
+            <summary>
+            TD路测
+            </summary>
         </member>
         <member name="M:LTE.WebAPI.Models.PointsSelectModel.Init">
             <summary>
@@ -973,19 +1193,9 @@
             干扰源点
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.distance">
-            <summary>
-            反向发射点发射半径
-            </summary>
-        </member>
         <member name="P:LTE.WebAPI.Models.RayLocRecordModel.incrementAngle">
             <summary>
             以方位角为中心，两边扩展的角度
-            </summary>
-        </member>
-        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.threadNum">
-            <summary>
-            线程个数
             </summary>
         </member>
         <member name="P:LTE.WebAPI.Models.RayLocRecordModel.reflectionNum">
@@ -1003,34 +1213,14 @@
             建筑物棱边绕射点间隔
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.computeIndoor">
+        <member name="F:LTE.WebAPI.Models.RayLocRecordModel.computeIndoor">
             <summary>
             计算立体覆盖
             </summary>
         </member>
-        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.computeVSide">
+        <member name="F:LTE.WebAPI.Models.RayLocRecordModel.computeVSide">
             <summary>
             计算棱边绕射
-            </summary>
-        </member>
-        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.directCoefficient">
-            <summary>
-            直射校正系数
-            </summary>
-        </member>
-        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.reflectCoefficient">
-            <summary>
-            反射校正系数
-            </summary>
-        </member>
-        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.diffractCoefficient">
-            <summary>
-            绕射校正系数
-            </summary>
-        </member>
-        <member name="P:LTE.WebAPI.Models.RayLocRecordModel.FCoefficient">
-            <summary>
-            菲涅尔绕射校正系数
             </summary>
         </member>
         <member name="M:LTE.WebAPI.Models.RayLocRecordModel.RecordRayLoc(System.Int32)">
@@ -1038,11 +1228,6 @@
             计算射线
             </summary>
             <returns></returns>
-        </member>
-        <member name="P:LTE.WebAPI.Models.CellRayTracing.userId">
-            <summary>
-            执行当前覆盖分析的用户ID
-            </summary>
         </member>
         <member name="P:LTE.WebAPI.Models.CellRayTracing.cellName">
             <summary>
@@ -1294,6 +1479,53 @@
             <summary>
             最大纬度
             </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RefreshDTLayerModel.version">
+            <summary>
+            指定刷新的版本
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RefreshDTLayerModel.distance">
+            <summary>
+            指定路测与对应基站的距离限制
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RefreshDTLayerModel.minx">
+            <summary>
+            最小地理坐标
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RefreshDTLayerModel.miny">
+            <summary>
+            最小地理坐标
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RefreshDTLayerModel.maxx">
+            <summary>
+            最大地理坐标
+            </summary>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RefreshDTLayerModel.maxy">
+            <summary>
+            最大地理坐标
+            </summary>
+        </member>
+        <member name="M:LTE.WebAPI.Models.RefreshDTLayerModel.refreshDTLayer">
+            <summary>
+            根据参数刷新图层
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:LTE.WebAPI.Models.RefreshSPLayerModel.version">
+            <summary>
+            指定刷新的版本
+            </summary>
+        </member>
+        <member name="M:LTE.WebAPI.Models.RefreshSPLayerModel.refreshSPLayer">
+            <summary>
+            根据参数刷新图层
+            </summary>
+            <returns></returns>
         </member>
         <member name="P:LTE.WebAPI.Models.Result.ok">
             <summary>

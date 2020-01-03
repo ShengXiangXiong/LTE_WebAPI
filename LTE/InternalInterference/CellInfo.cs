@@ -149,12 +149,13 @@ namespace LTE.InternalInterference
 
                             double x, y, z;
                             x = double.Parse(row["x"].ToString());
-                            y = double.Parse(row["y"].ToString());
+                            y = double.Parse(row["y"].ToString());                       
                             z = double.Parse(row["AntHeight"].ToString());
                             double z1 = double.Parse(row["Altitude"].ToString());
                             this.SourcePoint = new Point(x, y, z + z1);
 
                             string cellType = row["NetType"].ToString();
+                            this.cellType = CellType.GSM1800;//设置默认为GSM1800
                             if (cellType == "GSM900" || cellType == "GSM900小区")
                                 this.cellType = CellType.GSM900;
                             if (cellType == "GSM1800" || cellType == "GSM1800小区")

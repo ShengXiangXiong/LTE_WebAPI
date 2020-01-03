@@ -19,12 +19,13 @@ namespace GisClient
 {
   public partial class OpreateGisLayer {
     public interface ISync {
+      Result setLoadInfo(int userId, string taskName);
       Result RefreshCell();
       Result refreshGroundCover(string cellName);
       Result refresh3DCover(string cellName);
       Result refreshGroundCoverLayer(int minXid, int minYid, int maxXid, int maxYid);
       Result refresh3DCoverLayer(int minXid, int minYid, int maxXid, int maxYid);
-      Result refreshDTLayer();
+      Result refreshDTLayer(string bts, int dis, double minx, double miny, double maxx, double maxy);
       Result refreshDefectLayer(int minXid, int minYid, int maxXid, int maxYid, DefectType type);
       Result refreshInfLayer();
       Result refreshTINLayer();
@@ -35,9 +36,14 @@ namespace GisClient
       Result overlaygrass();
       Result overlaywater();
       Result cluster();
+      Result refreshSPLayer(string version);
     }
 
     public interface Iface : ISync {
+      #if SILVERLIGHT
+      IAsyncResult Begin_setLoadInfo(AsyncCallback callback, object state, int userId, string taskName);
+      Result End_setLoadInfo(IAsyncResult asyncResult);
+      #endif
       #if SILVERLIGHT
       IAsyncResult Begin_RefreshCell(AsyncCallback callback, object state);
       Result End_RefreshCell(IAsyncResult asyncResult);
@@ -59,7 +65,7 @@ namespace GisClient
       Result End_refresh3DCoverLayer(IAsyncResult asyncResult);
       #endif
       #if SILVERLIGHT
-      IAsyncResult Begin_refreshDTLayer(AsyncCallback callback, object state);
+      IAsyncResult Begin_refreshDTLayer(AsyncCallback callback, object state, string bts, int dis, double minx, double miny, double maxx, double maxy);
       Result End_refreshDTLayer(IAsyncResult asyncResult);
       #endif
       #if SILVERLIGHT
@@ -101,6 +107,10 @@ namespace GisClient
       #if SILVERLIGHT
       IAsyncResult Begin_cluster(AsyncCallback callback, object state);
       Result End_cluster(IAsyncResult asyncResult);
+      #endif
+      #if SILVERLIGHT
+      IAsyncResult Begin_refreshSPLayer(AsyncCallback callback, object state, string version);
+      Result End_refreshSPLayer(IAsyncResult asyncResult);
       #endif
     }
 
@@ -159,6 +169,77 @@ namespace GisClient
       }
       #endregion
 
+
+      
+      #if SILVERLIGHT
+      
+      public IAsyncResult Begin_setLoadInfo(AsyncCallback callback, object state, int userId, string taskName)
+      {
+        return send_setLoadInfo(callback, state, userId, taskName);
+      }
+
+      public Result End_setLoadInfo(IAsyncResult asyncResult)
+      {
+        oprot_.Transport.EndFlush(asyncResult);
+        return recv_setLoadInfo();
+      }
+
+      #endif
+
+      public Result setLoadInfo(int userId, string taskName)
+      {
+        #if SILVERLIGHT
+        var asyncResult = Begin_setLoadInfo(null, null, userId, taskName);
+        return End_setLoadInfo(asyncResult);
+
+        #else
+        send_setLoadInfo(userId, taskName);
+        return recv_setLoadInfo();
+
+        #endif
+      }
+      #if SILVERLIGHT
+      public IAsyncResult send_setLoadInfo(AsyncCallback callback, object state, int userId, string taskName)
+      {
+        oprot_.WriteMessageBegin(new TMessage("setLoadInfo", TMessageType.Call, seqid_));
+        setLoadInfo_args args = new setLoadInfo_args();
+        args.UserId = userId;
+        args.TaskName = taskName;
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        return oprot_.Transport.BeginFlush(callback, state);
+      }
+
+      #else
+
+      public void send_setLoadInfo(int userId, string taskName)
+      {
+        oprot_.WriteMessageBegin(new TMessage("setLoadInfo", TMessageType.Call, seqid_));
+        setLoadInfo_args args = new setLoadInfo_args();
+        args.UserId = userId;
+        args.TaskName = taskName;
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        oprot_.Transport.Flush();
+      }
+      #endif
+
+      public Result recv_setLoadInfo()
+      {
+        TMessage msg = iprot_.ReadMessageBegin();
+        if (msg.Type == TMessageType.Exception) {
+          TApplicationException x = TApplicationException.Read(iprot_);
+          iprot_.ReadMessageEnd();
+          throw x;
+        }
+        setLoadInfo_result result = new setLoadInfo_result();
+        result.Read(iprot_);
+        iprot_.ReadMessageEnd();
+        if (result.__isset.success) {
+          return result.Success;
+        }
+        throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "setLoadInfo failed: unknown result");
+      }
 
       
       #if SILVERLIGHT
@@ -518,9 +599,9 @@ namespace GisClient
       
       #if SILVERLIGHT
       
-      public IAsyncResult Begin_refreshDTLayer(AsyncCallback callback, object state)
+      public IAsyncResult Begin_refreshDTLayer(AsyncCallback callback, object state, string bts, int dis, double minx, double miny, double maxx, double maxy)
       {
-        return send_refreshDTLayer(callback, state);
+        return send_refreshDTLayer(callback, state, bts, dis, minx, miny, maxx, maxy);
       }
 
       public Result End_refreshDTLayer(IAsyncResult asyncResult)
@@ -531,23 +612,29 @@ namespace GisClient
 
       #endif
 
-      public Result refreshDTLayer()
+      public Result refreshDTLayer(string bts, int dis, double minx, double miny, double maxx, double maxy)
       {
         #if SILVERLIGHT
-        var asyncResult = Begin_refreshDTLayer(null, null);
+        var asyncResult = Begin_refreshDTLayer(null, null, bts, dis, minx, miny, maxx, maxy);
         return End_refreshDTLayer(asyncResult);
 
         #else
-        send_refreshDTLayer();
+        send_refreshDTLayer(bts, dis, minx, miny, maxx, maxy);
         return recv_refreshDTLayer();
 
         #endif
       }
       #if SILVERLIGHT
-      public IAsyncResult send_refreshDTLayer(AsyncCallback callback, object state)
+      public IAsyncResult send_refreshDTLayer(AsyncCallback callback, object state, string bts, int dis, double minx, double miny, double maxx, double maxy)
       {
         oprot_.WriteMessageBegin(new TMessage("refreshDTLayer", TMessageType.Call, seqid_));
         refreshDTLayer_args args = new refreshDTLayer_args();
+        args.Bts = bts;
+        args.Dis = dis;
+        args.Minx = minx;
+        args.Miny = miny;
+        args.Maxx = maxx;
+        args.Maxy = maxy;
         args.Write(oprot_);
         oprot_.WriteMessageEnd();
         return oprot_.Transport.BeginFlush(callback, state);
@@ -555,10 +642,16 @@ namespace GisClient
 
       #else
 
-      public void send_refreshDTLayer()
+      public void send_refreshDTLayer(string bts, int dis, double minx, double miny, double maxx, double maxy)
       {
         oprot_.WriteMessageBegin(new TMessage("refreshDTLayer", TMessageType.Call, seqid_));
         refreshDTLayer_args args = new refreshDTLayer_args();
+        args.Bts = bts;
+        args.Dis = dis;
+        args.Minx = minx;
+        args.Miny = miny;
+        args.Maxx = maxx;
+        args.Maxy = maxy;
         args.Write(oprot_);
         oprot_.WriteMessageEnd();
         oprot_.Transport.Flush();
@@ -1262,11 +1355,81 @@ namespace GisClient
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "cluster failed: unknown result");
       }
 
+      
+      #if SILVERLIGHT
+      
+      public IAsyncResult Begin_refreshSPLayer(AsyncCallback callback, object state, string version)
+      {
+        return send_refreshSPLayer(callback, state, version);
+      }
+
+      public Result End_refreshSPLayer(IAsyncResult asyncResult)
+      {
+        oprot_.Transport.EndFlush(asyncResult);
+        return recv_refreshSPLayer();
+      }
+
+      #endif
+
+      public Result refreshSPLayer(string version)
+      {
+        #if SILVERLIGHT
+        var asyncResult = Begin_refreshSPLayer(null, null, version);
+        return End_refreshSPLayer(asyncResult);
+
+        #else
+        send_refreshSPLayer(version);
+        return recv_refreshSPLayer();
+
+        #endif
+      }
+      #if SILVERLIGHT
+      public IAsyncResult send_refreshSPLayer(AsyncCallback callback, object state, string version)
+      {
+        oprot_.WriteMessageBegin(new TMessage("refreshSPLayer", TMessageType.Call, seqid_));
+        refreshSPLayer_args args = new refreshSPLayer_args();
+        args.Version = version;
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        return oprot_.Transport.BeginFlush(callback, state);
+      }
+
+      #else
+
+      public void send_refreshSPLayer(string version)
+      {
+        oprot_.WriteMessageBegin(new TMessage("refreshSPLayer", TMessageType.Call, seqid_));
+        refreshSPLayer_args args = new refreshSPLayer_args();
+        args.Version = version;
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        oprot_.Transport.Flush();
+      }
+      #endif
+
+      public Result recv_refreshSPLayer()
+      {
+        TMessage msg = iprot_.ReadMessageBegin();
+        if (msg.Type == TMessageType.Exception) {
+          TApplicationException x = TApplicationException.Read(iprot_);
+          iprot_.ReadMessageEnd();
+          throw x;
+        }
+        refreshSPLayer_result result = new refreshSPLayer_result();
+        result.Read(iprot_);
+        iprot_.ReadMessageEnd();
+        if (result.__isset.success) {
+          return result.Success;
+        }
+        throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "refreshSPLayer failed: unknown result");
+      }
+
     }
     public class Processor : TProcessor {
       public Processor(ISync iface)
       {
         iface_ = iface;
+        processMap_["setLoadInfo"] = setLoadInfo_Process;
         processMap_["RefreshCell"] = RefreshCell_Process;
         processMap_["refreshGroundCover"] = refreshGroundCover_Process;
         processMap_["refresh3DCover"] = refresh3DCover_Process;
@@ -1283,6 +1446,7 @@ namespace GisClient
         processMap_["overlaygrass"] = overlaygrass_Process;
         processMap_["overlaywater"] = overlaywater_Process;
         processMap_["cluster"] = cluster_Process;
+        processMap_["refreshSPLayer"] = refreshSPLayer_Process;
       }
 
       protected delegate void ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot);
@@ -1313,6 +1477,34 @@ namespace GisClient
           return false;
         }
         return true;
+      }
+
+      public void setLoadInfo_Process(int seqid, TProtocol iprot, TProtocol oprot)
+      {
+        setLoadInfo_args args = new setLoadInfo_args();
+        args.Read(iprot);
+        iprot.ReadMessageEnd();
+        setLoadInfo_result result = new setLoadInfo_result();
+        try
+        {
+          result.Success = iface_.setLoadInfo(args.UserId, args.TaskName);
+          oprot.WriteMessageBegin(new TMessage("setLoadInfo", TMessageType.Reply, seqid)); 
+          result.Write(oprot);
+        }
+        catch (TTransportException)
+        {
+          throw;
+        }
+        catch (Exception ex)
+        {
+          Console.Error.WriteLine("Error occurred in processor:");
+          Console.Error.WriteLine(ex.ToString());
+          TApplicationException x = new TApplicationException        (TApplicationException.ExceptionType.InternalError," Internal error.");
+          oprot.WriteMessageBegin(new TMessage("setLoadInfo", TMessageType.Exception, seqid));
+          x.Write(oprot);
+        }
+        oprot.WriteMessageEnd();
+        oprot.Transport.Flush();
       }
 
       public void RefreshCell_Process(int seqid, TProtocol iprot, TProtocol oprot)
@@ -1463,7 +1655,7 @@ namespace GisClient
         refreshDTLayer_result result = new refreshDTLayer_result();
         try
         {
-          result.Success = iface_.refreshDTLayer();
+          result.Success = iface_.refreshDTLayer(args.Bts, args.Dis, args.Minx, args.Miny, args.Maxx, args.Maxy);
           oprot.WriteMessageBegin(new TMessage("refreshDTLayer", TMessageType.Reply, seqid)); 
           result.Write(oprot);
         }
@@ -1761,6 +1953,290 @@ namespace GisClient
         }
         oprot.WriteMessageEnd();
         oprot.Transport.Flush();
+      }
+
+      public void refreshSPLayer_Process(int seqid, TProtocol iprot, TProtocol oprot)
+      {
+        refreshSPLayer_args args = new refreshSPLayer_args();
+        args.Read(iprot);
+        iprot.ReadMessageEnd();
+        refreshSPLayer_result result = new refreshSPLayer_result();
+        try
+        {
+          result.Success = iface_.refreshSPLayer(args.Version);
+          oprot.WriteMessageBegin(new TMessage("refreshSPLayer", TMessageType.Reply, seqid)); 
+          result.Write(oprot);
+        }
+        catch (TTransportException)
+        {
+          throw;
+        }
+        catch (Exception ex)
+        {
+          Console.Error.WriteLine("Error occurred in processor:");
+          Console.Error.WriteLine(ex.ToString());
+          TApplicationException x = new TApplicationException        (TApplicationException.ExceptionType.InternalError," Internal error.");
+          oprot.WriteMessageBegin(new TMessage("refreshSPLayer", TMessageType.Exception, seqid));
+          x.Write(oprot);
+        }
+        oprot.WriteMessageEnd();
+        oprot.Transport.Flush();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class setLoadInfo_args : TBase
+    {
+      private int _userId;
+      private string _taskName;
+
+      public int UserId
+      {
+        get
+        {
+          return _userId;
+        }
+        set
+        {
+          __isset.userId = true;
+          this._userId = value;
+        }
+      }
+
+      public string TaskName
+      {
+        get
+        {
+          return _taskName;
+        }
+        set
+        {
+          __isset.taskName = true;
+          this._taskName = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool userId;
+        public bool taskName;
+      }
+
+      public setLoadInfo_args() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 1:
+                if (field.Type == TType.I32) {
+                  UserId = iprot.ReadI32();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 2:
+                if (field.Type == TType.String) {
+                  TaskName = iprot.ReadString();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("setLoadInfo_args");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+          if (__isset.userId) {
+            field.Name = "userId";
+            field.Type = TType.I32;
+            field.ID = 1;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI32(UserId);
+            oprot.WriteFieldEnd();
+          }
+          if (TaskName != null && __isset.taskName) {
+            field.Name = "taskName";
+            field.Type = TType.String;
+            field.ID = 2;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteString(TaskName);
+            oprot.WriteFieldEnd();
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("setLoadInfo_args(");
+        bool __first = true;
+        if (__isset.userId) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("UserId: ");
+          __sb.Append(UserId);
+        }
+        if (TaskName != null && __isset.taskName) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("TaskName: ");
+          __sb.Append(TaskName);
+        }
+        __sb.Append(")");
+        return __sb.ToString();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class setLoadInfo_result : TBase
+    {
+      private Result _success;
+
+      public Result Success
+      {
+        get
+        {
+          return _success;
+        }
+        set
+        {
+          __isset.success = true;
+          this._success = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool success;
+      }
+
+      public setLoadInfo_result() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 0:
+                if (field.Type == TType.Struct) {
+                  Success = new Result();
+                  Success.Read(iprot);
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("setLoadInfo_result");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+
+          if (this.__isset.success) {
+            if (Success != null) {
+              field.Name = "Success";
+              field.Type = TType.Struct;
+              field.ID = 0;
+              oprot.WriteFieldBegin(field);
+              Success.Write(oprot);
+              oprot.WriteFieldEnd();
+            }
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("setLoadInfo_result(");
+        bool __first = true;
+        if (Success != null && __isset.success) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Success: ");
+          __sb.Append(Success== null ? "<null>" : Success.ToString());
+        }
+        __sb.Append(")");
+        return __sb.ToString();
       }
 
     }
@@ -3041,6 +3517,104 @@ namespace GisClient
     #endif
     public partial class refreshDTLayer_args : TBase
     {
+      private string _bts;
+      private int _dis;
+      private double _minx;
+      private double _miny;
+      private double _maxx;
+      private double _maxy;
+
+      public string Bts
+      {
+        get
+        {
+          return _bts;
+        }
+        set
+        {
+          __isset.bts = true;
+          this._bts = value;
+        }
+      }
+
+      public int Dis
+      {
+        get
+        {
+          return _dis;
+        }
+        set
+        {
+          __isset.dis = true;
+          this._dis = value;
+        }
+      }
+
+      public double Minx
+      {
+        get
+        {
+          return _minx;
+        }
+        set
+        {
+          __isset.minx = true;
+          this._minx = value;
+        }
+      }
+
+      public double Miny
+      {
+        get
+        {
+          return _miny;
+        }
+        set
+        {
+          __isset.miny = true;
+          this._miny = value;
+        }
+      }
+
+      public double Maxx
+      {
+        get
+        {
+          return _maxx;
+        }
+        set
+        {
+          __isset.maxx = true;
+          this._maxx = value;
+        }
+      }
+
+      public double Maxy
+      {
+        get
+        {
+          return _maxy;
+        }
+        set
+        {
+          __isset.maxy = true;
+          this._maxy = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool bts;
+        public bool dis;
+        public bool minx;
+        public bool miny;
+        public bool maxx;
+        public bool maxy;
+      }
 
       public refreshDTLayer_args() {
       }
@@ -3060,6 +3634,48 @@ namespace GisClient
             }
             switch (field.ID)
             {
+              case 1:
+                if (field.Type == TType.String) {
+                  Bts = iprot.ReadString();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 2:
+                if (field.Type == TType.I32) {
+                  Dis = iprot.ReadI32();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 3:
+                if (field.Type == TType.Double) {
+                  Minx = iprot.ReadDouble();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 4:
+                if (field.Type == TType.Double) {
+                  Miny = iprot.ReadDouble();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 5:
+                if (field.Type == TType.Double) {
+                  Maxx = iprot.ReadDouble();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 6:
+                if (field.Type == TType.Double) {
+                  Maxy = iprot.ReadDouble();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
               default: 
                 TProtocolUtil.Skip(iprot, field.Type);
                 break;
@@ -3080,6 +3696,55 @@ namespace GisClient
         {
           TStruct struc = new TStruct("refreshDTLayer_args");
           oprot.WriteStructBegin(struc);
+          TField field = new TField();
+          if (Bts != null && __isset.bts) {
+            field.Name = "bts";
+            field.Type = TType.String;
+            field.ID = 1;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteString(Bts);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.dis) {
+            field.Name = "dis";
+            field.Type = TType.I32;
+            field.ID = 2;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI32(Dis);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.minx) {
+            field.Name = "minx";
+            field.Type = TType.Double;
+            field.ID = 3;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteDouble(Minx);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.miny) {
+            field.Name = "miny";
+            field.Type = TType.Double;
+            field.ID = 4;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteDouble(Miny);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.maxx) {
+            field.Name = "maxx";
+            field.Type = TType.Double;
+            field.ID = 5;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteDouble(Maxx);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.maxy) {
+            field.Name = "maxy";
+            field.Type = TType.Double;
+            field.ID = 6;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteDouble(Maxy);
+            oprot.WriteFieldEnd();
+          }
           oprot.WriteFieldStop();
           oprot.WriteStructEnd();
         }
@@ -3091,6 +3756,43 @@ namespace GisClient
 
       public override string ToString() {
         StringBuilder __sb = new StringBuilder("refreshDTLayer_args(");
+        bool __first = true;
+        if (Bts != null && __isset.bts) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Bts: ");
+          __sb.Append(Bts);
+        }
+        if (__isset.dis) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Dis: ");
+          __sb.Append(Dis);
+        }
+        if (__isset.minx) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Minx: ");
+          __sb.Append(Minx);
+        }
+        if (__isset.miny) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Miny: ");
+          __sb.Append(Miny);
+        }
+        if (__isset.maxx) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Maxx: ");
+          __sb.Append(Maxx);
+        }
+        if (__isset.maxy) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Maxy: ");
+          __sb.Append(Maxy);
+        }
         __sb.Append(")");
         return __sb.ToString();
       }
@@ -5130,6 +5832,226 @@ namespace GisClient
 
       public override string ToString() {
         StringBuilder __sb = new StringBuilder("cluster_result(");
+        bool __first = true;
+        if (Success != null && __isset.success) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Success: ");
+          __sb.Append(Success== null ? "<null>" : Success.ToString());
+        }
+        __sb.Append(")");
+        return __sb.ToString();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class refreshSPLayer_args : TBase
+    {
+      private string _version;
+
+      public string Version
+      {
+        get
+        {
+          return _version;
+        }
+        set
+        {
+          __isset.version = true;
+          this._version = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool version;
+      }
+
+      public refreshSPLayer_args() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 1:
+                if (field.Type == TType.String) {
+                  Version = iprot.ReadString();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("refreshSPLayer_args");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+          if (Version != null && __isset.version) {
+            field.Name = "version";
+            field.Type = TType.String;
+            field.ID = 1;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteString(Version);
+            oprot.WriteFieldEnd();
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("refreshSPLayer_args(");
+        bool __first = true;
+        if (Version != null && __isset.version) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Version: ");
+          __sb.Append(Version);
+        }
+        __sb.Append(")");
+        return __sb.ToString();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class refreshSPLayer_result : TBase
+    {
+      private Result _success;
+
+      public Result Success
+      {
+        get
+        {
+          return _success;
+        }
+        set
+        {
+          __isset.success = true;
+          this._success = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool success;
+      }
+
+      public refreshSPLayer_result() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 0:
+                if (field.Type == TType.Struct) {
+                  Success = new Result();
+                  Success.Read(iprot);
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("refreshSPLayer_result");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+
+          if (this.__isset.success) {
+            if (Success != null) {
+              field.Name = "Success";
+              field.Type = TType.Struct;
+              field.ID = 0;
+              oprot.WriteFieldBegin(field);
+              Success.Write(oprot);
+              oprot.WriteFieldEnd();
+            }
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("refreshSPLayer_result(");
         bool __first = true;
         if (Success != null && __isset.success) {
           if(!__first) { __sb.Append(", "); }

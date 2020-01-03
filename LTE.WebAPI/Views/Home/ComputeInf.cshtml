@@ -1,0 +1,43 @@
+﻿@{
+    Layout = null;
+}
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>计算干扰源信号强度</title>
+</head>
+<body>
+    <div>
+        <h2>处理原始数据</h2>
+        <input type="button" id="cell" value="确定" />
+    </div>
+</body>
+</html>
+
+<script src="~/Scripts/jquery-1.8.2.min.js"></script>
+<script>
+
+    $("#cell").click(function () {
+
+        $.ajax
+        ({
+            url: "/api/DTHandler/PostComputeInfRSRP",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            headers: { "auth": window.localStorage.getItem("token") },
+            success: function (data, status) {
+                if (data.ok == true) {
+                    alert("计算成功！");
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("计算失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("计算失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+
+</script>

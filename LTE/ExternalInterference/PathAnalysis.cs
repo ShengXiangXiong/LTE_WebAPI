@@ -33,7 +33,7 @@ namespace LTE.ExternalInterference
         private int kCons = 3;
         private Dictionary<string, double> cellPwr = new Dictionary<string, double>();//记录接收功率从大到小的路测点信息
         List<string> VitalMP;//接收功率从大到小的路测点cellid
-
+        private DataTable tb = new DataTable();
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -92,6 +92,16 @@ namespace LTE.ExternalInterference
                 }
                 curMax = nextMax;
             }
+
+            tb.Columns.Add("Version");
+            tb.Columns.Add("Longitude");
+            tb.Columns.Add("Latitude");
+            tb.Columns.Add("x");
+            tb.Columns.Add("y");
+            tb.Columns.Add("z");
+            tb.Columns.Add("ansID");
+
+
         }
 
 
@@ -112,7 +122,7 @@ namespace LTE.ExternalInterference
 
             // this.BalanceFiltPara(1000, 500, 80, 0.8, 0.80, 200);
 
-            BalanceFiltParaS(500, 5, 0.7, 0.9, 200);
+            BalanceFiltParaS(2000, 10, 0.8, 0.8, 200);
             SortByPalthloss();
             AverageGridPathloss(600);
             this.MergeGridPwr(this.togrid);
@@ -120,6 +130,9 @@ namespace LTE.ExternalInterference
             //CompareWithAim();
             Debug.WriteLine("过滤发射源周围栅格后栅格大小 " + this.togrid.Count);
             string aimGrid = EvaluateCombineAll(togrid, ratioAP, ratioP, ratioAPW,10);
+            Debug.WriteLine("AimGrid: " + aimGrid==""?"none":aimGrid);
+            t4 = DateTime.Now;
+            Debug.WriteLine("计算时长: " + (t4 - t1));
             //string aimGrid = EvaluateCombineALL(togrid, ratioAP, ratioP, ratioAPW);//得到当前占比最大的栅格
             if (aimGrid == null || aimGrid == "")
             {
@@ -127,14 +140,60 @@ namespace LTE.ExternalInterference
                 return new ResultRecord(false, "", "", 0, "未找到合适位置"); 
             }
             //TestPre();
-            Debug.WriteLine("AimGrid: " + aimGrid);
-            t4 = DateTime.Now;
-            Debug.WriteLine("计算时长: " + (t4-t1));
+            
             
             return showResult(aimGrid);
         }
 
         private ResultRecord showResult(string ans)
+        {
+            String[] tmp = ans.Split(',');
+            int gx = 0, gy = 0, gz = 0;
+            try
+            {
+                gx = Convert.ToInt32(tmp[0]); gy = Convert.ToInt32(tmp[1]); gz = Convert.ToInt32(tmp[2]);
+            }
+            catch
+            {
+                Debug.WriteLine(ans);
+            }
+            Geometric.Point p = new Geometric.Point();
+            Grid3D tmp1 = new Grid3D(gx, gy, gz);
+            GridHelper.getInstance().PointGridXYZ(ref p, tmp1, ggridsize, ggridVsize);
+            
+            Debug.WriteLine("定位结果坐标：" + p.X + ",  " + p.Y + ",   " + p.Z);
+            Debug.WriteLine("定位结果栅格：" + gx + ",  " + gy + ",   " + gz);
+            LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p);
+            double lon = p.X;
+            double lat = p.Y;
+            LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(p);
+            Hashtable ht = new Hashtable();
+            ht["cellname"] = this.virname;
+            DataTable source = IbatisHelper.ExecuteQueryForDataTable("GetVirSourceAllInfo", ht);
+            Geometric.Point point;
+            if (source==null || source.Rows.Count < 1)
+            {
+                Debug.WriteLine("tbRealSource中无数据");
+                return new ResultRecord(true,lon,lat,string.Format("{0},{1},{2}", p.X, p.Y, p.Z), "", 0, "不存在指定的干扰源信息");
+            }
+            else
+            {
+                point = new Geometric.Point(Convert.ToDouble(source.Rows[0]["x"]), Convert.ToDouble(source.Rows[0]["y"]), Convert.ToDouble(source.Rows[0]["z"]));
+                Grid3D tmp2 = new Grid3D();
+                GridHelper.getInstance().PointXYZGrid(point, ref tmp2, ggridsize, ggridVsize);
+                Console.WriteLine("干扰源点坐标：" + point.X + ",  " + point.Y + ",   " + point.Z);
+                Debug.WriteLine(" 干扰源点栅格：" + tmp2.gxid + ",  " + tmp2.gyid + ",  " + tmp2.gzid);
+                point.Z = 0;
+                p.Z = 0;
+                double dis = Geometric.Point.distance(point, p);
+                Debug.WriteLine(" 定位精度：" + dis);
+                return new ResultRecord(true, lon, lat, string.Format("{0},{1},{2}", p.X, p.Y, p.Z), string.Format("{0},{1},{2}", point.X, point.Y, point.Z), dis, "成功定位");
+                //presentGrid(tmp1);
+
+            }
+        }
+
+        private ResultRecord showResultTest(string ans)
         {
             Hashtable ht = new Hashtable();
             ht["cellname"] = this.virname;
@@ -2018,13 +2077,13 @@ namespace LTE.ExternalInterference
             for (int i = 0; i < keyArr.Length; i++)
             {
                 string key = keyArr[i];
-                if (grid_from[key].Count < this.max_from - 1)
+                if (grid_from[key].Count < this.max_from * param_1)
                 {
                     tmp.Remove(keyArr[i]);
                 }
             }
-
-            Dictionary<string, List<GridInfo>> pre = new Dictionary<string, List<GridInfo>>(togrid);
+            
+            Dictionary<string, List<GridInfo>> pre = new Dictionary<string, List<GridInfo>>(tmp);
             #region 之前栅格From条件的代码
 
             /*while ((count > threshold + 100 || count < 5) && itera-- > 0)
@@ -2059,7 +2118,7 @@ namespace LTE.ExternalInterference
                 pre = new Dictionary<string, List<GridInfo>>(tmp);
             }*/
             #endregion
-            Debug.WriteLine("一层过滤结果集大小" + togrid.Count);
+            Debug.WriteLine("一层过滤结果集大小" + tmp.Count);
             Dictionary<string, double> ratRec = ComputeRateO(pre);
             count = OPGetFiltrateGrid(param_2, lownum, tmp, ratRec);
             
@@ -2345,7 +2404,8 @@ namespace LTE.ExternalInterference
                 if (cell_pathloss.ContainsKey(grid.cellid))
                 {
                     List<double> tmp = new List<double>(cell_pathloss[grid.cellid]);
-                    if (tmp.Count < L && (grid.rayType == 0 || grid.rayType == 1))//仅取l位数
+                    //if (tmp.Count < L && (grid.rayType == 0 || grid.rayType == 1))//仅取l位数
+                    if (tmp.Count < L )
                     {
                         tmp.Add(grid.pathloss);
                         cell_pathloss.Remove(grid.cellid);
@@ -2362,7 +2422,7 @@ namespace LTE.ExternalInterference
                 {
                     sumv += v;
                 }
-                Debug.WriteLine("ID" + kvp.Key + "    sumv:" + sumv + "     count:" + kvp.Value.Count);
+                //Debug.WriteLine("ID" + kvp.Key + "    sumv:" + sumv + "     count:" + kvp.Value.Count);
                 cellRecPwr.Add(kvp.Key, sumv / kvp.Value.Count);
             }
             cell_pathloss.Clear();
@@ -2674,11 +2734,12 @@ namespace LTE.ExternalInterference
             MinHeap<LocResult> rec = new MinHeap<LocResult>(kn);
             MinHeap<LocPResult> recP = new MinHeap<LocPResult>(kn);
             MinHeap<LocPpResult> recPp = new MinHeap<LocPpResult>(kn);
+            MaxHeap<LocPpResult> recminPp = new MaxHeap<LocPpResult>(kn);
             foreach (KeyValuePair<string, List<GridInfo>> kvp in candidate_grid)
             {
                 string k = kvp.Key;
                 //计算值
-                double value = grid_from[k].Count * from + grid_strongP[k] * 0.002 * pathnum - Ppathloss[k] * 0.1 * ratioP;
+                double value = grid_from[k].Count * from + grid_strongP[k] * 0.05 * pathnum - Ppathloss[k] * 0.2 * ratioP;
 
                 if (value > max)
                 {
@@ -2721,7 +2782,7 @@ namespace LTE.ExternalInterference
                 {
                     if (grid_strongP[k] > recP.GetMinItem().snum)
                     {
-                        LocPResult loc = new LocPResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, kvp.Value.Count);
+                        LocPResult loc = new LocPResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, (int)grid_strongP[k]);
 
                         recP.DeteleMinItem();
                         recP.AddItem(loc);
@@ -2729,7 +2790,7 @@ namespace LTE.ExternalInterference
                 }
                 else
                 {
-                    LocPResult loc = new LocPResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, kvp.Value.Count);
+                    LocPResult loc = new LocPResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, (int)grid_strongP[k]);
                     recP.AddItem(loc);
                 }
 
@@ -2737,7 +2798,7 @@ namespace LTE.ExternalInterference
                 {
                     if (Ppathloss[k] > recPp.GetMinItem().subPloss)
                     {
-                        LocPpResult loc = new LocPpResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, kvp.Value.Count);
+                        LocPpResult loc = new LocPpResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, (int)grid_strongP[k]);
 
                         recPp.DeteleMinItem();
                         recPp.AddItem(loc);
@@ -2745,8 +2806,24 @@ namespace LTE.ExternalInterference
                 }
                 else
                 {
-                    LocPpResult loc = new LocPpResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, kvp.Value.Count);
+                    LocPpResult loc = new LocPpResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, (int)grid_strongP[k]);
                     recPp.AddItem(loc);
+                }
+
+                if (recminPp.isFull())
+                {
+                    if (Ppathloss[k] < recminPp.GetMaxItem().subPloss)
+                    {
+                        LocPpResult loc = new LocPpResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, (int)grid_strongP[k]);
+
+                        recminPp.DeteleMaxItem();
+                        recPp.AddItem(loc);
+                    }
+                }
+                else
+                {
+                    LocPpResult loc = new LocPpResult(Convert.ToInt32(str[0]), Convert.ToInt32(str[1]), Convert.ToInt32(str[2]), value, grid_from[k].Count, Ppathloss[k], dis, (int)grid_strongP[k]);
+                    recminPp.AddItem(loc);
                 }
 
 
@@ -2761,12 +2838,19 @@ namespace LTE.ExternalInterference
                 recP.DeteleMinItem();
             }
 
-            Debug.WriteLine("综合干扰差值最小前" + kn + "个结果集，由差值大小从大到小输出");
+            Debug.WriteLine("综合干扰差值最大前" + kn + "个结果集，由差值大小从小到大输出");
             while (!recPp.isEmpty())
             {
                 LocPpResult loc = recPp.GetMinItem();
                 Debug.WriteLine(count + " grid:" + loc.gridx + "  " + loc.gridy + "   " + loc.gridz + "    rate:" + loc.rp + "    dis:" + loc.dis + "    from:" + loc.fromnum + "    综合干扰差值：" + loc.subPloss + "   路径数" + loc.snum);
                 recPp.DeteleMinItem();
+            }
+            Debug.WriteLine("综合干扰差值最小前" + kn + "个结果集，由差值大小从大到小输出");
+            while (!recminPp.isEmpty())
+            {
+                LocPpResult loc = recminPp.GetMaxItem();
+                Debug.WriteLine(count + " grid:" + loc.gridx + "  " + loc.gridy + "   " + loc.gridz + "    rate:" + loc.rp + "    dis:" + loc.dis + "    from:" + loc.fromnum + "    综合干扰差值：" + loc.subPloss + "   路径数" + loc.snum);
+                recminPp.DeteleMaxItem();
             }
 
             Debug.WriteLine(kn + "个结果集，由评分从小到大输出");
@@ -2774,13 +2858,45 @@ namespace LTE.ExternalInterference
             {
                 LocResult loc = rec.GetMinItem();
                 Debug.WriteLine(count + " grid:" + loc.gridx + "  " + loc.gridy + "   " + loc.gridz + "    rate:" + loc.rp + "    dis:" + loc.dis + "    from:" + loc.fromnum + "    综合干扰差值：" + loc.subPloss + "   路径数" + loc.snum);
+                
+                Geometric.Point p = new Geometric.Point();
+                Grid3D tmp1 = new Grid3D(loc.gridx, loc.gridy, loc.gridz);
+                GridHelper.getInstance().PointGridXYZ(ref p, tmp1, ggridsize, ggridVsize);
+                DataRow dr = tb.NewRow();
+                
+                dr["Version"] = this.virname;
+                dr["ansID"] = kn--;
+                dr["x"] = p.X;
+                dr["y"] = p.Y;
+                dr["z"] = p.Z;
+                PointConvertByProj.Instance.GetGeoPoint(p);
+                dr["Longitude"] = p.X;
+                dr["Latitude"] = p.Y;
+                tb.Rows.Add(dr);
                 rec.DeteleMinItem();
             }
+            WriteToLocResult();
 
 
-            
+
             return maxKey;
 
+        }
+
+        private void WriteToLocResult()
+        {
+            Hashtable ht = new Hashtable();
+            ht["Version"] = this.virname;
+            IbatisHelper.ExecuteDelete("deletbLocResult", ht);
+            using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+            {
+                bcp.BatchSize = tb.Rows.Count;
+                bcp.BulkCopyTimeout = 1000;
+                bcp.DestinationTableName = "tbLocResults";
+                bcp.WriteToServer(tb);
+                bcp.Close();
+            }
+            tb.Clear();
         }
         public void CompareWithAim()
         {

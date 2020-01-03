@@ -70,10 +70,14 @@
     <Reference Include="ProjNet, Version=1.2.4636.15762, Culture=neutral, PublicKeyToken=a1f5bdcd9c6f5740, processorArchitecture=MSIL">
       <HintPath>..\packages\Proj.NET.1.2\lib\net20\ProjNet.dll</HintPath>
     </Reference>
+    <Reference Include="StackExchange.Redis, Version=1.2.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StackExchange.Redis.1.2.6\lib\net45\StackExchange.Redis.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Entity" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Management" />
     <Reference Include="System.Net.Http.Formatting, Version=5.2.7.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -204,19 +208,26 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Attributes\ApiAuthorizeAttribute.cs" />
+    <Compile Include="Attributes\TaskLoadInfoAttribute.cs" />
+    <Compile Include="Attributes\ParamsCheckAttribute.cs" />
+    <Compile Include="Controllers\AreaCoverAnalysisController.cs" />
     <Compile Include="Controllers\AreaCoverDefectController.cs" />
     <Compile Include="Controllers\CalibrationController.cs" />
     <Compile Include="Controllers\CellRadiusController.cs" />
     <Compile Include="Controllers\CellRayTracingController.cs" />
     <Compile Include="Controllers\DebugController.cs" />
     <Compile Include="Controllers\DTdataController.cs" />
+    <Compile Include="Controllers\DTHandlerController.cs" />
     <Compile Include="Controllers\ExternalInfLocateController.cs" />
+    <Compile Include="Controllers\FishnetController.cs" />
     <Compile Include="Controllers\Grid3DStrengthQueryController.cs" />
     <Compile Include="Controllers\GridController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\InterferenceLocateController.cs" />
     <Compile Include="Controllers\LoadingController.cs" />
+    <Compile Include="Controllers\LoadShpLayerController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\OverlayController.cs" />
     <Compile Include="Controllers\PointsSelectController.cs" />
     <Compile Include="Controllers\RayRecordController.cs" />
     <Compile Include="Controllers\RefreshLayerController.cs" />
@@ -226,13 +237,20 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\Area.cs" />
     <Compile Include="Models\AreaCoverDefectModel.cs" />
     <Compile Include="Models\AuthInfo.cs" />
+    <Compile Include="Models\BuildingOverlayModel.cs" />
     <Compile Include="Models\CalibrationModel.cs" />
     <Compile Include="Models\CellRadiusModel.cs" />
+    <Compile Include="Models\ClusterShpModel.cs" />
     <Compile Include="Models\DebugModel.cs" />
+    <Compile Include="Models\DTHandlerModel.cs" />
     <Compile Include="Models\ExternalInfLocateModel.cs" />
+    <Compile Include="Models\FishnetModel.cs" />
+    <Compile Include="Models\GrassOverlayModel.cs" />
     <Compile Include="Models\Grid3DStrengthQueryModel.cs" />
+    <Compile Include="Models\LayerNames.cs" />
     <Compile Include="Models\PointsSelectModel.cs" />
     <Compile Include="Models\RayRecordModel.cs" />
     <Compile Include="Models\CellRayTracingModel.cs" />
@@ -245,6 +263,8 @@
     <Compile Include="Models\ScenePartModel.cs" />
     <Compile Include="Models\SingleRayTracingModel.cs" />
     <Compile Include="Models\SmoothBuildingVertexModel.cs" />
+    <Compile Include="Models\TaskType.cs" />
+    <Compile Include="Models\WaterOverlayModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\CgAlgorithm.cs" />
     <Compile Include="Utils\JwtHelper.cs" />
@@ -347,6 +367,7 @@
     <Content Include="Properties\settings.json" />
     <Content Include="providers.config" />
     <None Include="Scripts\jquery-1.8.2.intellisense.js" />
+    <Content Include="range.xml" />
     <Content Include="Scripts\jquery-1.8.2.js" />
     <Content Include="Scripts\jquery-1.8.2.min.js" />
     <None Include="Scripts\jquery.validate-vsdoc.js" />
@@ -428,6 +449,12 @@
     </Content>
     <Content Include="Views\Home\ExternalInfLocate.cshtml" />
     <Content Include="Views\Home\PointsSelect.cshtml" />
+    <Content Include="Views\Home\Fishnet.cshtml" />
+    <Content Include="Views\Home\Overlay.cshtml" />
+    <Content Include="Views\Home\RefreshLayerDT.cshtml" />
+    <Content Include="Views\Home\RefreshLayerSP.cshtml" />
+    <Content Include="Views\Home\ComputeInf.cshtml" />
+    <Content Include="Views\Home\UpdateDT.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Logs\" />
@@ -439,6 +466,14 @@
     <ProjectReference Include="..\GisClient\GisClient.csproj">
       <Project>{d6976601-f5f1-495c-a5ea-67ab6f84c12d}</Project>
       <Name>GisClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LTE.CalcProcess\LTE.CalcProcess.csproj">
+      <Project>{670c7e29-ff18-43c3-a27e-40ac9e3e7379}</Project>
+      <Name>LTE.CalcProcess</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LTE.MultiProcessController\LTE.MultiProcessController.csproj">
+      <Project>{ef8b562a-d771-4ece-990b-01aa64b264a9}</Project>
+      <Name>LTE.MultiProcessController</Name>
     </ProjectReference>
     <ProjectReference Include="..\LTE\LTE.csproj">
       <Project>{6fcf49cc-532a-4508-b2b4-bed927ab7165}</Project>

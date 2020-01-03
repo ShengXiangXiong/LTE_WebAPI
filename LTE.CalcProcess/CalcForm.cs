@@ -21,6 +21,7 @@ using LTE.Model;
 using System.Net.Http;
 using System.Net;
 using System.Net.Http.Headers;
+using Point = LTE.Geometric.Point;
 
 namespace LTE.CalcProcess
 {
@@ -50,7 +51,7 @@ namespace LTE.CalcProcess
         private LoadInfo loadInfo = new LoadInfo();
 
         //Http
-        private HttpClient httpClient = new HttpClient();
+        //private HttpClient httpClient = new HttpClient();
 
         private double fromAngle;
         private double toAngle;
@@ -78,33 +79,30 @@ namespace LTE.CalcProcess
 
         private ConsoleShow cs;
 
-        public void LoadApi() { }
-
 
         /// <summary>
         /// HttpClient实现Post请求
         /// </summary>
-        public async void doPostLoading(LoadInfo loadInfo,string action)
-        {
-            string url = "http://localhost:3298/api/Loading/"+action;
+        //public async void doPostLoading(LoadInfo loadInfo,string action)
+        //{
+        //    string url = "http://localhost:3298/api/Loading/"+action;
 
-            HttpContent httpContent = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(loadInfo));
-            httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            httpContent.Headers.ContentType.CharSet = "utf-8";
-            try
-            {
-                //httpClient = new HttpClient();
-                //AuthenticationHeaderValue authValue = new AuthenticationHeaderValue("Basic", token);
-                //httpClient.DefaultRequestHeaders.Authorization = authValue;
-                HttpResponseMessage response = await httpClient.PostAsync(url, httpContent);
-                //Console.WriteLine("response:"+response.IsSuccessStatusCode);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+        //    HttpContent httpContent = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(loadInfo));
+        //    httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        //    httpContent.Headers.ContentType.CharSet = "utf-8";
+        //    try
+        //    {
+        //        httpClient = new HttpClient();
+        //        AuthenticationHeaderValue authValue = new AuthenticationHeaderValue("Basic", token);
+        //        httpClient.DefaultRequestHeaders.Authorization = authValue;
+        //        HttpResponseMessage response = await httpClient.PostAsync(url, httpContent);
+        //    }
+        //    catch (Exception)
+        //    {
+        //        throw;
+        //    }
 
-        }
+        //}
 
 
 
@@ -156,8 +154,8 @@ namespace LTE.CalcProcess
             {
                 System.Environment.Exit(0);
             }
-            loadInfo.UserId = userId;
-            loadInfo.taskName = taskName;
+            LoadInfo.UserId.Value = userId;
+            LoadInfo.taskName.Value = taskName;
         }
 
         private bool dealParams(string[] args)
@@ -269,10 +267,7 @@ namespace LTE.CalcProcess
                         else
                         {
                             if (true)
-                            {
-                                Console.WriteLine("CoverAnalysis");
                                 this.startCalc();
-                            }
                             else
                             {
                                 // 2019.1.12 尹静萍
@@ -465,6 +460,15 @@ namespace LTE.CalcProcess
             //将位于扇区覆盖范围内的地面栅格加进来
             List<LTE.Geometric.Point> gfPoints = GroundGrid.getGGridCenterBySector(source, this.distance, this.fromAngle, this.toAngle, null);
 
+            foreach (var item in gfPoints)
+            {
+                Point t_p = new Point(item.X,item.Y,item.Z);
+                int gxid = -1, gyid = -1;
+                if (!GridHelper.getInstance().XYToGGrid(t_p.X, t_p.Y, ref gxid, ref gyid))
+                    return;
+            }
+
+
             //建筑物顶面栅格
             List<LTE.Geometric.Point> topPoints = TopPlaneGrid.GetAllTopGrid(source, this.bids);
 
@@ -532,11 +536,10 @@ namespace LTE.CalcProcess
             //init load
             int count = gray + bray + vray;
 
-            loadInfo.cnt = 0;
-            loadInfo.count = count;
-            loadInfo.UserId = userId;
-            loadInfo.taskName = taskName;
-            doPostLoading(loadInfo, "addCountByMulti");
+            LoadInfo.UserId.Value = userId;
+            LoadInfo.taskName.Value = taskName;
+            loadInfo.loadCountAdd(count);
+            //doPostLoading(loadInfo, "addCountByMulti");
 
 
             t2 = DateTime.Now;
@@ -763,7 +766,7 @@ namespace LTE.CalcProcess
                 double mergeAngle = 5.0 / 2000;//弧度制
                 // 合并射线终点，射线的角度小于mergeAngle的合并
                 List<LTE.Geometric.Point> vmPoints = GeometricUtilities.mergePointsByAngle(source, vPoints, mergeAngle);
-
+                Console.WriteLine("Loc反射初级直射线数目"+vmPoints.Count);
                 for (int i = 0; i < vmPoints.Count; i++)
                 {
                     List<InternalInterference.NodeInfo> rayList = new List<InternalInterference.NodeInfo>();
@@ -796,7 +799,7 @@ namespace LTE.CalcProcess
             #region 直射
             Console.WriteLine("Loc直射射线跟踪");
             double interval = 10;
-            List<Geometric.Point> pts = GroundGrid.getPointBySector(source, this.distance, this.fromAngle, this.toAngle, interval);
+            List<Geometric.Point> pts = GroundGrid.getPointBySector(source, this.distance, this.fromAngle, this.toAngle, interval);//获取地面或者顶面点
 
             // 向地面发射射线
             if (source.Z > 1)
@@ -823,7 +826,7 @@ namespace LTE.CalcProcess
             DateTime t3 = DateTime.Now;
 
             this.afterCalc();
-
+            this.computing = false;
             DateTime t4 = DateTime.Now;
 
             Console.WriteLine("射线数量 = {0}", this.rayLocate.rayCount);
@@ -1392,10 +1395,13 @@ namespace LTE.CalcProcess
             Console.WriteLine("扇区内建筑物顶面栅格数量 = {0}", topPoints.Count);
             Console.WriteLine("扇区内建筑物立面栅格数量 = {0}", vmPoints.Count);
             Console.WriteLine("扇区内建筑物棱边栅格数量 = {0}", diffPoints.Count);
-            Console.WriteLine("扇区内<6m建筑物数量 = {0}, 占比 = {1} ", h1, h1 / this.bids.Count);
-            Console.WriteLine("扇区内6~20m建筑物数量 = {0}, 占比 = {1} ", h2, h2 / this.bids.Count);
-            Console.WriteLine("扇区内>20m建筑物数量 = {0}, 占比 = {1} ", h3, h3 / this.bids.Count);
-            Console.WriteLine("扇区内建筑物占比 = {0}", topPoints.Count / gfPoints.Count);
+            if (this.bids.Count != 0 && gfPoints.Count!=0) {
+                Console.WriteLine("扇区内<6m建筑物数量 = {0}, 占比 = {1} ", h1, h1 / this.bids.Count);
+                Console.WriteLine("扇区内6~20m建筑物数量 = {0}, 占比 = {1} ", h2, h2 / this.bids.Count);
+                Console.WriteLine("扇区内>20m建筑物数量 = {0}, 占比 = {1} ", h3, h3 / this.bids.Count);
+                Console.WriteLine("扇区内建筑物占比 = {0}", topPoints.Count / gfPoints.Count);
+            }
+
             Console.WriteLine("射线数量 = {0}", this.rayLocate.rayCount);
             Console.WriteLine("直射线数量 = {0}", this.rayLocate.rayCountDir);
             Console.WriteLine("绕射线数量 = {0}", this.rayLocate.rayCountDif);
@@ -1410,8 +1416,8 @@ namespace LTE.CalcProcess
 
             this.afterCalc();
 
-            //Console.ReadKey();
             //this.cs.free();
+            this.Close();
         }
         #endregion
 
@@ -1433,7 +1439,18 @@ namespace LTE.CalcProcess
             {
                 if (++rayCounter % 1000 == 1)
                 {
+                    loadInfo.loadHashAdd(1000);
                     this.updateProgress(rayCounter);
+                }
+
+                Point t_p = new Point(endp.X, endp.Y, endp.Z);
+                int gxid = -1, gyid = -1;
+                if (!GridHelper.getInstance().XYToGGrid(t_p.X, t_p.Y, ref gxid, ref gyid))
+                    return;
+
+                if (gxid == 3421 && gyid == 8916)
+                {
+                    Console.WriteLine("111111");
                 }
 
                 //if (rayCounter < 2117)
@@ -1456,6 +1473,7 @@ namespace LTE.CalcProcess
                 // 跟踪某种类型的射线传播
                 rayList.Clear();
                 this.interAnalysis.rayTracingFirst(s.SourcePoint, endp, rayList, s, LTE.InternalInterference.RayType.Direction, type, coverageRadius);
+                //this.rayLocate.rayTracingFirstAdj(s.SourcePoint, endp, rayList, s, LTE.InternalInterference.RayType.Direction, type);
             }
             //MessageBox.Show("finish");
             this.updateProgress(points.Count);
@@ -1475,6 +1493,7 @@ namespace LTE.CalcProcess
             {
                 if (++rayCounter % 1000 == 1)
                 {
+                    loadInfo.loadHashAdd(1000);
                     this.updateProgress(rayCounter);
                 }
 
@@ -1508,8 +1527,9 @@ namespace LTE.CalcProcess
             tb.Columns.Add("angle");
             tb.Columns.Add("attenuation");  // 损耗系数
             tb.Columns.Add("recePwrDbm");
-
-            System.Data.DataTable tb1 = IbatisHelper.ExecuteQueryForDataTable("GetMaxRayLocID", null);
+            Hashtable ht = new Hashtable();
+            ht["cellid"] = this.cellInfo.CI;
+            System.Data.DataTable tb1 = IbatisHelper.ExecuteQueryForDataTable("GetMaxRayLocID", ht);
             long maxid = 0;
             if (tb1.Rows.Count > 0 && tb1.Rows[0][0] != null && tb1.Rows[0][0].ToString() != "")
             {
@@ -2003,6 +2023,7 @@ namespace LTE.CalcProcess
             else if (this.isRayAdj)
             {
                 writeRayAdj();
+                RayHelper.clearInstance();
                 IPC.PostMessage(this.parentHandle, IPC.WM_POST_CALCDONE, this.Handle, 0);
             }
             else
@@ -2184,6 +2205,7 @@ namespace LTE.CalcProcess
                 ret.ReceivedPowerW = gs.ReceivedPowerW;
                 ret.ReceivedPowerdbm = gs.ReceivedPowerdbm;
                 ret.PathLoss = gs.PathLoss;
+                ret.ground = gs.ground;
             }
             catch (Exception e)
             {
@@ -2234,8 +2256,9 @@ namespace LTE.CalcProcess
         /// <param name="val"></param>
         private void updateProgress(int val)
         {
-            loadInfo.cnt = (int)this.interAnalysis.rayCount;
-            doPostLoading(loadInfo, "updateLoadingInfo");
+            //loadInfo.cnt = (int)this.interAnalysis.rayCount;
+            //doPostLoading(loadInfo, "updateLoadingInfo");
+            //loadInfo.loadUpdate();
             //loading.updateLoading(userId, taskName, (int)this.interAnalysis.rayCount);
 
             this.label1.Text = string.Format("已经计算{0}/{1}条射线", val, this.totalRay);

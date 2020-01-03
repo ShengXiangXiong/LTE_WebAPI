@@ -24,7 +24,7 @@ namespace LTE.WebAPI.Models
             else
             {
                 string msg = string.Format("定位结果坐标：{0}\n干扰源坐标：{1}\n定位精度：{2}米", ans.GetResLocation(), ans.GetReaLocation(), ans.GetPrecise());
-                return new Result(true, msg);
+                return new Result(true, msg, ans);
             }
         }
     }

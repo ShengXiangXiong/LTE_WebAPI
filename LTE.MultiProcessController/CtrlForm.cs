@@ -214,8 +214,8 @@ namespace LTE.MultiProcessController
                     to = (fromAngle + (i + 1) * deltaA + 360) % 360;
 
 
-                    if (to > this.toAngle)
-                        to = this.toAngle;
+                    //if (to > this.toAngle)
+                    //    to = this.toAngle;
 
 
                     calcBids = "-1";
@@ -634,7 +634,7 @@ namespace LTE.MultiProcessController
             gs.ReceivedPowerW = ret.ReceivedPowerW;
             gs.ReceivedPowerdbm = ret.ReceivedPowerdbm;
             gs.PathLoss = ret.PathLoss;
-
+            gs.ground = ret.ground;
             return gs;
         }
 

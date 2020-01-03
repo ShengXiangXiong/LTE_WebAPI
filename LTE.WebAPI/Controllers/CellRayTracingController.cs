@@ -17,7 +17,8 @@ namespace LTE.WebAPI.Controllers
         /// <param name="rt">射线跟踪计算参数</param>
         /// <returns></returns>
         [HttpPost]
-        [ApiAuthorize(Roles ="admin")]
+        [ApiAuthorize(Roles = "admin")]
+        [TaskLoadInfo(taskName = "小区覆盖分析", type = TaskType.CellCoverCompu)]
         public Result PostRayTracing([FromBody]CellRayTracingModel rt)
         {
             return rt.calc();

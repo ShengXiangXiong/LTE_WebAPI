@@ -8,6 +8,7 @@ using LTE.InternalInterference;
 using LTE.InternalInterference.Grid;
 using System.Threading;
 using GisClient;
+using System.Collections;
 
 namespace LTE.WebAPI.Models
 {
@@ -25,6 +26,14 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().RefreshCell();
                 if (res.Ok)
                 {
+                    Hashtable ht = new Hashtable();
+                    //TODO：最好以地区名最为索引标志，可以通过项目创建时数据库中的地区名称来获得
+                    ht["IndexName"] = "南京";
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "Cell";
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
                     return new Result(true, "小区图层刷新成功");
                 }
                 else
@@ -70,16 +79,23 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshGroundCover(cellName);
                 if (res.Ok)
                 {
+                    Hashtable ht = new Hashtable();
+                    ht["IndexName"] = cellName;
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "GroundCover";
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
                     return new Result(true, "地面覆盖图层刷新成功");
                 }
                 else
                 {
-                    return new Result(false, "地面覆盖图层刷新失败");
+                    return new Result(false, "地面覆盖图层刷新失败"+res.Msg);
                 }
             }
             catch (Exception e)
             {
-                return new Result(false, "远程调用失败" + e);
+                return new Result(false, "地面覆盖图层刷新失败: " + e);
             }
             finally
             {
@@ -105,11 +121,18 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refresh3DCover(cellName);
                 if (res.Ok)
                 {
-                    return new Result(true, "地面覆盖图层刷新成功");
+                    Hashtable ht = new Hashtable();
+                    ht["IndexName"] = cellName;
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "Ground3DCover";
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
+                    return new Result(true, "立体覆盖图层刷新成功");
                 }
                 else
                 {
-                    return new Result(false, "地面覆盖图层刷新失败");
+                    return new Result(false, "立体覆盖图层刷新失败: "+res.Msg);
                 }
             }
             catch (Exception e)
@@ -173,11 +196,18 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshGroundCoverLayer(minXid, minYid, maxXid, maxYid);
                 if (res.Ok)
                 {
+                    Hashtable ht = new Hashtable();
+                    ht["IndexName"] = String.Format("%_%_%_%",minLongitude,minLatitude,maxLongitude,maxLatitude);
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "AreaGroundCover";
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
                     return new Result(true, "区域地面覆盖图层刷新成功");
                 }
                 else
                 {
-                    return new Result(false, "区域地面覆盖图层刷新失败");
+                    return new Result(false, "区域地面覆盖图层刷新失败" + res.Msg);
                 }
             } 
             catch (Exception e)
@@ -207,6 +237,13 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refresh3DCoverLayer(minXid, minYid, maxXid, maxYid);
                 if (res.Ok)
                 {
+                    Hashtable ht = new Hashtable();
+                    ht["IndexName"] = String.Format("%_%_%_%", minLongitude, minLatitude, maxLongitude, maxLatitude);
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "AreaGround3DCover";
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
                     return new Result(true, "区域立体覆盖图层刷新成功");
                 }
                 else
@@ -252,25 +289,25 @@ namespace LTE.WebAPI.Models
     #region 刷新虚拟路测图层
     public class RefreshDTdataLayerModel
     {
-        public static Result refreshDTLayer()
-        {
-            try
-            {
-                GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshDTLayer();
-                if (res.Ok)
-                {
-                    return new Result(true, "路测图层刷新成功");
-                }
-                else
-                {
-                    return new Result(false, "路测图层刷新失败");
-                }
-            }
-            catch (Exception e)
-            {
-                return new Result(false, "远程调用失败" + e);
-            }
-        }
+        //public static Result refreshDTLayer()
+        //{
+        //    try
+        //    {
+        //        GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshDTLayer();
+        //        if (res.Ok)
+        //        {
+        //            return new Result(true, "路测图层刷新成功");
+        //        }
+        //        else
+        //        {
+        //            return new Result(false, "路测图层刷新失败");
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        return new Result(false, "远程调用失败" + e);
+        //    }
+        //}
     }
     #endregion
 
@@ -344,7 +381,14 @@ namespace LTE.WebAPI.Models
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshDefectLayer(minXid, minYid, maxXid, maxYid,type);
                 if (res.Ok)
                 {
-                    return new Result(true, "网内干扰图层刷新成功");
+                    Hashtable ht = new Hashtable();
+                    ht["IndexName"] = String.Format("%_%_%_%", minLongitude, minLatitude, maxLongitude, maxLatitude);
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = type;
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
+                    return new Result(true, "网内干扰图层图层刷新成功");
                 }
                 else
                 {
@@ -527,6 +571,111 @@ namespace LTE.WebAPI.Models
                 ServiceApi.CloseConn();
             }
         }
+    }
+    #endregion
+
+    #region 刷新路测图层
+    public class RefreshDTLayerModel
+    {
+        /// <summary>
+        /// 指定刷新的版本
+        /// </summary>
+        public string version { get; set;}
+
+        /// <summary>
+        /// 指定路测与对应基站的距离限制
+        /// </summary>
+        public int distance { get; set; }
+
+        /// <summary>
+        /// 最小地理坐标
+        /// </summary>
+        public double minx { get; set; }
+
+        /// <summary>
+        /// 最小地理坐标
+        /// </summary>
+        public double miny { get; set; }
+
+        /// <summary>
+        /// 最大地理坐标
+        /// </summary>
+        public double maxx { get; set; }
+
+        /// <summary>
+        /// 最大地理坐标
+        /// </summary>
+        public double maxy { get; set; }
+
+        /// <summary>
+        /// 根据参数刷新图层
+        /// </summary>
+        /// <returns></returns>
+        public Result refreshDTLayer()
+        {
+    
+            try
+            {
+                GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshDTLayer(version,distance,minx,miny,maxx,maxy);
+                if (res.Ok)
+                {
+                    return new Result(true, "路测图层刷新成功");
+                }
+                else
+                {
+                    return new Result(false,res.Msg);
+                }
+            }
+            catch (Exception e)
+            {
+                return new Result(false, "远程调用失败" + e);
+            }
+            finally
+            {
+                ServiceApi.CloseConn();
+            }
+        }
+        
+    }
+    #endregion
+
+    #region 刷新路测图层
+    public class RefreshSPLayerModel
+    {
+        /// <summary>
+        /// 指定刷新的版本
+        /// </summary>
+        public string version { get; set; }
+
+        /// <summary>
+        /// 根据参数刷新图层
+        /// </summary>
+        /// <returns></returns>
+        public Result refreshSPLayer()
+        {
+
+            try
+            {
+                GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshSPLayer(version);
+                if (res.Ok)
+                {
+                    return new Result(true, "路测图层刷新成功");
+                }
+                else
+                {
+                    return new Result(false, res.Msg);
+                }
+            }
+            catch (Exception e)
+            {
+                return new Result(false, "远程调用失败" + e);
+            }
+            finally
+            {
+                ServiceApi.CloseConn();
+            }
+        }
+
     }
     #endregion
 }

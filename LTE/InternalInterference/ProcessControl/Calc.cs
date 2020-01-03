@@ -1030,7 +1030,7 @@ namespace LTE.InternalInterference.ProcessControl
             DateTime t0, t1, t2, t3, t4, t5, t6;
             t0 = DateTime.Now;
 
-            this.beforeCalc();
+            this.beforeCalc(); 
 
             int gray, bray = 0, vray;
             Geometric.Point source = this.cellInfo.SourcePoint;
@@ -1142,10 +1142,12 @@ namespace LTE.InternalInterference.ProcessControl
             Console.WriteLine("扇区内建筑物顶面栅格数量 = {0}", topPoints.Count);
             Console.WriteLine("扇区内建筑物立面栅格数量 = {0}", vmPoints.Count);
             Console.WriteLine("扇区内建筑物棱边栅格数量 = {0}", diffPoints.Count);
-            Console.WriteLine("扇区内<6m建筑物数量 = {0}, 占比 = {1} ", h1, h1 / this.bids.Count);
-            Console.WriteLine("扇区内6~20m建筑物数量 = {0}, 占比 = {1} ", h2, h2 / this.bids.Count);
-            Console.WriteLine("扇区内>20m建筑物数量 = {0}, 占比 = {1} ", h3, h3 / this.bids.Count);
-            Console.WriteLine("扇区内建筑物占比 = {0}", topPoints.Count / gfPoints.Count);
+            if (this.bids.Count != 0 && gfPoints.Count != 0) {
+                Console.WriteLine("扇区内<6m建筑物数量 = {0}, 占比 = {1} ", h1, h1 / this.bids.Count);
+                Console.WriteLine("扇区内6~20m建筑物数量 = {0}, 占比 = {1} ", h2, h2 / this.bids.Count);
+                Console.WriteLine("扇区内>20m建筑物数量 = {0}, 占比 = {1} ", h3, h3 / this.bids.Count);
+                Console.WriteLine("扇区内建筑物占比 = {0}", topPoints.Count / gfPoints.Count);
+            }         
             Console.WriteLine("射线数量 = {0}", this.rayLocate.rayCount);
             Console.WriteLine("直射线数量 = {0}", this.rayLocate.rayCountDir);
             Console.WriteLine("绕射线数量 = {0}", this.rayLocate.rayCountDif);
@@ -1198,7 +1200,8 @@ namespace LTE.InternalInterference.ProcessControl
 
                 // 跟踪某种类型的射线传播
                 rayList.Clear();
-                this.interAnalysis.rayTracingFirst(s.SourcePoint, endp, rayList, s, LTE.InternalInterference.RayType.Direction, type, coverageRadius);
+                //this.interAnalysis.rayTracingFirst(s.SourcePoint, endp, rayList, s, LTE.InternalInterference.RayType.Direction, type, coverageRadius);
+                this.rayLocate.rayTracingFirstAdj(s.SourcePoint, endp, rayList, s, LTE.InternalInterference.RayType.Direction, type);
             }
             //MessageBox.Show("finish");
         }
@@ -1284,7 +1287,9 @@ namespace LTE.InternalInterference.ProcessControl
             tb.Columns.Add("attenuation");  // 损耗系数
             tb.Columns.Add("recePwrDbm");
 
-            System.Data.DataTable tb1 = IbatisHelper.ExecuteQueryForDataTable("GetMaxRayLocID", null);
+            Hashtable ht = new Hashtable();
+            ht["cellid"] = this.cellInfo.CI;
+            System.Data.DataTable tb1 = IbatisHelper.ExecuteQueryForDataTable("GetMaxRayLocID", ht);
             long maxid = 0;
             if (tb1.Rows.Count > 0 && tb1.Rows[0][0] != null && tb1.Rows[0][0].ToString() != "")
             {
@@ -1603,7 +1608,7 @@ namespace LTE.InternalInterference.ProcessControl
             Console.WriteLine("系数校正数据入库");
         }
 
-        // 2019.1.11  用于系数校正
+        // 2019.1.11  用于系数校正（目前使用的）
         void writeRayAdj()
         {
             System.Data.DataTable tb = new System.Data.DataTable();

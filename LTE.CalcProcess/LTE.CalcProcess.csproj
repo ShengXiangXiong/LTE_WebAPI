@@ -85,14 +85,20 @@
     <Reference Include="GeoAPI, Version=1.6.4448.22541, Culture=neutral, PublicKeyToken=a1a0da7def465678, processorArchitecture=MSIL">
       <HintPath>..\packages\GeoAPI.1.6.0\lib\net35\GeoAPI.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.VisualStudio.Threading, Version=15.8.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.10.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="ProjNet, Version=1.2.4636.15762, Culture=neutral, PublicKeyToken=a1f5bdcd9c6f5740, processorArchitecture=MSIL">
       <HintPath>..\packages\Proj.NET.1.2\lib\net20\ProjNet.dll</HintPath>
     </Reference>
+    <Reference Include="StackExchange.Redis, Version=1.2.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StackExchange.Redis.1.2.6\lib\net45\StackExchange.Redis.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -129,6 +135,7 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <None Include="app.config" />
+    <None Include="bin\x86\Debug\LTE.CalcProcess.exe.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -158,6 +165,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\GisClient\GisClient.csproj">
+      <Project>{d6976601-f5f1-495c-a5ea-67ab6f84c12d}</Project>
+      <Name>GisClient</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LTE\LTE.csproj">
       <Project>{6FCF49CC-532A-4508-B2B4-BED927AB7165}</Project>
       <Name>LTE</Name>
@@ -165,6 +176,16 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="bin\Debug\LTE.CalcProcess.XML" />
+    <Content Include="bin\x64\Debug\Microsoft.VisualStudio.Threading.dll" />
+    <Content Include="bin\x86\Debug\LTE.CalcProcess.exe" />
+    <Content Include="bin\x86\Debug\LTE.CalcProcess.pdb" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\Release\" />
+    <Folder Include="bin\x86\Release\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
