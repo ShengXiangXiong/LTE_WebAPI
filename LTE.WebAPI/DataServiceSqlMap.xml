@@ -1072,10 +1072,13 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   <select id = "getAreaShpByLonLat" parameterClass="Hashtable">
     <![CDATA[
       SELECT  ShpName FROM  tbAreaShpLayer
-      where not ( MinLongitude>#maxLongitude# or MaxLongitude<#minLongitude# 
-                  or MinLatitude>#maxLatitude# or MaxLatitude<#minLatitude#)
+      where not ( MinLongitude>$maxLongitude$ or MaxLongitude<$minLongitude$ 
+                  or MinLatitude>$maxLatitude$ or MaxLatitude<$minLatitude$)
+                  and type in ($type$)
     ]]>
   </select>
+
+  
 
   <select id = "getNotComputedCellByArea" parameterClass="Hashtable">
     <!--SELECT  CellName,x,y,CoverageRadius FROM  CELL
