@@ -20,6 +20,7 @@ namespace LTE.WebAPI.Models
                 try//更新前提条件表
                 {
                     IbatisHelper.ExecuteDelete("UpdatetbDependTableDuetoClusterShp", null);
+                    IbatisHelper.ExecuteDelete("deleteAdjcoefficient", null);
                 }
                 catch (Exception ex)
                 { return new Result(false, ex.ToString()); }

@@ -236,6 +236,7 @@ namespace LTE.WebAPI.Models
                 try//更新加速场景表，前提条件表
                 {
                     IbatisHelper.ExecuteDelete("UpdatetbDependTableDuetoClustertoDB", null);
+                    IbatisHelper.ExecuteDelete("deleteAdjcoefficient", null);
                     IbatisHelper.ExecuteUpdate("UpdatetbAccelerateGridSceneDuetoClustertoDB", null);
                 }
                 catch (Exception ex)
@@ -632,7 +633,7 @@ namespace LTE.WebAPI.Models
                     foreach (var item in myDictionary.Keys)
                     {
                         dt.Rows.Add(new object[] { (item % (ymax + 1)).ToString(), (item / (ymax + 1)).ToString(), myDictionary[item].ToString(), c[item / columnnumber, item % columnnumber].ToString() });
-                        if (dt.Rows.Count > 5000)
+                        if (dt.Rows.Count > 100000)
                         {
                             using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
                             {
@@ -643,6 +644,8 @@ namespace LTE.WebAPI.Models
                                 bcp.Close();
                             }
                             dt.Clear();
+                            IbatisHelper.ExecuteUpdate("UpdatetbAccelerateGridClusterByTmp", null);
+                            IbatisHelper.ExecuteDelete("DeletetbAccelerateGridSceneTmpCluster", null);
                         }
                     }
                     using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
