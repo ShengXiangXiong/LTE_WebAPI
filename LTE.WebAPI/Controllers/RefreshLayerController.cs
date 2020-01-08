@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using GisClient;
+using LTE.DB;
 using LTE.WebAPI.Attributes;
 using LTE.WebAPI.Models;
+using Result = LTE.WebAPI.Models.Result;
 
 namespace LTE.WebAPI.Controllers
 {
@@ -86,7 +90,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
-        [TaskLoadInfo(taskName = "弱覆盖点图层", type = TaskType.AreaCoverLayer)]
+        [TaskLoadInfo(taskName = "弱覆盖点图层", type = TaskType.AreaInterferenceLayer)]
         public Result PostRefreshWeakLayer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshWeakLayer();
@@ -98,7 +102,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
-        [TaskLoadInfo(taskName = "过覆盖点图层", type = TaskType.AreaCoverLayer)]
+        [TaskLoadInfo(taskName = "过覆盖点图层", type = TaskType.AreaInterferenceLayer)]
         public Result PostRefreshExcessiveLayer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshExcessiveLayer();
@@ -110,7 +114,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
-        [TaskLoadInfo(taskName = "重叠覆盖点图层", type = TaskType.AreaCoverLayer)]
+        [TaskLoadInfo(taskName = "重叠覆盖点图层", type = TaskType.AreaInterferenceLayer)]
         public Result PostRefreshOverlappedLayer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshOverlappedLayer();
@@ -122,7 +126,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
-        [TaskLoadInfo(taskName = "PCI冲突点图层", type = TaskType.AreaCoverLayer)]
+        [TaskLoadInfo(taskName = "PCI冲突点图层", type = TaskType.AreaInterferenceLayer)]
         public Result PostRefreshPCIconflictLayer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshPCIconflictLayer();
@@ -134,7 +138,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
-        [TaskLoadInfo(taskName = "PCI混淆点图层", type = TaskType.AreaCoverLayer)]
+        [TaskLoadInfo(taskName = "PCI混淆点图层", type = TaskType.AreaInterferenceLayer)]
         public Result PostRefreshPCIconfusionLayer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshPCIconfusionLayer();
@@ -146,7 +150,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="layer">区域范围</param>
         /// <returns></returns>
         [HttpPost]
-        [TaskLoadInfo(taskName = "PCI mod3 对打点图层", type = TaskType.AreaCoverLayer)]
+        [TaskLoadInfo(taskName = "PCI mod3 对打点图层", type = TaskType.AreaInterferenceLayer)]
         public Result PostRefreshPCImod3Layer([FromBody]RefreshAreaCoverDefectLayerModel layer)
         {
             return layer.refreshPCImod3Layer();
@@ -193,6 +197,43 @@ namespace LTE.WebAPI.Controllers
         public Result PostRefreshBuildingSmoothLayer()
         {
             return RefreshBuildingSmoothLayer.refreshBuildingSmoothLayer();
+        }
+
+        /// <summary>
+        /// 刷新固定终端图层
+        /// </summary>
+        /// <returns></returns>
+        [HttpPost]
+        [TaskLoadInfo(taskName = "固定终端图层", type = TaskType.AreaGSMLayer)]
+        public Result PostFixTerminalLayer()
+        {
+            try
+            {
+                GisClient.Result res = GisClient.ServiceApi.getGisLayerService().refreshFixTerminalLayer();
+                if (res.Ok)
+                {
+                    Hashtable ht = new Hashtable();
+                    ht["IndexName"] = "固定终端";
+                    ht["ShpName"] = res.ShpName;
+                    ht["Type"] = "fix";
+                    ht["DateTime"] = DateTime.Now;
+                    IbatisHelper.ExecuteInsert("insShp", ht);
+
+                    return new Result(true, "固定终端图层刷新成功");
+                }
+                else
+                {
+                    return new Result(false, "固定终端图层刷新失败");
+                }
+            }
+            catch (Exception e)
+            {
+                return new Result(false, "远程调用失败" + e);
+            }
+            finally
+            {
+                ServiceApi.CloseConn();
+            }
         }
     }
 }

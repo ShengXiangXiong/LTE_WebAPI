@@ -214,10 +214,9 @@ namespace LTE.MultiProcessController
                     to = (fromAngle + (i + 1) * deltaA + 360) % 360;
 
 
-                    if (to > this.toAngle)
-                        to = this.toAngle;
-
-
+                    //if (to > this.toAngle)
+                    //    to = this.toAngle;
+                    Console.WriteLine("thread" + i + "from: " + from + "  to:" + to);
                     calcBids = "-1";
                     for (int j = i * bidsNum, k = 0, bound = i == this.processNum - 1 ? this.bids.Count - j : bidsNum; k < bound; k++)
                     {

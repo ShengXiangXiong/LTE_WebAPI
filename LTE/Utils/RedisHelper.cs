@@ -19,9 +19,19 @@ namespace LTE.Utils
         {
             if(redis is null)
             {
+
                 redis = new RedisHelper();
                 redis.addr = url + ":" + port;
-                redis.conn = ConnectionMultiplexer.Connect(redis.addr);
+                var config = new ConfigurationOptions
+                {
+                    AbortOnConnectFail = false,
+                    AllowAdmin = true,
+                    ConnectTimeout = 15000,
+                    SyncTimeout = 5000,
+                    ResponseTimeout = 15000,
+                    EndPoints = { redis.addr }
+                };
+                redis.conn = ConnectionMultiplexer.Connect(config);
                 redis.db = redis.conn.GetDatabase();
             }
             return redis;

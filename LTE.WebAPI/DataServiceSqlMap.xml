@@ -1082,8 +1082,8 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     where x between $minX and $maxX and y between $minY and $maxY-->
 
     SELECT  distinct CellName,x,y,CoverageRadius FROM  CELL a
-    where x between $minX$ and $maxX$ and y between $minY$ and $maxY$ and
-    not Exists( select ci from tbGridPathloss b where a.CI=b.CI)
+    where x between $minX$ and $maxX$ and y between $minY$ and $maxY$ and CoverageRadius is not null
+    and not Exists( select ci from tbGridPathloss b where a.CI=b.CI)
   </select>
   
 <!--»ñÈ¡ÓæÍøÎ»ÖÃ-->

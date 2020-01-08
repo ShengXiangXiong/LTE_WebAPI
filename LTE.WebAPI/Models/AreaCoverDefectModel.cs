@@ -220,6 +220,7 @@ namespace LTE.WebAPI.Models
                 if (updateSize==++cnt1)
                 {
                     loadInfo.loadHashAdd(updateSize);
+                    cnt1 = 0;
                 }
                 dic[key].Sort(new SubCompare());  // 按功率从大到小排序
 
@@ -400,6 +401,7 @@ namespace LTE.WebAPI.Models
                 if (updateSize == ++cnt1)
                 {
                     loadInfo.loadHashAdd(updateSize);
+                    cnt1 = 0;
                 }
                 dic1[key].Sort(new SubCompare());
                 int m = dic1[key].Count - 1;

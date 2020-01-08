@@ -37,6 +37,7 @@ namespace GisClient
       Result overlaywater();
       Result cluster();
       Result refreshSPLayer(string version);
+      Result refreshFixTerminalLayer();
     }
 
     public interface Iface : ISync {
@@ -111,6 +112,10 @@ namespace GisClient
       #if SILVERLIGHT
       IAsyncResult Begin_refreshSPLayer(AsyncCallback callback, object state, string version);
       Result End_refreshSPLayer(IAsyncResult asyncResult);
+      #endif
+      #if SILVERLIGHT
+      IAsyncResult Begin_refreshFixTerminalLayer(AsyncCallback callback, object state);
+      Result End_refreshFixTerminalLayer(IAsyncResult asyncResult);
       #endif
     }
 
@@ -1424,6 +1429,73 @@ namespace GisClient
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "refreshSPLayer failed: unknown result");
       }
 
+      
+      #if SILVERLIGHT
+      
+      public IAsyncResult Begin_refreshFixTerminalLayer(AsyncCallback callback, object state)
+      {
+        return send_refreshFixTerminalLayer(callback, state);
+      }
+
+      public Result End_refreshFixTerminalLayer(IAsyncResult asyncResult)
+      {
+        oprot_.Transport.EndFlush(asyncResult);
+        return recv_refreshFixTerminalLayer();
+      }
+
+      #endif
+
+      public Result refreshFixTerminalLayer()
+      {
+        #if SILVERLIGHT
+        var asyncResult = Begin_refreshFixTerminalLayer(null, null);
+        return End_refreshFixTerminalLayer(asyncResult);
+
+        #else
+        send_refreshFixTerminalLayer();
+        return recv_refreshFixTerminalLayer();
+
+        #endif
+      }
+      #if SILVERLIGHT
+      public IAsyncResult send_refreshFixTerminalLayer(AsyncCallback callback, object state)
+      {
+        oprot_.WriteMessageBegin(new TMessage("refreshFixTerminalLayer", TMessageType.Call, seqid_));
+        refreshFixTerminalLayer_args args = new refreshFixTerminalLayer_args();
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        return oprot_.Transport.BeginFlush(callback, state);
+      }
+
+      #else
+
+      public void send_refreshFixTerminalLayer()
+      {
+        oprot_.WriteMessageBegin(new TMessage("refreshFixTerminalLayer", TMessageType.Call, seqid_));
+        refreshFixTerminalLayer_args args = new refreshFixTerminalLayer_args();
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        oprot_.Transport.Flush();
+      }
+      #endif
+
+      public Result recv_refreshFixTerminalLayer()
+      {
+        TMessage msg = iprot_.ReadMessageBegin();
+        if (msg.Type == TMessageType.Exception) {
+          TApplicationException x = TApplicationException.Read(iprot_);
+          iprot_.ReadMessageEnd();
+          throw x;
+        }
+        refreshFixTerminalLayer_result result = new refreshFixTerminalLayer_result();
+        result.Read(iprot_);
+        iprot_.ReadMessageEnd();
+        if (result.__isset.success) {
+          return result.Success;
+        }
+        throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "refreshFixTerminalLayer failed: unknown result");
+      }
+
     }
     public class Processor : TProcessor {
       public Processor(ISync iface)
@@ -1447,6 +1519,7 @@ namespace GisClient
         processMap_["overlaywater"] = overlaywater_Process;
         processMap_["cluster"] = cluster_Process;
         processMap_["refreshSPLayer"] = refreshSPLayer_Process;
+        processMap_["refreshFixTerminalLayer"] = refreshFixTerminalLayer_Process;
       }
 
       protected delegate void ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot);
@@ -1983,6 +2056,34 @@ namespace GisClient
         oprot.Transport.Flush();
       }
 
+      public void refreshFixTerminalLayer_Process(int seqid, TProtocol iprot, TProtocol oprot)
+      {
+        refreshFixTerminalLayer_args args = new refreshFixTerminalLayer_args();
+        args.Read(iprot);
+        iprot.ReadMessageEnd();
+        refreshFixTerminalLayer_result result = new refreshFixTerminalLayer_result();
+        try
+        {
+          result.Success = iface_.refreshFixTerminalLayer();
+          oprot.WriteMessageBegin(new TMessage("refreshFixTerminalLayer", TMessageType.Reply, seqid)); 
+          result.Write(oprot);
+        }
+        catch (TTransportException)
+        {
+          throw;
+        }
+        catch (Exception ex)
+        {
+          Console.Error.WriteLine("Error occurred in processor:");
+          Console.Error.WriteLine(ex.ToString());
+          TApplicationException x = new TApplicationException        (TApplicationException.ExceptionType.InternalError," Internal error.");
+          oprot.WriteMessageBegin(new TMessage("refreshFixTerminalLayer", TMessageType.Exception, seqid));
+          x.Write(oprot);
+        }
+        oprot.WriteMessageEnd();
+        oprot.Transport.Flush();
+      }
+
     }
 
 
@@ -2193,10 +2294,6 @@ namespace GisClient
           }
           iprot.ReadStructEnd();
         }
-        catch(Exception ex)
-                {
-                    Console.WriteLine(ex.StackTrace);
-                }
         finally
         {
           iprot.DecrementRecursionDepth();
@@ -6056,6 +6153,180 @@ namespace GisClient
 
       public override string ToString() {
         StringBuilder __sb = new StringBuilder("refreshSPLayer_result(");
+        bool __first = true;
+        if (Success != null && __isset.success) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Success: ");
+          __sb.Append(Success== null ? "<null>" : Success.ToString());
+        }
+        __sb.Append(")");
+        return __sb.ToString();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class refreshFixTerminalLayer_args : TBase
+    {
+
+      public refreshFixTerminalLayer_args() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("refreshFixTerminalLayer_args");
+          oprot.WriteStructBegin(struc);
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("refreshFixTerminalLayer_args(");
+        __sb.Append(")");
+        return __sb.ToString();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class refreshFixTerminalLayer_result : TBase
+    {
+      private Result _success;
+
+      public Result Success
+      {
+        get
+        {
+          return _success;
+        }
+        set
+        {
+          __isset.success = true;
+          this._success = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool success;
+      }
+
+      public refreshFixTerminalLayer_result() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 0:
+                if (field.Type == TType.Struct) {
+                  Success = new Result();
+                  Success.Read(iprot);
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("refreshFixTerminalLayer_result");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+
+          if (this.__isset.success) {
+            if (Success != null) {
+              field.Name = "Success";
+              field.Type = TType.Struct;
+              field.ID = 0;
+              oprot.WriteFieldBegin(field);
+              Success.Write(oprot);
+              oprot.WriteFieldEnd();
+            }
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("refreshFixTerminalLayer_result(");
         bool __first = true;
         if (Success != null && __isset.success) {
           if(!__first) { __sb.Append(", "); }

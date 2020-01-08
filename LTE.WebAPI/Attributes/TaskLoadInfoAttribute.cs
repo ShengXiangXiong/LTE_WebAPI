@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Web;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
@@ -17,10 +18,11 @@ namespace LTE.WebAPI.Attributes
         public string taskName { get; set; }
         public TaskType type { get; set; }
         private LoadInfo loadInfo = new LoadInfo();
-
+        private static readonly object gisLock = new Object();
+        //标志任务是否涉及gis图层，否则置为false
+        private bool layer = true;
         public override void OnActionExecuting(HttpActionContext actionContext)
         {
-            bool layer = true;
             //string taskName = typeof(TaskType).GetEnumName(type);
             string taskName1 = taskName;
             taskName1 += "_";
@@ -52,6 +54,10 @@ namespace LTE.WebAPI.Attributes
                     layer = false;
                     taskName1 += String.Format("{0}_{1}_{2}_{3}", obj4.minLongitude, obj4.minLatitude, obj4.maxLongitude, obj4.maxLatitude);
                     break;
+                case TaskType.AreaInterferenceLayer:
+                    var obj7 = (RefreshAreaCoverDefectLayerModel)actionContext.ActionArguments["layer"];
+                    taskName1 += String.Format("{0}_{1}_{2}_{3}", obj7.minLongitude, obj7.minLatitude, obj7.maxLongitude, obj7.maxLatitude);
+                    break;
                 case TaskType.RayRecordAdj:
                     var obj5 = (RayRecordAdjModel)actionContext.ActionArguments["ray"];
                     layer = false;
@@ -77,8 +83,15 @@ namespace LTE.WebAPI.Attributes
             //提前通知远程系统的初始化进度信息
             if (layer)
             {
+                Monitor.Enter(gisLock);
+                //if(Monitor.TryEnter(gisLock)){
+                GisClient.ServiceApi.gisApi.Value = new GisClient.ServiceApi();
                 GisClient.Result res = GisClient.ServiceApi.getGisLayerService().setLoadInfo(LoadInfo.UserId.Value, taskName1);
                 GisClient.ServiceApi.CloseConn();
+                //}
+                //GisClient.ServiceApi.gisApi.Value = new GisClient.ServiceApi();
+                //GisClient.Result res = GisClient.ServiceApi.getGisLayerService().setLoadInfo(LoadInfo.UserId.Value, taskName1);
+                //GisClient.ServiceApi.CloseConn();
             }
             loadInfo.loadCreate();
             
@@ -95,7 +108,11 @@ namespace LTE.WebAPI.Attributes
             {
                 loadInfo.loadBreakDown();
             }
-
+            if (layer)
+            {
+                GisClient.ServiceApi.CloseConn();
+                Monitor.Exit(gisLock);
+            }
         }
         /// <summary>
         /// 读取action返回的result

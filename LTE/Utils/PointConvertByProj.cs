@@ -66,7 +66,7 @@ namespace LTE.Utils
         /// <remarks>其中pPoint的X是经度，Y是纬度，单位都是度，千万不要搞错，否则转换出来的值是不对的或转换不出值</remarks>
         public LTE.Geometric.Point GetProjectPoint(LTE.Geometric.Point point)
         {
-            lock (syncPrj)
+            lock (obj)
             {
                 double[] p = new double[2];
                 p[0] = point.X;
@@ -87,7 +87,7 @@ namespace LTE.Utils
         ///<remarks></remarks>
         public LTE.Geometric.Point GetGeoPoint(LTE.Geometric.Point point)
         {
-            lock (syncGeo)
+            lock (obj)
             {
                 double[] p = new double[2];
                 p[0] = point.X;

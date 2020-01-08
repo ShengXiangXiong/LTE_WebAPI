@@ -206,6 +206,10 @@ namespace LTE.InternalInterference.Grid
                 gs = kv.Value;
                 if (gs.ground)
                 {//地面栅格
+                    if (gs.ReceivedPowerdbm == double.NegativeInfinity)
+                    {
+                        continue;
+                    }
                     ng++;
                     dr = groundCover.NewRow();
                     dr["GXID"] = gs.GXID;

@@ -168,7 +168,7 @@ namespace LTE.CalcProcess
                 {
                     cs = new ConsoleShow();
                     //MessageBox.Show("读取参数 ...");
-                    this.label1.Text = "读取参数 ...";
+                    //this.label1.Text = "读取参数 ...";
                     this.MMFName = string.Format("{0}_{1}", args[1], this.Handle);
                     this.MMFName1 = this.MMFName + "_ReRay";
                     Console.WriteLine("memory name : {0}", this.MMFName);
@@ -442,12 +442,12 @@ namespace LTE.CalcProcess
             t0 = DateTime.Now;
 
             this.computing = true;
-            this.label1.Text = "正在构建加速结构，即将开始计算 ...";
-            this.label1.Refresh();
+            //this.label1.Text = "正在构建加速结构，即将开始计算 ...";
+            //this.label1.Refresh();
             this.beforeCalc();
 
-            this.label1.Text = "生成射线 ...";
-            this.label1.Refresh();
+            //this.label1.Text = "生成射线 ...";
+            //this.label1.Refresh();
 
             int gray, bray = 0, vray;
             LTE.Geometric.Point source = this.cellInfo.SourcePoint;
@@ -548,8 +548,8 @@ namespace LTE.CalcProcess
 
 
             t2 = DateTime.Now;
-            this.label1.Text = "直射分析 ...";
-            this.label1.Refresh();
+            //this.label1.Text = "直射分析 ...";
+            //this.label1.Refresh();
             this.analysis(gfPoints, 1);
             gray = gfPoints.Count;
 
@@ -559,8 +559,8 @@ namespace LTE.CalcProcess
             gray += topPoints.Count;
 
             //t5 = DateTime.Now;
-            this.label1.Text = "反射、室内分析...";
-            this.label1.Refresh();
+            //this.label1.Text = "反射、室内分析...";
+            //this.label1.Refresh();
             this.analysis(vmPoints, 3);
             bray = vmPoints.Count;
 
@@ -568,21 +568,21 @@ namespace LTE.CalcProcess
 
             t3 = DateTime.Now;
 
-            this.label1.Text = "绕射分析...";
-            this.label1.Refresh();
+            //this.label1.Text = "绕射分析...";
+            //this.label1.Refresh();
             this.analysis(diffPoints, 4);
             vray = diffPoints.Count;
 
             Console.WriteLine("绕射线分析完成");
 
-            this.label1.Text = "分析完成...";
-            this.label1.Refresh();
+            //this.label1.Text = "分析完成...";
+            //this.label1.Refresh();
 
             t4 = DateTime.Now;
 
             if (this.reRay)  // 需要二次投射
             {
-                this.label1.Refresh();
+                //this.label1.Refresh();
                 SourceInfo sourceInfo = this.cellInfo.clone();
                 Hashtable ht = new Hashtable();
                 ht["CI"] = this.cellInfo.CI;
@@ -739,12 +739,12 @@ namespace LTE.CalcProcess
             DateTime t0 = DateTime.Now;
 
             this.computing = true;
-            this.label1.Text = "正在构建加速结构，即将开始计算 ...";
-            this.label1.Refresh();
+            //this.label1.Text = "正在构建加速结构，即将开始计算 ...";
+            //this.label1.Refresh();
             this.beforeCalcLoc();
 
-            this.label1.Text = "射线生成 ...";
-            this.label1.Refresh();
+            //this.label1.Text = "射线生成 ...";
+            //this.label1.Refresh();
 
             Geometric.Point source = this.cellInfo.SourcePoint;
 
@@ -1098,8 +1098,8 @@ namespace LTE.CalcProcess
         private void startCalcBeam()
         {
             this.computing = true;
-            this.label1.Text = "beam 跟踪即将开始计算 ...";
-            this.label1.Refresh();
+            //this.label1.Text = "beam 跟踪即将开始计算 ...";
+            //this.label1.Refresh();
 
             DateTime t0 = DateTime.Now;
 
@@ -1434,7 +1434,7 @@ namespace LTE.CalcProcess
         /// <returns></returns>
         private void analysis(List<LTE.Geometric.Point> points, int type)
         {
-            this.resetProgress(points.Count);
+            //this.resetProgress(points.Count);
 
             int rayCounter = 0;
 
@@ -1445,7 +1445,7 @@ namespace LTE.CalcProcess
                 if (++rayCounter % 1000 == 1&&!notUpdateCoverLoad)
                 {
                     loadInfo.loadHashAdd(1000);
-                    this.updateProgress(rayCounter);
+                    //this.updateProgress(rayCounter);
                 }
 
                 Point t_p = new Point(endp.X, endp.Y, endp.Z);
@@ -1481,7 +1481,7 @@ namespace LTE.CalcProcess
                 //this.rayLocate.rayTracingFirstAdj(s.SourcePoint, endp, rayList, s, LTE.InternalInterference.RayType.Direction, type);
             }
             //MessageBox.Show("finish");
-            this.updateProgress(points.Count);
+            //this.updateProgress(points.Count);
         }
 
         /// <summary>
@@ -1489,7 +1489,7 @@ namespace LTE.CalcProcess
         /// </summary>
         private void analysis(ref List<ReRay> points)
         {
-            this.resetProgress(points.Count);
+            //this.resetProgress(points.Count);
 
             int rayCounter = 0;
 
@@ -1499,7 +1499,7 @@ namespace LTE.CalcProcess
                 if (++rayCounter % 1000 == 1&&notUpdateCoverLoad)
                 {
                     loadInfo.loadHashAdd(1000);
-                    this.updateProgress(rayCounter);
+                    //this.updateProgress(rayCounter);
                 }
 
                 // 跟踪某种类型的射线传播
@@ -1509,7 +1509,7 @@ namespace LTE.CalcProcess
                 this.interAnalysis.rayTracing(source, dir, rayList, (InternalInterference.RayType)sp.type, sp.pwrDbm);
             }
             //MessageBox.Show("finish");
-            this.updateProgress(points.Count);
+            //this.updateProgress(points.Count);
         }
 
         // 2018.12.11  用于定位
@@ -2246,30 +2246,30 @@ namespace LTE.CalcProcess
         /// 重置计算进度
         /// </summary>
         /// <param name="total"></param>
-        private void resetProgress(int total)
-        {
-            this.totalRay = total;
-            this.progressBar1.Maximum = total;
-            this.progressBar1.Value = 0;
-            this.progressBar1.Refresh();
-        }
+        //private void resetProgress(int total)
+        //{
+        //    this.totalRay = total;
+        //    this.progressBar1.Maximum = total;
+        //    this.progressBar1.Value = 0;
+        //    this.progressBar1.Refresh();
+        //}
 
         /// <summary>
         /// 更新计算进度显示
         /// </summary>
         /// <param name="val"></param>
-        private void updateProgress(int val)
-        {
-            //loadInfo.cnt = (int)this.interAnalysis.rayCount;
-            //doPostLoading(loadInfo, "updateLoadingInfo");
-            //loadInfo.loadUpdate();
-            //loading.updateLoading(userId, taskName, (int)this.interAnalysis.rayCount);
+        //private void updateProgress(int val)
+        //{
+        //    //loadInfo.cnt = (int)this.interAnalysis.rayCount;
+        //    //doPostLoading(loadInfo, "updateLoadingInfo");
+        //    //loadInfo.loadUpdate();
+        //    //loading.updateLoading(userId, taskName, (int)this.interAnalysis.rayCount);
 
-            this.label1.Text = string.Format("已经计算{0}/{1}条射线", val, this.totalRay);
-            this.label1.Refresh();
-            this.progressBar1.Value = val;
-            this.progressBar1.Refresh();
-        }
+        //    this.label1.Text = string.Format("已经计算{0}/{1}条射线", val, this.totalRay);
+        //    this.label1.Refresh();
+        //    this.progressBar1.Value = val;
+        //    this.progressBar1.Refresh();
+        //}
 
         private void CalcForm_Load(object sender, EventArgs e)
         {
