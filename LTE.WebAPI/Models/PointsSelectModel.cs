@@ -233,6 +233,91 @@ namespace LTE.WebAPI.Models
             }
 
         }
+
+        public Result GetPointsAuto()
+        {
+            Init();
+            AddToVirsource();
+            Hashtable ht = new Hashtable();
+            ht["BtsName"] = this.virname;
+            ht["RSRP"] = this.RSRPCons;
+            DataTable dtinfo = IbatisHelper.ExecuteQueryForDataTable("GetDTSet", ht);//获取大于RSRP的BtsName对应的路测信息
+            if (dtinfo.Rows.Count < 2 * this.pointNum)
+            {
+                return new Result(false, "路测数据不够");
+            }
+            Debug.WriteLine("进入距离约束阶段》》》");
+            double curdis = this.DisCons;
+            double currsrp = this.RSRPCons;
+            DataTable firstRet = ComputePointByD(dtinfo, this.pointNum, curdis);
+            int itera = 50;
+            while (true)
+            {
+                if ((firstRet != null && firstRet.Rows.Count >= this.pointNum && firstRet.Rows.Count < 2 * this.pointNum) || itera-- == 0)
+                {
+                    Debug.WriteLine("DisCons:" + curdis);
+                    break;
+                }
+                else if (firstRet == null || firstRet.Rows.Count < this.pointNum)
+                {
+                    if (curdis > this.DisCons)
+                    {
+                        curdis -= 5;
+                        firstRet.Clear();
+                        firstRet = ComputePointByD(dtinfo, this.pointNum, curdis);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    if (curdis > 300)//若是距离很大时，依然有很多备选路测点，则提高RSRP阈值
+                    {
+                        dtinfo.Clear();
+                        currsrp -= 1;
+                        curdis = 300;
+                        ht["RSRP"] = currsrp;
+                        dtinfo = IbatisHelper.ExecuteQueryForDataTable("GetDTSet", ht);
+                        firstRet.Clear();
+                        firstRet = ComputePointByD(dtinfo, this.pointNum, curdis);
+                    }
+                    else
+                    {
+                        firstRet.Clear();
+                        curdis += 10;
+                        firstRet = ComputePointByD(dtinfo, this.pointNum, curdis);
+                    }
+                }
+            }
+            if (firstRet != null && firstRet.Rows.Count >= this.pointNum)
+            {
+                if (CompleteAzimuth(firstRet))
+                {
+                    double minD = double.MaxValue, maxD = double.MinValue, avgD = 0, areax = 0, areay = 0;
+                    if (TestDis(tb, ref minD, ref maxD, ref avgD, ref areax, ref areay))
+                    {
+                        Debug.WriteLine("干扰源的距离平均：" + avgD + "  与干扰源的最远距离" + maxD + "  与干扰源的最近距离" + minD + "  包围盒长" + areax + "  包围盒宽" + areay);
+                    }
+                    Hashtable ht1 = new Hashtable();
+                    ht1["fromName"] = this.virname;
+                    IbatisHelper.ExecuteDelete("deletetbRayLoc", ht1);
+                    WriteDataToBase(100);
+                    return new Result { ok = true, msg = "成功写入数据库", code = "1" }; ;
+                }
+                else
+                {
+                    Debug.WriteLine("选点失败");
+                    return new Result(false, "选点失败");
+                }
+            }
+            else
+            {
+                Debug.WriteLine("无满足距离约束的足够数量的点》》》" + firstRet==null?0:firstRet.Rows.Count);
+                return new Result(false, "无满足距离约束的足够数量的点");
+            }
+        }
         /// <summary>
         /// 写入数据库
         /// </summary>
@@ -310,11 +395,18 @@ namespace LTE.WebAPI.Models
             avgx /= dtinfo.Rows.Count;
             avgy /= dtinfo.Rows.Count;
             Geometric.Point endavg = new Geometric.Point(avgx, avgy, 0);
+            double minx = double.MaxValue, miny = double.MaxValue, maxx = double.MinValue, maxy = double.MinValue;
             for (int i = 0; i < dtinfo.Rows.Count; i++)
             {
                 //Debug.WriteLine(i);
                 double x = Convert.ToDouble(dtinfo.Rows[i]["x"]);
                 double y = Convert.ToDouble(dtinfo.Rows[i]["y"]);
+
+                if (x < minx) minx = x;
+                if (x > maxx) maxx = x;
+                if (y < miny) miny = y;
+                if (y > maxy) maxy = y;
+
                 Geometric.Point start = new Geometric.Point(x, y, 0);
                 
                 double aziavg = LTE.Geometric.GeometricUtilities.getPolarCoord(start, endavg).theta / Math.PI * 180;
@@ -329,6 +421,11 @@ namespace LTE.WebAPI.Models
                 thisrow["Azimuth"] = aziavg;
                 thisrow["Distance"] = distanceXY(start.X, start.Y, endavg.X, endavg.Y) + 300;
                 tb.Rows.Add(thisrow);
+            }
+            if (maxx - minx < 100 || maxy - maxx < 100)
+            {
+                tb.Clear();
+                return false;
             }
             return true;
         }

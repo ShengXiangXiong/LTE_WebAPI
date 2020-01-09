@@ -170,7 +170,7 @@
       <Name>GisClient</Name>
     </ProjectReference>
     <ProjectReference Include="..\LTE\LTE.csproj">
-      <Project>{6FCF49CC-532A-4508-B2B4-BED927AB7165}</Project>
+      <Project>{6fcf49cc-532a-4508-b2b4-bed927ab7165}</Project>
       <Name>LTE</Name>
     </ProjectReference>
   </ItemGroup>

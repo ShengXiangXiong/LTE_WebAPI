@@ -44,6 +44,11 @@ namespace LTE.ExternalInterference.Struct
             precise = -1;
             msg = tips;
         }
+        public ResultRecord(bool ans, string tips)
+        {
+            isLocated = ans;
+            msg = tips;
+        }
 
         public bool GetIsLocated()
         {

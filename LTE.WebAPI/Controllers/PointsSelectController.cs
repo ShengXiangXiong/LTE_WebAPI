@@ -20,7 +20,7 @@ namespace LTE.WebAPI.Controllers
         
         public Result SelectPoints([FromBody]PointsSelectModel rt)
         {
-            Result res = rt.GetPointsByDis();
+            Result res = rt.GetPointsAuto();
             return res;
         }
         // GET api/<controller>

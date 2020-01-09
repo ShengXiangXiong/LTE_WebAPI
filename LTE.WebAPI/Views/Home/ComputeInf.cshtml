@@ -10,6 +10,7 @@
 <body>
     <div>
         <h2>处理原始数据</h2>
+        命名干扰源名称：<input type="text" id="infname" value=2 /> <br />
         <input type="button" id="cell" value="确定" />
     </div>
 </body>
@@ -19,11 +20,13 @@
 <script>
 
     $("#cell").click(function () {
-
+        var rt = {};
+        rt.infname = $("#infname").val();
         $.ajax
         ({
             url: "/api/DTHandler/PostComputeInfRSRP",
             type: "POST",
+            data: JSON.stringify(rt),
             contentType: "application/json; charset=utf-8",
             headers: { "auth": window.localStorage.getItem("token") },
             success: function (data, status) {

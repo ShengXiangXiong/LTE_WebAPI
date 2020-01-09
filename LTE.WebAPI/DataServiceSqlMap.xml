@@ -981,11 +981,28 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     from tbDTData
     where Lon between 118.401 and 119.192 and  Lat between 31.2864 and 32.5508
   </select>
+  <select id="SelectTbDTInf">
+    select ID,Lon,Lat,PCI
+    from tbDTInf
+    where Lon between 118.401 and 119.192 and  Lat between 31.2864 and 32.5508
+  </select>
+  <select id="SelectTbDTNoInf">
+    select ID,Lon,Lat,PCI
+    from tbDTNoInf
+    where Lon between 118.401 and 119.192 and  Lat between 31.2864 and 32.5508
+  </select>
   <delete id="deleteNousetbDTData" parameterClass="Hashtable">
     delete from tbDTData
     where ID is null or Lon is null or Lat is null or PCI is null
   </delete>
-  
+  <delete id="deleteNousetbDTInf" parameterClass="Hashtable">
+    delete from tbDTInf
+    where ID is null or Lon is null or Lat is null or PCI is null
+  </delete>
+  <delete id="deleteNousetbDTNoInf" parameterClass="Hashtable">
+    delete from tbDTNoInf
+    where ID is null or Lon is null or Lat is null or PCI is null
+  </delete>
   <delete id="deletetbtmpDTData" parameterClass="Hashtable">
     delete from tbtmpDTData
   </delete>
@@ -1008,13 +1025,52 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     where tbDTData.ID = tbtmpDTData.ID
   </update>
 
+  <update id="UpdatetbDTNoInfByTmp">
+    update tbDTNoInf
+    set tbDTNoInf.x = tbtmpDTData.x,
+    tbDTNoInf.y=tbtmpDTData.y,
+    tbDTNoInf.eNodeBID = tbtmpDTData.eNodeBID,
+    tbDTNoInf.CellID=tbtmpDTData.CellID,
+    tbDTNoInf.SCell_Dist = tbtmpDTData.SCell_Dist
+    from tbDTNoInf,tbtmpDTData
+    where tbDTNoInf.ID = tbtmpDTData.ID
+  </update>
+  <update id="UpdatetbDTInfByTmp">
+    update tbDTInf
+    set tbDTInf.x = tbtmpDTData.x,
+    tbDTInf.y=tbtmpDTData.y,
+    tbDTInf.eNodeBID = tbtmpDTData.eNodeBID,
+    tbDTInf.CellID=tbtmpDTData.CellID,
+    tbDTInf.SCell_Dist = tbtmpDTData.SCell_Dist
+    from tbDTInf,tbtmpDTData
+    where tbDTInf.ID = tbtmpDTData.ID
+  </update>
   <!--更新扇区，防止全部写入内存导致溢出-->
   <update id="UpdatetbDTDataByCell">
     update tbDTData
     set tbDTData.BtsName=CELL.BtsName,
-    tbDTData.CellName = CELL.CellName
+    tbDTData.CellName = CELL.CellName,
+    tbDTData.CI = CELL.CI
     from tbDTData,CELL
     where tbDTData.eNodeBID = CELL.eNodeB and tbDTData.CellID = CELL.CellID
+  </update>
+
+  <update id="UpdatetbDTInfByCell">
+    update tbDTInf
+    set tbDTInf.BtsName=CELL.BtsName,
+    tbDTInf.CellName = CELL.CellName,
+    tbDTInf.CI = CELL.CI
+    from tbDTInf,CELL
+    where tbDTInf.eNodeBID = CELL.eNodeB and tbDTInf.CellID = CELL.CellID
+  </update>
+
+  <update id="UpdatetbDTNoInfByCell">
+    update tbDTNoInf
+    set tbDTNoInf.BtsName=CELL.BtsName,
+    tbDTNoInf.CellName = CELL.CellName,
+    tbDTNoInf.CI = CELL.CI
+    from tbDTNoInf,CELL
+    where tbDTNoInf.eNodeBID = CELL.eNodeB and tbDTNoInf.CellID = CELL.CellID
   </update>
   <!--网外干扰定位选点相关-->
   <select id="GetDTSet" parameterClass="Hashtable">
@@ -1452,12 +1508,14 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   <select id="getDTNoInf" parameterClass="">
     select ID,Lon,Lat,SINR,RSRP,CI
     from tbDTNoInf
-    where RSRP is not null and SINR is not null
+    where RSRP is not null and SINR is not null and RSRP>-95
+    order by RSRP desc
   </select>
   <select id="getDTInf" parameterClass="">
     select ID,Lon,Lat,SINR,RSRP,CI
     from tbDTInf
-    where RSRP is not null and SINR is not null
+    where RSRP is not null and SINR is not null and RSRP>-95
+    order by RSRP desc
   </select>
   <delete id="deleteNouseDTNoInf" parameterClass="">
     delete from tbDTNoInf
@@ -1470,7 +1528,19 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 
   <delete id="deleteUINTF" parameterClass="">
     delete from tbUINTF
+    where InfName='$InfName$'
   </delete>
-  
-  </statements>
+
+  <delete id="deleteNouseTerminalMI" parameterClass="">
+    delete from tbTerminalMI
+    where  Lon is null or Lat is null or SINR is null or RSRP is null or IMSI is null
+  </delete>
+
+  <select id="getTerminalMI" parameterClass="HashTable">
+    select Lon,Lat,SINR,RSRP,IMSI
+    from tbTerminalMI
+    where isInf=$isInf$
+  </select>
+
+</statements>
 </sqlMap>

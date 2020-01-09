@@ -120,7 +120,7 @@ namespace LTE.WebAPI.Models
         /// 计算射线
         /// </summary>
         /// <returns></returns>
-        public Result RecordRayLoc(int way)
+        public Result RecordRayLoc()
         {
             threadNum = Environment.ProcessorCount - 2;
             Hashtable ht = new Hashtable();

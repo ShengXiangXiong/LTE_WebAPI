@@ -107,12 +107,16 @@ namespace LTE.ExternalInterference
 
         public ResultRecord StartAnalysis(double ratioAP, double ratioP, double ratioAPW)
         {
+
             
             Clear();
             DateTime t1, t2, t3, t4;
             t1 = DateTime.Now;
 
-            DataHandler(3);
+            if (!DataHandler(3))
+            {
+                return new ResultRecord(false,"路径不完整，没有覆盖所有反向跟踪起点");
+            }
            
             t3 = DateTime.Now;
 
@@ -122,7 +126,7 @@ namespace LTE.ExternalInterference
 
             // this.BalanceFiltPara(1000, 500, 80, 0.8, 0.80, 200);
 
-            BalanceFiltParaS(2000, 10, 0.8, 0.8, 200);
+            BalanceFiltParaS(500, 10, 0.9, 0.8, 200);
             SortByPalthloss();
             AverageGridPathloss(600);
             this.MergeGridPwr(this.togrid);
@@ -387,7 +391,7 @@ namespace LTE.ExternalInterference
 
         //}
 
-        private void DataHandler(int k)
+        private bool DataHandler(int k)
         {
             //获取该virsources对应的反射点Cellid
             DateTime t1, t2, t3;
@@ -400,6 +404,10 @@ namespace LTE.ExternalInterference
                 double pwr = cellPwr[VitalMP[i]];
                 //对于每一个cellid，获取射线datatable,进行读取和映射处理
                 List<PathInfo> curpaths = GetPathByBatch(cellid, pwr);
+                if (curpaths == null || curpaths.Count < 2)
+                {
+                    return false;
+                }
                 t2 = DateTime.Now;
                 int mod = 10000;
                 int alllen = curpaths.Count;
@@ -433,6 +441,10 @@ namespace LTE.ExternalInterference
                 double pwr = cellPwr[VitalMP[i]];
                 //对于每一个cellid，获取射线datatable,进行读取和映射处理
                 List<PathInfo> curpaths = GetPathByBatch(cellid, pwr);
+                if (curpaths == null || curpaths.Count < 2)
+                {
+                    return false;
+                }
                 t2 = DateTime.Now;
                 int mod = 10000;
                 int alllen = curpaths.Count;
@@ -459,6 +471,7 @@ namespace LTE.ExternalInterference
                 t3 = DateTime.Now;
                 Debug.WriteLine("批次CI=:" + cellid + "   读取处理用时：" + (t2 - t1) + "   建立索引用时：" + (t3 - t2));
             }
+            return true;
         }
         public List<PathInfo> GetPathByBatch(int ci, double pwr)
         {
@@ -2876,9 +2889,6 @@ namespace LTE.ExternalInterference
                 rec.DeteleMinItem();
             }
             WriteToLocResult();
-
-
-
             return maxKey;
 
         }

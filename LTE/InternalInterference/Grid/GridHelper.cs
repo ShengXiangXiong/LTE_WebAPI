@@ -6,7 +6,7 @@ using System.Text;
 using LTE.Geometric;
 using LTE.DB;
 using System.Collections;
-
+using LTE.Utils;
 namespace LTE.InternalInterference.Grid
 {
     /// <summary>
@@ -700,7 +700,6 @@ namespace LTE.InternalInterference.Grid
                 grid.gzid = p.Z == 0 ? 0 : Convert.ToInt32(Math.Ceiling(p.Z / gridz)) - 1;
                 
             }
-
             return ret;
         }
 

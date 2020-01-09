@@ -15,10 +15,10 @@ namespace LTE.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public Result PostComputeInfRSRP()
+        public Result PostComputeInfRSRP([FromBody]PreHandleDTForLoc rt)
         {
 
-            return new DTHandlerModel().ComputeInfRSRP();
+            return rt.ComputeInfRSRP();
         }
 
         /// <summary>
