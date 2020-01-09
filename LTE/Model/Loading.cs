@@ -30,16 +30,23 @@ namespace LTE.Model
 
         public void loadCreate()
         {
-            db.SetAdd("Task:" + UserId.Value, taskName.Value);
-            HashEntry[] hashEntries = new HashEntry[6];
-            hashEntries[0] = new HashEntry("UserId", UserId.Value);
-            hashEntries[1] = new HashEntry("taskName", taskName.Value);
-            hashEntries[2] = new HashEntry("cnt", 0);
-            hashEntries[3] = new HashEntry("count", this.count);
-            hashEntries[4] = new HashEntry("breakdown", false);
-            hashEntries[5] = new HashEntry("finish", false);
-            db.HashSet(UserId.Value.ToString() + ":" + taskName.Value, hashEntries);
-            db.KeyExpire(UserId.Value.ToString() + ":" + taskName.Value, DateTime.Now.AddDays(7));
+            try
+            {
+                db.SetAdd("Task:" + UserId.Value, taskName.Value);
+                HashEntry[] hashEntries = new HashEntry[6];
+                hashEntries[0] = new HashEntry("UserId", UserId.Value);
+                hashEntries[1] = new HashEntry("taskName", taskName.Value);
+                hashEntries[2] = new HashEntry("cnt", 0);
+                hashEntries[3] = new HashEntry("count", this.count);
+                hashEntries[4] = new HashEntry("breakdown", false);
+                hashEntries[5] = new HashEntry("finish", false);
+                db.HashSet(UserId.Value.ToString() + ":" + taskName.Value, hashEntries);
+                db.KeyExpire(UserId.Value.ToString() + ":" + taskName.Value, DateTime.Now.AddDays(7));
+            }
+            catch (Exception e)
+            {
+                return;
+            }
         }
         public void loadUpdate()
         {
@@ -68,13 +75,21 @@ namespace LTE.Model
         }
         public List<HashEntry[]> GetLoadInfos()
         {
-            RedisValue[] taskNames = db.SetMembers("Task:" + UserId.Value);
-            List<HashEntry[]> res = new List<HashEntry[]>();
-            foreach (var item in taskNames)
+            try
             {
-                res.Add(db.HashGetAll(UserId.Value + ":" + item));
+                RedisValue[] taskNames = db.SetMembers("Task:" + UserId.Value);
+                List<HashEntry[]> res = new List<HashEntry[]>();
+                foreach (var item in taskNames)
+                {
+                    res.Add(db.HashGetAll(UserId.Value + ":" + item));
+                }
+                return res;
             }
-            return res;
+            catch(Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                return null;
+            }
         }
     }
     //public class Loading

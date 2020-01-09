@@ -1150,18 +1150,21 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   <select id = "getAreaShpByLonLat" parameterClass="Hashtable">
     <![CDATA[
       SELECT  ShpName FROM  tbAreaShpLayer
-      where not ( MinLongitude>#maxLongitude# or MaxLongitude<#minLongitude# 
-                  or MinLatitude>#maxLatitude# or MaxLatitude<#minLatitude#)
+      where not ( MinLongitude>$maxLongitude$ or MaxLongitude<$minLongitude$ 
+                  or MinLatitude>$maxLatitude$ or MaxLatitude<$minLatitude$)
+                  and type in ($type$)
     ]]>
   </select>
+
+  
 
   <select id = "getNotComputedCellByArea" parameterClass="Hashtable">
     <!--SELECT  CellName,x,y,CoverageRadius FROM  CELL
     where x between $minX and $maxX and y between $minY and $maxY-->
 
     SELECT  distinct CellName,x,y,CoverageRadius FROM  CELL a
-    where x between $minX$ and $maxX$ and y between $minY$ and $maxY$ and
-    not Exists( select ci from tbGridPathloss b where a.CI=b.CI)
+    where x between $minX$ and $maxX$ and y between $minY$ and $maxY$ and CoverageRadius is not null
+    and not Exists( select ci from tbGridPathloss b where a.CI=b.CI)
   </select>
   
 <!--»ñÈ¡ÓæÍøÎ»ÖÃ-->

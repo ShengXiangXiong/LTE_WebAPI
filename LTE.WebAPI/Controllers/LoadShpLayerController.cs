@@ -22,6 +22,7 @@ namespace LTE.WebAPI.Controllers
             public double maxLongitude;
             public double minLatitude;
             public double maxLatitude;
+            public string type;
         }
         // POST: api/LoadShpLayer
         [HttpPost]
@@ -52,7 +53,7 @@ namespace LTE.WebAPI.Controllers
             ht["maxLongitude"] = ob.maxLongitude;
             ht["minLatitude"] = ob.minLatitude;
             ht["maxLatitude"] = ob.maxLatitude;
-
+            ht["type"] = ob.type;
             object shpobj = IbatisHelper.ExecuteQueryForDataTable("getAreaShpByLonLat", ht);
             if (shpobj != null)
             {

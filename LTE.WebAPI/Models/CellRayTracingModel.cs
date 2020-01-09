@@ -353,7 +353,7 @@ namespace LTE.WebAPI.Models
         bool howCalc(double fromAngle, double toAngle, ref int threadCnt, ref int batchNum, ref int flag)
         {
             double capacity = this.MemoryInfo() / 6.0;  // 获取系统物理内存
-            threadCnt = Math.Max(3, this.threadNum);
+            threadCnt = 4;
             batchNum = 2;
 
             double theta = ((toAngle - fromAngle + 360) % 360) / 360;

@@ -28,6 +28,7 @@ namespace LTE.WebAPI.Models
         ClusterShp=35,
         AdjCoefficient=36,
         RayRecordAdjBatchMode = 12,
-        Calibration =13
+        Calibration =13,
+        AreaInterferenceLayer = 16
     }
 }
