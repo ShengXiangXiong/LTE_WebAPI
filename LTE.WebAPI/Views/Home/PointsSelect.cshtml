@@ -12,12 +12,17 @@
 <body>
     <div>
         <h3>选点参数</h3>
-        干扰源Btsname：<input type="text" id="virname" value="" /> <br />
+        干扰源名称：<input type="text" id="virname" value="" /> <br />
         选点个数：<input type="text" id="pointNum" value=10 />个<br />
         点角度约束：<input type="text" id="AngleCons" value=5 /> 度<br />
         点间距约束：<input type="text" id="DisCons" value=5 /> 米<br />
         RSRP阈值：<input type="text" id="RSRPCons" value=-80 /> dbm<br />
-        <input type="button" id="ComfirmSelect" value="确定" /><br />
+        <input type="button" id="ComfirmSelect" value="基站定位选点确定" /><br />
+        <input type="button" id="ComfirmSelectInf" value="实际定位选点确定" /><br />
+        <h3>二次定位选点更正参数</h3>
+        指定干扰源经度：<input type="text" id="inflon" value=0 />个<br />
+        指定干扰源纬度：<input type="text" id="inflat" value=0 /> 度<br />
+        <input type="button" id="ReLocSPUpdate" value="选点更正确定" /><br />
     </div>
 </body>
 </html>
@@ -34,6 +39,64 @@
         $.ajax
         ({
             url: "/api/PointsSelect/SelectPoints",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(rt),
+            headers: { "auth": window.localStorage.getItem("token") },
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("成功入库！");
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("选点失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("选点失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+    $("#ComfirmSelectInf").click(function () {
+        var rt = {};
+        rt.virname = $("#virname").val();
+        rt.pointNum = parseInt($("#pointNum").val());
+        rt.AngleCons = parseFloat($("#AngleCons").val()).toFixed(1);
+        rt.DisCons = parseFloat($("#DisCons").val()).toFixed(2);
+        rt.RSRPCons = parseFloat($("#RSRPCons").val()).toFixed(2);
+        $.ajax
+        ({
+            url: "/api/PointsSelect/SelectPointsInf",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(rt),
+            headers: { "auth": window.localStorage.getItem("token") },
+            success: function (data, status)
+            {
+                if (data.ok == true)
+                {
+                    alert("成功入库！");
+                    window.location.href = "@Url.Action("Home", "Home")";
+                }
+                else
+                    alert("选点失败！" + data.msg);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown)
+            {
+                alert("选点失败！，消息：" + textStatus + "  " + errorThrown);
+            }
+        });
+    });
+    $("#ReLocSPUpdate").click(function () {
+        var rt = {};
+        rt.virname = $("#virname").val();
+        rt.inflon = parseFloat($("#inflon").val()).toFixed(3);
+        rt.inflat = parseFloat($("#inflat").val()).toFixed(3);
+        $.ajax
+        ({
+            url: "/api/PointsSelect/UpdateSelectPoints",
             type: "POST",
             contentType: "application/json; charset=utf-8",
             data: JSON.stringify(rt),

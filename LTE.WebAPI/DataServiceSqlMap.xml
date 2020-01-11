@@ -1079,6 +1079,13 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     where  RSRP>$RSRP$ and BtsName='$BtsName$' and 3000>SCell_Dist
     order by RSRP desc
   </select>
+  <!--网外干扰定位选点相关-->
+  <select id="GettbUINTF" parameterClass="Hashtable">
+    select ID,Lon,Lat, RSRP
+    from tbUINTF
+    where  RSRP>$RSRP$ and InfName='$InfName$'
+    order by RSRP desc
+  </select>
   <select id="GetVirSourceAllInfo" parameterClass="Hashtable">
     select * from tbVirSource
     where CellName = '$cellname$'
@@ -1113,6 +1120,11 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     FROM  tbSelectedPoints
     where fromName = '$fromName$'
   </select>
+  <update id="UpdatetbSelectedPointByCI" parameterClass="Hashtable">
+    update tbSelectedPoints
+    set tbSelectedPoints.Azimuth=$Azimuth$
+    where CI =$CI$  and fromName = '$fromName$'
+  </update>
   <delete id="deletetbRayLoc" parameterClass="Hashtable">
     delete from tbRayLoc
     where cellid in (select distinct CI from tbSelectedPoints where fromName = '$fromName$' )
@@ -1511,13 +1523,13 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   <select id="getDTNoInf" parameterClass="">
     select ID,Lon,Lat,SINR,RSRP,CI
     from tbDTNoInf
-    where RSRP is not null and SINR is not null and RSRP>-95
+    where RSRP is not null and SINR is not null and RSRP>-90
     order by RSRP desc
   </select>
   <select id="getDTInf" parameterClass="">
     select ID,Lon,Lat,SINR,RSRP,CI
     from tbDTInf
-    where RSRP is not null and SINR is not null and RSRP>-95
+    where RSRP is not null and SINR is not null and RSRP>-90
     order by RSRP desc
   </select>
   <delete id="deleteNouseDTNoInf" parameterClass="">

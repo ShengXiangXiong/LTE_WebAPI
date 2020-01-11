@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using LTE.WebAPI.Attributes;
 using LTE.WebAPI.Models;
 
 namespace LTE.WebAPI.Controllers
@@ -15,9 +16,9 @@ namespace LTE.WebAPI.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
+        [TaskLoadInfo(taskName = "计算RSRP", type = TaskType.ComputeInfRSRP)]
         public Result PostComputeInfRSRP([FromBody]PreHandleDTForLoc rt)
         {
-
             return rt.ComputeInfRSRP();
         }
 
