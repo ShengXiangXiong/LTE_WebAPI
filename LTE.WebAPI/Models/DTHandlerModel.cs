@@ -10,10 +10,13 @@ using LTE.Utils;
 using LTE.Geometric;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using LTE.Model;
+
 namespace LTE.WebAPI.Models
 {
     public class PreHandleDTForLoc
     {
+        private LoadInfo loadInfo = new LoadInfo();
         /// <summary>
         /// 设定的干扰源的名字
         /// </summary>
@@ -29,12 +32,14 @@ namespace LTE.WebAPI.Models
             reset.Columns.Add("Lat");
             reset.Columns.Add("RSRP");
             reset.Columns.Add("InfName");
+            reset.Columns.Add("DtType");
         }
         public Result ComputeInfRSRP()
         {
+            loadInfo.loadCountAdd(3);
             DTHandlerModel dt = new DTHandlerModel();
             dt.UpdateDTDataForLoc();
-
+            loadInfo.loadHashAdd(1);
             #region 计算路测数据RSRP入库
             //去除无效数据
             IbatisHelper.ExecuteDelete("deleteNouseDTNoInf");
@@ -99,6 +104,7 @@ namespace LTE.WebAPI.Models
                             newRow["Lat"] = lat;
                             newRow["RSRP"] = UINTF;
                             newRow["InfName"] = this.infname;
+                            newRow["DtType"] = "路测";
                             reset.Rows.Add(newRow);
                             flag[j] = true;
                             break;
@@ -112,6 +118,7 @@ namespace LTE.WebAPI.Models
             }
             dtinf.Clear();
             dtnoinf.Clear();
+            loadInfo.loadHashAdd(1);
             #endregion
 
             #region 计算终端数据入库
@@ -171,6 +178,7 @@ namespace LTE.WebAPI.Models
                             newRow["Lat"] = lat;
                             newRow["RSRP"] = UINTF;
                             newRow["InfName"] = this.infname;
+                            newRow["DtType"] = "终端";
                             reset.Rows.Add(newRow);
                             Tflag[j] = true;
                             break;
@@ -188,6 +196,7 @@ namespace LTE.WebAPI.Models
             {
                 DTHandlerModel.writeFinalResultToDB(reset, "tbUINTF");
             }
+            loadInfo.loadHashAdd(1);
             #endregion
             return new Result(true, "成功");
         }

@@ -76,6 +76,15 @@ namespace LTE.WebAPI.Attributes
                     layer = false;
                     taskName1 += "系数校正";
                     break;
+                case TaskType.SelectedPointsLayer:
+                    var obj9 = (RefreshSPLayerModel)actionContext.ActionArguments["layer"];
+                    taskName1 += obj9.version;
+                    break;
+                case TaskType.ComputeInfRSRP:
+                    layer = false;
+                    var obj10 = (PreHandleDTForLoc)actionContext.ActionArguments["rt"];
+                    taskName1 += obj10.infname;
+                    break;
                 default:
                     break;
             }

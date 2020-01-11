@@ -206,6 +206,8 @@ namespace LTE.WebAPI.Controllers
             return layer.refreshDTLayer();
         }
 
+        [HttpPost]
+        [TaskLoadInfo(taskName = "反向跟踪起点刷新", type = TaskType.SelectedPointsLayer)]
         public Result PostRefreshSPLayer([FromBody]RefreshSPLayerModel layer)
         {
             return layer.refreshSPLayer();

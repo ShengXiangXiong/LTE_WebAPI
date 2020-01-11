@@ -23,6 +23,18 @@ namespace LTE.WebAPI.Controllers
             Result res = rt.GetPointsAuto();
             return res;
         }
+
+        public Result SelectPointsInf([FromBody]PointsSelectModel rt)
+        {
+            Result res = rt.GetPointsAutoReal();
+            return res;
+        }
+
+        public Result UpdateSelectPoints([FromBody]UpdateSP rt)
+        {
+            Result res = rt.UpdateSelectPoints();
+            return res;
+        }
         // GET api/<controller>
         public IEnumerable<string> Get()
         {

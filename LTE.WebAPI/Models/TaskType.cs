@@ -14,12 +14,13 @@ namespace LTE.WebAPI.Models
         AreaTinLayer = 4,
         RoadTestLayer =5,
         TDDriverTest = 6,
-
+        SelectedPointsLayer = 14,
         CellCoverCompu = 7,
         AreaCoverCompu = 8,
         AreaInterference = 9,
         RayRecordAdj = 10,
         RayRecordLoc = 11,
+
         Fishnet=30,
         BuildingOverlay=31,
         WaterOverlay=32,
@@ -29,6 +30,7 @@ namespace LTE.WebAPI.Models
         AdjCoefficient=36,
         RayRecordAdjBatchMode = 12,
         Calibration =13,
-        AreaInterferenceLayer = 16
+        AreaInterferenceLayer = 16,
+        ComputeInfRSRP=17,
     }
 }
