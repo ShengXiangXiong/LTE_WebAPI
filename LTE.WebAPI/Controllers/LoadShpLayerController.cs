@@ -15,6 +15,7 @@ namespace LTE.WebAPI.Controllers
         public class shpLayer
         {
             public string IndexName;
+            public string Type;
         }
         public class areaShpLayer
         {
@@ -29,7 +30,7 @@ namespace LTE.WebAPI.Controllers
         public Result getShpByCellName([FromBody]shpLayer ob)
         {
             Result res = new Result();
-            object shpobj = IbatisHelper.ExecuteQueryForObject("getShpByIndexName", ob.IndexName);
+            object shpobj = IbatisHelper.ExecuteQueryForObject("getShpByIndexName", ob);
             if (shpobj != null)
             {
                 res.ok = true;

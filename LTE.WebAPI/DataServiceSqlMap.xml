@@ -1144,7 +1144,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 
   <select id = "getShpByIndexName" parameterClass="string">
     SELECT  ShpName FROM  tbShpLayer
-    where IndexName = #IndexName#
+    where IndexName = #IndexName# and Type = #Type#
   </select>
   
   <select id = "getAreaShpByLonLat" parameterClass="Hashtable">

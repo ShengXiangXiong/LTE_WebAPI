@@ -73,13 +73,7 @@
             <param name="sharename"></param>
             <returns></returns>
         </member>
-        <member name="M:LTE.CalcProcess.CalcForm.resetProgress(System.Int32)">
-            <summary>
-            重置计算进度
-            </summary>
-            <param name="total"></param>
-        </member>
-        <member name="M:LTE.CalcProcess.CalcForm.updateProgress(System.Int32)">
+        <member name="M:LTE.CalcProcess.CalcForm.CalcForm_Load(System.Object,System.EventArgs)">
             <summary>
             更新计算进度显示
             </summary>
