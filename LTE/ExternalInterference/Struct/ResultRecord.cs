@@ -21,8 +21,8 @@ namespace LTE.ExternalInterference.Struct
             isLocated = ans;
             reslocation = res;
             realocation = real;
-            lon = Math.Round(tlon,4);
-            lat = Math.Round(tlat,4);
+            lon = Math.Round(tlon,6);
+            lat = Math.Round(tlat,6);
             precise = dis;
             msg = tips;
         }

@@ -15,7 +15,7 @@ using LTE.InternalInterference.Grid;
 using LTE.InternalInterference;
 
 using System.IO;
-using Excel = Microsoft.Office.Interop.Excel;
+//using Excel = Microsoft.Office.Interop.Excel;
 using Point = LTE.Geometric.Point;
 
 namespace LTE.Calibration

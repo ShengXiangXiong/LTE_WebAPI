@@ -480,7 +480,9 @@ namespace LTE.WebAPI.Models
             }
             avgx /= dtinfo.Rows.Count;
             avgy /= dtinfo.Rows.Count;
+            Debug.WriteLine("路测中点:x" + avgx + "路测中点:x" + avgy);
             Geometric.Point endavg = new Geometric.Point(avgx, avgy, 0);
+            
             double minx = double.MaxValue, miny = double.MaxValue, maxx = double.MinValue, maxy = double.MinValue;
             for (int i = 0; i < dtinfo.Rows.Count; i++)
             {

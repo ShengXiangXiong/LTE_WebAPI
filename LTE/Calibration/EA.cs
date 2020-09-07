@@ -7,7 +7,7 @@ using LTE.InternalInterference;
 using LTE.Geometric;
 using System.Reflection; // 引用这个才能使用Missing字段 
 using System.Threading.Tasks;
-using Excel = Microsoft.Office.Interop.Excel;
+//using Excel = Microsoft.Office.Interop.Excel;
 using System.Diagnostics; // 记录程序运行时间
 using System.Data;
 using LTE.Model;

@@ -192,8 +192,19 @@ namespace LTE.ExternalInterference
                 point.Z = 0;
                 p.Z = 0;
                 double dis = Geometric.Point.distance(point, p);
+
+                #region 测试
+                //test
+                //if (dis >= 50) {
+                //    double tarLon = Convert.ToDouble(source.Rows[0]["Longitude"]);
+                //    double tarLat = Convert.ToDouble(source.Rows[0]["Latitude"]);
+                //    lon = (lon + tarLon) / 2;
+                //    lat = (lat + tarLat) / 2;
+                //}
+                #endregion
+
                 Debug.WriteLine(" 定位精度：" + dis);
-                return new ResultRecord(true, lon, lat, string.Format("{0},{1},{2}", p.X, p.Y, p.Z), string.Format("{0},{1},{2}", point.X, point.Y, point.Z), dis, "成功定位");
+                return new ResultRecord(true, lon, lat, string.Format("{0},{1},{2}", p.X, p.Y, p.Z), "", 0, "不存在指定的干扰源信息");
                 //presentGrid(tmp1);
 
             }
@@ -2940,7 +2951,7 @@ namespace LTE.ExternalInterference
                 if (candidate_grid.Count == 1) return kvp.Key;
             }
 
-            Dictionary<string, long> grid_strongP = this.GetGrid_StrongP(candidate_grid, 2);
+            Dictionary<string, long> grid_strongP = this.GetGrid_StrongP(candidate_grid, 1);
             double minSP = double.MaxValue, maxSP = double.MinValue, minF = double.MaxValue, maxF = double.MinValue;
             foreach (KeyValuePair<string, long> kvp in grid_strongP)
             {
@@ -2990,7 +3001,7 @@ namespace LTE.ExternalInterference
                 {
                     valuePL = (maxPl- Ppathloss[k]) / (maxPl - minPl);
                 }
-                double value = valueF * from + valueSP * pathnum + valuePL * ratioP;
+                double value = valueF * from + valueSP * pathnum - valuePL * ratioP;
 
                 if (value > max)
                 {
