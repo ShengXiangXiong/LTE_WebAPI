@@ -1,4 +1,4 @@
-﻿using LTE.DB;
+using LTE.DB;
 using LTE.WebAPI.Models;
 using System;
 using System.Collections;
