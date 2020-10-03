@@ -659,6 +659,8 @@ namespace LTE.InternalInterference
 
         public void rayTracingFirst(Point originPoint, Point endPoint, List<NodeInfo> rayList, SourceInfo sourceInfo, RayType rayType, int type, double coverageRadius)
         {
+            //this.scenNum = 0;
+            //this.calcStrength.scenNum = 0;
             // 采用界面输入的校正系数
             if (this.scenNum == 0)
             {

@@ -18,6 +18,7 @@ namespace LTE.WebAPI.Controllers
         public Result Post([FromBody]Area area)
         {
             return area.computeAreaAnlysis();
+
         }
 
 

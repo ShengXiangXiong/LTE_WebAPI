@@ -229,6 +229,7 @@
     <Compile Include="Controllers\LoadingController.cs" />
     <Compile Include="Controllers\LoadShpLayerController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\ModelDataGenController.cs" />
     <Compile Include="Controllers\OverlayController.cs" />
     <Compile Include="Controllers\PointsSelectController.cs" />
     <Compile Include="Controllers\RayRecordController.cs" />
@@ -274,6 +275,7 @@
     <Compile Include="Utils\CgAlgorithm.cs" />
     <Compile Include="Utils\JwtHelper.cs" />
     <Compile Include="Utils\TimerHelper.cs" />
+    <Compile Include="Utils\UIDHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Data\LTE.WebAPI.xml" />

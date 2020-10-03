@@ -246,7 +246,10 @@ namespace LTE.WebAPI.Models
                 if (flag == 2)
                 {
                     this.threadNum = threadCnt;
-                    double delta = (toAngle - fromAngle + 360) % 360 / batchNum;
+                    //double delta = (toAngle - fromAngle + 360) % 360 / batchNum;
+
+                    double delta = (toAngle - fromAngle) / batchNum;
+
                     double startAngle = fromAngle;
                     
                     for (int currBatch = 1; currBatch <= batchNum; currBatch++)
@@ -356,7 +359,7 @@ namespace LTE.WebAPI.Models
             threadCnt = 4;
             batchNum = 2;
 
-            double theta = ((toAngle - fromAngle + 360) % 360) / 360;
+            double theta = (toAngle - fromAngle) / 360;
             double F = memF(this.distance);
             double R = memR(this.distance, theta);
             if (this.threadNum * F + R < capacity)
