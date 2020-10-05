@@ -127,6 +127,8 @@ namespace LTE.WebAPI.Controllers
                         CellRayTracingModel rayCell = new CellRayTracingModel();
                         rayCell.cellName = cELL.CellName;
                         rayCell.reflectionNum = 3;
+                        rayCell.diffPointsMargin = 5;
+                        rayCell.diffractionNum = 2;
                         rayCell.threadNum = 3;
                         rayCell.incrementAngle = 180;
                         rayCell.computeIndoor = false;
