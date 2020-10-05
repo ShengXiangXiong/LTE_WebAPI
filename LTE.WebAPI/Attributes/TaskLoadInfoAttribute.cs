@@ -85,6 +85,11 @@ namespace LTE.WebAPI.Attributes
                     var obj10 = (PreHandleDTForLoc)actionContext.ActionArguments["rt"];
                     taskName1 += obj10.infname;
                     break;
+                case TaskType.DataMock:
+                    layer = false;
+                    var obj11 = (DataRange)actionContext.ActionArguments["dataRange"];
+                    taskName1 += obj11.infAreaId;
+                    break;
                 default:
                     break;
             }

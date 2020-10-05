@@ -461,6 +461,16 @@ namespace LTE.InternalInterference.Grid
             y = oY + gyid * ggridsize + half;
             z = 0 + (gzid - 1) * ggridsize + half;
         }
+
+        public Point GridToXY(int gxid, int gyid)
+        {
+            double half = 0.5 * ggridsize;
+            Point p = new Point();
+            p.X = oX + gxid * ggridsize + half;
+            p.Y = oY + gyid * ggridsize + half;
+            return p;
+        }
+
         /// <summary>
         /// 返回网格中心点对应的地理坐标
         /// </summary>

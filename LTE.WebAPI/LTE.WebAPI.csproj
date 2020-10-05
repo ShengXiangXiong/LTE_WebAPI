@@ -249,6 +249,7 @@
     <Compile Include="Models\CalibrationRangeModel.cs" />
     <Compile Include="Models\CellRadiusModel.cs" />
     <Compile Include="Models\ClusterShpModel.cs" />
+    <Compile Include="Models\DataRange.cs" />
     <Compile Include="Models\DebugModel.cs" />
     <Compile Include="Models\DTHandlerModel.cs" />
     <Compile Include="Models\ExternalInfLocateModel.cs" />

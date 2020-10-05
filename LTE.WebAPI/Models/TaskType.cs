@@ -32,5 +32,7 @@ namespace LTE.WebAPI.Models
         Calibration =13,
         AreaInterferenceLayer = 16,
         ComputeInfRSRP=17,
+
+        DataMock = 18,
     }
 }
