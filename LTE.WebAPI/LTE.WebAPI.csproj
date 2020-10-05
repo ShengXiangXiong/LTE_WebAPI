@@ -229,6 +229,7 @@
     <Compile Include="Controllers\LoadingController.cs" />
     <Compile Include="Controllers\LoadShpLayerController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\ModelDataGenController.cs" />
     <Compile Include="Controllers\OverlayController.cs" />
     <Compile Include="Controllers\PointsSelectController.cs" />
     <Compile Include="Controllers\RayRecordController.cs" />
@@ -248,6 +249,7 @@
     <Compile Include="Models\CalibrationRangeModel.cs" />
     <Compile Include="Models\CellRadiusModel.cs" />
     <Compile Include="Models\ClusterShpModel.cs" />
+    <Compile Include="Models\DataRange.cs" />
     <Compile Include="Models\DebugModel.cs" />
     <Compile Include="Models\DTHandlerModel.cs" />
     <Compile Include="Models\ExternalInfLocateModel.cs" />
@@ -274,6 +276,7 @@
     <Compile Include="Utils\CgAlgorithm.cs" />
     <Compile Include="Utils\JwtHelper.cs" />
     <Compile Include="Utils\TimerHelper.cs" />
+    <Compile Include="Utils\UIDHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App_Data\LTE.WebAPI.xml" />

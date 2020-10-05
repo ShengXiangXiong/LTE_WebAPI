@@ -201,7 +201,8 @@ namespace LTE.MultiProcessController
 
             Random r = new Random(DateTime.Now.Second);
             LTE.Geometric.Point p = cellInfo.SourcePoint;
-            double deltaA = (this.toAngle - this.fromAngle + 360) % 360 / processNum;
+            //double deltaA = (this.toAngle - this.fromAngle + 360) % 360 / processNum;
+            double deltaA = (this.toAngle - this.fromAngle)/ processNum;
             double from, to;
             string calcBids = "";
             int bidsNum = Convert.ToInt32(Math.Round(this.bids.Count * 1.0 / processNum));

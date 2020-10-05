@@ -1557,5 +1557,12 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     where isInf=$isInf$
   </select>
 
+  <!--查询数据仿真生成的模拟路测点信号-->
+  <select id="qureyMockDT" parameterClass="HashTable">
+    select GXID,GYID,ReceivedPowerdbm
+    from tbGridPathloss
+    where eNodeB=$eNodeB$
+  </select>
+
 </statements>
 </sqlMap>

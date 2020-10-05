@@ -1453,10 +1453,10 @@ namespace LTE.CalcProcess
                 if (!GridHelper.getInstance().XYToGGrid(t_p.X, t_p.Y, ref gxid, ref gyid))
                     return;
 
-                if (gxid == 3439 && gyid == 4909)
-                {
-                    Console.WriteLine("111111");
-                }
+                //if (gxid == 3439 && gyid == 4909)
+                //{
+                //    Console.WriteLine("111111");
+                //}
 
                 //if (rayCounter < 2117)
                 //    continue;
