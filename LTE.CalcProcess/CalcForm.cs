@@ -1453,7 +1453,7 @@ namespace LTE.CalcProcess
                 if (!GridHelper.getInstance().XYToGGrid(t_p.X, t_p.Y, ref gxid, ref gyid))
                     return;
 
-                if (gxid == 3421 && gyid == 8916)
+                if (gxid == 3439 && gyid == 4909)
                 {
                     Console.WriteLine("111111");
                 }
