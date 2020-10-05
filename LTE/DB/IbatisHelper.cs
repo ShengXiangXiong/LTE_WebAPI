@@ -14,6 +14,7 @@ using IBatisNet.DataMapper.MappedStatements;
 using IBatisNet.Common;
 using IBatisNet.DataMapper.Scope;
 using System.Windows;
+using IBatisNet.DataMapper.SessionStore;
 
 namespace LTE.DB
 {
@@ -31,6 +32,10 @@ namespace LTE.DB
         public static ISqlMapper Mapper()
         {
             ISqlMapper sqlMap = IBatisNet.DataMapper.Mapper.Instance();
+
+            //支持多线程下访问Ibatis
+            sqlMap.SessionStore = new HybridWebThreadSessionStore(sqlMap.Id);
+
             if (!sqlMap.IsSessionStarted)
             {
                 sqlMap.OpenConnection();

@@ -38,8 +38,17 @@ namespace LTE.WebAPI.Controllers
                     {
                         Hashtable ht = new Hashtable();
                         DataTable dtable = new DataTable();
+
                         ht["eNodeB"] = eNodeB;
                         DataTable dt = DB.IbatisHelper.ExecuteQueryForDataTable("qureyMockDT", ht);
+                        dtable.Columns.Add("x", System.Type.GetType("System.Decimal"));
+                        dtable.Columns.Add("y", System.Type.GetType("System.Decimal"));
+                        dtable.Columns.Add("Lon", System.Type.GetType("System.Decimal"));
+                        dtable.Columns.Add("Lat", System.Type.GetType("System.Decimal"));
+                        dtable.Columns.Add("RSRP", System.Type.GetType("System.Double"));
+                        dtable.Columns.Add("InfName", System.Type.GetType("System.String"));
+                        dtable.Columns.Add("DtType", System.Type.GetType("System.String"));
+
                         for (int i = 0; i < dt.Rows.Count; i++)
                         {
                             var row = dt.Rows[i];
@@ -63,8 +72,6 @@ namespace LTE.WebAPI.Controllers
                 }
             }
 
-
-
             Result res = new Result();
             return res;
         }
@@ -85,7 +92,7 @@ namespace LTE.WebAPI.Controllers
             LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(pMax);
 
             double maxBh = 100;//最大建筑物高度
-            int radius = 1000;//干扰源覆盖半径
+            int radius = 2000;//干扰源覆盖半径
             String tarBaseName = "测试干扰源基站_";
             List<CELL> cells = new List<CELL>();
             int batch = 200;
