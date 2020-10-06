@@ -16,6 +16,8 @@ using System.Threading;
 using LTE.DB;
 using LTE.InternalInterference;
 using LTE.InternalInterference.Grid;
+using LTE.Utils;
+using System.Threading.Tasks;
 
 // 更新：
 // 2019.04.12 程序运行结束后关闭窗体
@@ -95,6 +97,8 @@ namespace LTE.MultiProcessController
 
             //MessageBox.Show("4");
             InitializeComponent();
+
+            CheckForIllegalCrossThreadCalls = false;
 
             childPtr = new List<IntPtr>();
 
@@ -281,7 +285,7 @@ namespace LTE.MultiProcessController
                     else
                     {
                         Console.WriteLine("非Loc&&非Adj！");
-                        readCalcResult(m.WParam, m.LParam.ToInt32());
+                        readCalcResultAsync(m.WParam, m.LParam.ToInt32());
                     }
                     break;
                 case IPC.WM_POST_ReRayDONE:  // 2019.5.22
@@ -429,7 +433,7 @@ namespace LTE.MultiProcessController
             dtable.Clear();
             Console.WriteLine("tbReRay 写入结束！");
         }
-        private void readCalcResult(IntPtr Chandle, int dataSize)
+        private async Task readCalcResultAsync(IntPtr Chandle, int dataSize)
         {
             //-1代表子进程写入共享内存失败
             if (dataSize == -1)
@@ -443,7 +447,9 @@ namespace LTE.MultiProcessController
                 Console.WriteLine(string.Format("当前批{0}没有数据", Chandle));
                 if (++this.procDoneNum== this.processNum)
                 {
-                    writeResToDb();
+                    await Task.Run(() => {
+                        writeResToDb();
+                    });
                 }
                 return;
             }
@@ -534,11 +540,14 @@ namespace LTE.MultiProcessController
             //if (++this.procDoneNum == Math.Min(this.maxProcNum, this.processNum - this.procDoneNum1))
             if (this.procDoneNum == this.processNum)
             {
-                writeResToDb();
+                await Task.Run(() => {
+                    writeResToDb();
+                });
             }
         }
         private void writeResToDb()
         {
+            
             //Console.WriteLine(string.Format("merge outcome..., init num : {0}", this.GridStrengths.Count));
             //Console.ReadKey();
             DateTime d1, d2;
@@ -562,6 +571,7 @@ namespace LTE.MultiProcessController
 
             GridCover gc = GridCover.getInstance();
             gc.convertToDt(this.GridStrengths);
+            this.GridStrengths.Clear();
             Hashtable ht = new Hashtable();
             ht["eNodeB"] = this.cellInfo.eNodeB;
             ht["CI"] = this.cellInfo.CI;
@@ -581,7 +591,9 @@ namespace LTE.MultiProcessController
             Console.WriteLine(info);
             Console.WriteLine("write done");
 
-            this.GridStrengths.Clear();
+            RedisMq.Pub("cover_finish", this.cellInfo.eNodeB);
+
+            //this.GridStrengths.Clear();
             //Console.ReadKey(); // 2019.04.12
             this.cs.free();
             this.Close();  // 2019.04.12

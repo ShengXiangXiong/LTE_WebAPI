@@ -204,6 +204,7 @@
     <Compile Include="Utils\DataCheck.cs" />
     <Compile Include="Utils\PointConvertByProj.cs" />
     <Compile Include="Utils\RedisHelper.cs" />
+    <Compile Include="Utils\RedisMq.cs" />
     <Compile Include="Win32Lib\ConsoleShow.cs" />
     <Compile Include="Win32Lib\IPC.cs" />
     <Compile Include="Win32Lib\MMF.cs" />
