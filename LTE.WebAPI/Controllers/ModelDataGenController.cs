@@ -28,12 +28,32 @@ namespace LTE.WebAPI.Controllers
         {
             List<CellRayTracingModel> cellRays = interfeCellGen(dataRange);
             WriteDt(dataRange);
-            foreach (var ray in cellRays)
+            int cnt = 0;
+            LoadInfo loadInfo = new LoadInfo();
+            loadInfo.count = cellRays.Count;
+            loadInfo.loadCreate();
+            cellRays[0].calc();
+            RedisMq.subscriber.Subscribe("rayTrace_finish", (channel, message) =>
             {
-                ray.calc();
-            }
+                if (++cnt < cellRays.Count)
+                {
+                    loadInfo.cnt = cnt;
+                    loadInfo.loadUpdate();
+                    cellRays[++cnt].calc();
+                }
+                else
+                {
+                    loadInfo.finish = true;
+                    loadInfo.loadUpdate();
+                }
+            });
 
-            Result res = new Result();
+            //foreach (var ray in cellRays)
+            //{
+            //    ray.calc();
+            //}
+
+            Result res = new Result(true,"区域数据仿真已提交");
             return res;
         }
 
@@ -122,7 +142,7 @@ namespace LTE.WebAPI.Controllers
 
         public void WriteDt(DataRange dataRange)
         {
-            RedisMq.subscriber.Subscribe("cover_finish", (channel, message) => {
+            RedisMq.subscriber.Subscribe("cover2db_finish", (channel, message) => {
 
                 Hashtable ht = new Hashtable();
                 DataTable dtable = new DataTable();

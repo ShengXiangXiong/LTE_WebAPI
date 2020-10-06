@@ -433,7 +433,7 @@ namespace LTE.MultiProcessController
             dtable.Clear();
             Console.WriteLine("tbReRay 写入结束！");
         }
-        private async Task readCalcResultAsync(IntPtr Chandle, int dataSize)
+        private void readCalcResultAsync(IntPtr Chandle, int dataSize)
         {
             //-1代表子进程写入共享内存失败
             if (dataSize == -1)
@@ -447,7 +447,7 @@ namespace LTE.MultiProcessController
                 Console.WriteLine(string.Format("当前批{0}没有数据", Chandle));
                 if (++this.procDoneNum== this.processNum)
                 {
-                    await Task.Run(() => {
+                    Task.Run(() => {
                         writeResToDb();
                     });
                 }
@@ -540,9 +540,10 @@ namespace LTE.MultiProcessController
             //if (++this.procDoneNum == Math.Min(this.maxProcNum, this.processNum - this.procDoneNum1))
             if (this.procDoneNum == this.processNum)
             {
-                await Task.Run(() => {
+                Task.Run(() => {
                     writeResToDb();
                 });
+                RedisMq.Pub("rayTrace_finish", this.cellInfo.eNodeB);
             }
         }
         private void writeResToDb()
@@ -591,7 +592,7 @@ namespace LTE.MultiProcessController
             Console.WriteLine(info);
             Console.WriteLine("write done");
 
-            RedisMq.Pub("cover_finish", this.cellInfo.eNodeB);
+            RedisMq.Pub("cover2db_finish", this.cellInfo.eNodeB);
 
             //this.GridStrengths.Clear();
             //Console.ReadKey(); // 2019.04.12
