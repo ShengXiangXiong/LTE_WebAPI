@@ -27,49 +27,10 @@ namespace LTE.WebAPI.Controllers
         public Result roadPointMockGen([FromBody]DataRange dataRange)
         {
             List<CellRayTracingModel> cellRays = interfeCellGen(dataRange);
-
+            WriteDt(dataRange);
             foreach (var ray in cellRays)
             {
-                if (ray.calc().ok)
-                {
-                    int eNodeB = Int32.Parse(ray.cellName.Split('_')[1]);
-                    //多线程并行处理
-                    new Thread(() =>
-                    {
-                        Hashtable ht = new Hashtable();
-                        DataTable dtable = new DataTable();
-
-                        ht["eNodeB"] = eNodeB;
-                        DataTable dt = DB.IbatisHelper.ExecuteQueryForDataTable("qureyMockDT", ht);
-                        dtable.Columns.Add("x", System.Type.GetType("System.Decimal"));
-                        dtable.Columns.Add("y", System.Type.GetType("System.Decimal"));
-                        dtable.Columns.Add("Lon", System.Type.GetType("System.Decimal"));
-                        dtable.Columns.Add("Lat", System.Type.GetType("System.Decimal"));
-                        dtable.Columns.Add("RSRP", System.Type.GetType("System.Double"));
-                        dtable.Columns.Add("InfName", System.Type.GetType("System.String"));
-                        dtable.Columns.Add("DtType", System.Type.GetType("System.String"));
-
-                        for (int i = 0; i < dt.Rows.Count; i++)
-                        {
-                            var row = dt.Rows[i];
-                            int gxid = (int)row["GXID"];
-                            int gyid = (int)row["GYID"];
-                            double rsrp = (double)row["ReceivedPowerdbm"];
-                            Point geo = GridHelper.getInstance().GridToGeo(gxid, gyid);
-                            Point proj = GridHelper.getInstance().GridToXY(gxid, gyid);
-                            DataRow thisrow = dtable.NewRow();
-                            thisrow["x"] = proj.X;
-                            thisrow["y"] = proj.Y;
-                            thisrow["Lon"] = geo.X;
-                            thisrow["Lat"] = geo.Y;
-                            thisrow["RSRP"] = rsrp;
-                            thisrow["InfName"] = dataRange.infAreaId;
-                            thisrow["DtType"] = "mock";
-                            dtable.Rows.Add(thisrow);
-                        }
-                        DataUtil.BCPDataTableImport(dtable, "tbUINTF");
-                    }).Start();
-                }
+                ray.calc();
             }
 
             Result res = new Result();
@@ -157,6 +118,47 @@ namespace LTE.WebAPI.Controllers
             return res;
         }
 
+
+
+        public void WriteDt(DataRange dataRange)
+        {
+            RedisMq.subscriber.Subscribe("cover_finish", (channel, message) => {
+
+                Hashtable ht = new Hashtable();
+                DataTable dtable = new DataTable();
+
+                ht["eNodeB"] = message;
+                DataTable dt = DB.IbatisHelper.ExecuteQueryForDataTable("qureyMockDT", ht);
+                dtable.Columns.Add("x", System.Type.GetType("System.Decimal"));
+                dtable.Columns.Add("y", System.Type.GetType("System.Decimal"));
+                dtable.Columns.Add("Lon", System.Type.GetType("System.Decimal"));
+                dtable.Columns.Add("Lat", System.Type.GetType("System.Decimal"));
+                dtable.Columns.Add("RSRP", System.Type.GetType("System.Double"));
+                dtable.Columns.Add("InfName", System.Type.GetType("System.String"));
+                dtable.Columns.Add("DtType", System.Type.GetType("System.String"));
+
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    var row = dt.Rows[i];
+                    int gxid = (int)row["GXID"];
+                    int gyid = (int)row["GYID"];
+                    double rsrp = (double)row["ReceivedPowerdbm"];
+                    Point geo = GridHelper.getInstance().GridToGeo(gxid, gyid);
+                    Point proj = GridHelper.getInstance().GridToXY(gxid, gyid);
+                    DataRow thisrow = dtable.NewRow();
+                    thisrow["x"] = proj.X;
+                    thisrow["y"] = proj.Y;
+                    thisrow["Lon"] = geo.X;
+                    thisrow["Lat"] = geo.Y;
+                    thisrow["RSRP"] = rsrp;
+                    thisrow["InfName"] = dataRange.infAreaId;
+                    thisrow["DtType"] = "mock";
+                    dtable.Rows.Add(thisrow);
+                }
+                DataUtil.BCPDataTableImport(dtable, "tbUINTF");
+            });
+        }
+        
 
     }
 }
