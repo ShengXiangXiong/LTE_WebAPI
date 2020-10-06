@@ -33,7 +33,7 @@ namespace LTE.DB
         {
             ISqlMapper sqlMap = IBatisNet.DataMapper.Mapper.Instance();
 
-            //支持多线程下访问Ibatis
+            //支持非IIS线程下访问Ibatis
             sqlMap.SessionStore = new HybridWebThreadSessionStore(sqlMap.Id);
 
             if (!sqlMap.IsSessionStarted)

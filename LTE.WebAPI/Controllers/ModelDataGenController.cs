@@ -34,7 +34,7 @@ namespace LTE.WebAPI.Controllers
                 {
                     int eNodeB = Int32.Parse(ray.cellName.Split('_')[1]);
                     //多线程并行处理
-                    new Thread(()=>
+                    new Thread(() =>
                     {
                         Hashtable ht = new Hashtable();
                         DataTable dtable = new DataTable();
@@ -55,8 +55,8 @@ namespace LTE.WebAPI.Controllers
                             int gxid = (int)row["GXID"];
                             int gyid = (int)row["GYID"];
                             double rsrp = (double)row["ReceivedPowerdbm"];
-                            Point geo = GridHelper.getInstance().GridToGeo(gxid,gyid);
-                            Point proj = GridHelper.getInstance().GridToXY(gxid,gyid);
+                            Point geo = GridHelper.getInstance().GridToGeo(gxid, gyid);
+                            Point proj = GridHelper.getInstance().GridToXY(gxid, gyid);
                             DataRow thisrow = dtable.NewRow();
                             thisrow["x"] = proj.X;
                             thisrow["y"] = proj.Y;
@@ -67,7 +67,7 @@ namespace LTE.WebAPI.Controllers
                             thisrow["DtType"] = "mock";
                             dtable.Rows.Add(thisrow);
                         }
-                        DataUtil.BCPDataTableImport(dt, "tbUINTF");
+                        DataUtil.BCPDataTableImport(dtable, "tbUINTF");
                     }).Start();
                 }
             }
