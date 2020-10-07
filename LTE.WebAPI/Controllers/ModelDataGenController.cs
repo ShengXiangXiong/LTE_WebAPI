@@ -32,14 +32,14 @@ namespace LTE.WebAPI.Controllers
             LoadInfo loadInfo = new LoadInfo();
             loadInfo.count = cellRays.Count;
             loadInfo.loadCreate();
-            cellRays[0].calc();
+
             RedisMq.subscriber.Subscribe("rayTrace_finish", (channel, message) =>
             {
                 if (++cnt < cellRays.Count)
                 {
                     loadInfo.cnt = cnt;
                     loadInfo.loadUpdate();
-                    cellRays[++cnt].calc();
+                    cellRays[cnt].calc();
                 }
                 else
                 {
@@ -47,6 +47,9 @@ namespace LTE.WebAPI.Controllers
                     loadInfo.loadUpdate();
                 }
             });
+
+            cellRays[0].calc();
+            
 
             //foreach (var ray in cellRays)
             //{

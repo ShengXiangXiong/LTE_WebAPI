@@ -21,7 +21,7 @@ namespace LTE.WebAPI.Controllers
         [TaskLoadInfo(taskName = "小区覆盖分析", type = TaskType.CellCoverCompu)]
         public Result PostRayTracing([FromBody]CellRayTracingModel rt)
         {
-            return rt.calc();
+            return rt.calc(loadInfo:true);
         }
     }
 }

@@ -198,7 +198,7 @@ namespace LTE.WebAPI.Models
         /// 如果数据库表 tbAdjCoefficient 中有校正系数时，则界面中的校正系数仅仅被传入，而不会在计算场强中用到
         /// </summary>
         /// <returns></returns>
-        public Result calc()
+        public Result calc(bool loadInfo=false)
         {
             int eNodeB = 0, CI = 0;
             string cellType = "";
@@ -235,8 +235,15 @@ namespace LTE.WebAPI.Models
                 bool reRay = false;  // 是否需要进行二次投射，即读取前一批覆盖计算中出界的射线，并对其进行射线跟踪
                 bool recordReRay = false;  // 是否需要记录当前批的出界射线
 
+                if (loadInfo)
+                {
+                    return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false, LoadInfo.UserId.Value, LoadInfo.taskName.Value);
+                }
+                else
+                {
+                    return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false, -1, "default");
+                }
                 // 小区覆盖计算
-                return parallelComputing(ref cellInfo, fromAngle, toAngle, eNodeB, CI, ref paList, reRay, recordReRay, false, false, LoadInfo.UserId.Value, LoadInfo.taskName.Value);
             }
             // 需要分批计算
             else  
