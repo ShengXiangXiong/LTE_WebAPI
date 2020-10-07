@@ -39,7 +39,11 @@ namespace LTE.WebAPI.Controllers
                 {
                     loadInfo.cnt = cnt;
                     loadInfo.loadUpdate();
-                    cellRays[cnt].calc();
+                    Task.Run(() =>
+                    {
+                        cellRays[cnt].calc();
+                    });
+                    
                 }
                 else
                 {
@@ -47,10 +51,7 @@ namespace LTE.WebAPI.Controllers
                     loadInfo.loadUpdate();
                 }
             });
-
             cellRays[0].calc();
-            
-
             //foreach (var ray in cellRays)
             //{
             //    ray.calc();
