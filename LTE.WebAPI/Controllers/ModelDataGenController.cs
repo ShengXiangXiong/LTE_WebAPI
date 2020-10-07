@@ -79,7 +79,7 @@ namespace LTE.WebAPI.Controllers
             int radius = 2000;//干扰源覆盖半径
             String tarBaseName = "测试干扰源基站_";
             List<CELL> cells = new List<CELL>();
-            int batch = 200;
+            int batch = 10;
             int cnt = 0;
 
             //计算测试数据总数
@@ -136,7 +136,10 @@ namespace LTE.WebAPI.Controllers
                     }
                 }
             }
-            IbatisHelper.ExecuteInsert("CELL_BatchInsert", cells);
+            if (cells.Count > 0)
+            {
+                IbatisHelper.ExecuteInsert("CELL_BatchInsert", cells);
+            }
 
             return res;
         }
