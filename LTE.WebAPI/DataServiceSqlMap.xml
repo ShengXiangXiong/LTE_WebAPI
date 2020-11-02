@@ -1564,5 +1564,17 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     where eNodeB=$eNodeB$
   </select>
 
+  <select id="queryDTRange" parameterClass="HashTable">
+    select max(x) as maxX,max(y) as maxY,min(x) as minX,min(y) as minY
+    from tbUINTF
+    where InfName = '$InfName$'
+  </select>
+
+  <select id="queryTopKDT" parameterClass="HashTable">
+    select top $k$ ID,x,y,RSRP
+    from tbUINTF
+    where InfName = '$InfName$' order by RSRP desc
+  </select>
+
 </statements>
 </sqlMap>

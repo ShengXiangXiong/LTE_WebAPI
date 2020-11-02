@@ -120,7 +120,7 @@ namespace LTE.WebAPI.Models
         /// 计算射线
         /// </summary>
         /// <returns></returns>
-        public Result RecordRayLoc()
+        public Result RecordRayLoc(bool load=false)
         {
             threadNum = Environment.ProcessorCount/2;
             Hashtable ht = new Hashtable();
@@ -169,7 +169,14 @@ namespace LTE.WebAPI.Models
                 //{
                 //    res = parallelComputing(cellInfo, fromAngle, toAngle,dis);
                 //}
-                res = parallelComputing(cellInfo, fromAngle, toAngle, dis);
+                if (load)
+                {
+                    res = parallelComputing(cellInfo, fromAngle, toAngle, dis,LoadInfo.UserId.Value,LoadInfo.taskName.Value);
+                }
+                else
+                {
+                    res = parallelComputing(cellInfo, fromAngle, toAngle, dis,-1,"default");
+                }
                 if (res.ok == false)
                 {
                     IbatisHelper.ExecuteDelete("deletetbRayLoc", ht);
@@ -219,7 +226,7 @@ namespace LTE.WebAPI.Models
         //}
 
 
-        private Result parallelComputing(CellInfo cellInfo, double fromAngle, double toAngle,double dis)
+        private Result parallelComputing(CellInfo cellInfo, double fromAngle, double toAngle,double dis,int userId,string taskName)
         {
             
             string bidstext = "-1";
@@ -237,7 +244,7 @@ namespace LTE.WebAPI.Models
                 cellInfo.Azimuth, cellInfo.Inclination, cellInfo.cellType, cellInfo.frequncy, cellInfo.EIRP,
                 cellInfo.directCoefficient, cellInfo.reflectCoefficient, cellInfo.diffracteCoefficient, cellInfo.diffracteCoefficient,
                 fromAngle, toAngle, dis, this.reflectionNum, this.diffractionNum, this.computeIndoor,
-                this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false, LoadInfo.UserId.Value, LoadInfo.taskName.Value);
+                this.threadNum, bidstext, this.sideSplitUnit, this.computeVSide, false, false, true, false, userId, taskName);
 
             try
             {

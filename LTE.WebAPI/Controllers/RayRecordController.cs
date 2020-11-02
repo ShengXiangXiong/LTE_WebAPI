@@ -23,7 +23,7 @@ namespace LTE.WebAPI.Controllers
         [TaskLoadInfo(taskName = "射线记录Loc", type = TaskType.RayRecordLoc)]
         public Result PostRayRecordLoc([FromBody]RayLocRecordModel ray)
         {
-            Result res = ray.RecordRayLoc();
+            Result res = ray.RecordRayLoc(load:true);
             return res;
         }
 

@@ -212,9 +212,9 @@ namespace LTE.WebAPI.Models
             double fromAngle = cellInfo.Azimuth - this.incrementAngle;
             double toAngle = cellInfo.Azimuth + this.incrementAngle;
 
-            //指定最大覆盖半径
-            int maxCoverageRadius = 15000;
-            this.distance = Math.Min(this.distance, maxCoverageRadius);
+            ////指定最大覆盖半径
+            //int maxCoverageRadius = 15000;
+            //this.distance = Math.Min(this.distance, maxCoverageRadius);
 
             // 删除旧的接收功率数据
             Hashtable ht = new Hashtable();

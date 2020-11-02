@@ -17,14 +17,22 @@ using System.Threading;
 using LTE.InternalInterference.Grid;
 using LTE.Utils;
 using StackExchange.Redis;
+using System.Diagnostics;
+using System.Data.SqlClient;
+using LTE.ExternalInterference.Struct;
+using LTE.InternalInterference;
 
 namespace LTE.WebAPI.Controllers
 {
     public class ModelDataGenController : ApiController
     {
+        private int canGridL = 120;
+        private int canGridW = 120;
+        private int canGridH = 30;
+
         [AllowAnonymous]
         [TaskLoadInfo(taskName = "干扰区域数据仿真——模拟路测点生成", type = TaskType.DataMock)]
-        public Result roadPointMockGen([FromBody]DataRange dataRange)
+        public Result RoadPointMockGen([FromBody]DataRange dataRange)
         {
             List<CellRayTracingModel> cellRays = interfeCellGen(dataRange);
             WriteDt(dataRange);
@@ -33,7 +41,7 @@ namespace LTE.WebAPI.Controllers
             loadInfo.count = cellRays.Count;
             loadInfo.loadCreate();
 
-            RedisMq.subscriber.Subscribe("rayTrace_finish", (channel, message) =>
+            RedisMq.subscriber.Subscribe("rayTrace_finish", (channel, message) => 
             {
                 if (++cnt < cellRays.Count)
                 {
@@ -43,7 +51,6 @@ namespace LTE.WebAPI.Controllers
                     {
                         cellRays[cnt].calc();
                     });
-                    
                 }
                 else
                 {
@@ -60,7 +67,7 @@ namespace LTE.WebAPI.Controllers
             Result res = new Result(true,"区域数据仿真已提交");
             return res;
         }
-
+        
         public List<CellRayTracingModel> interfeCellGen(DataRange dataRange)
         {
             List<CellRayTracingModel> res = new List<CellRayTracingModel>();
@@ -89,7 +96,7 @@ namespace LTE.WebAPI.Controllers
             int lz = (int)Math.Ceiling(maxBh/ dataRange.tarGridH)-1;
             long uidBatch = long.Parse((lx*ly*lz).ToString());
             String dbName = "CELL";
-            int initOff = 50000;
+            int initOff = 1500000; 
             int uid = (int)UIDHelper.GenUIdByRedis(dbName,uidBatch)+initOff;
 
             for (double x = pMin.X; x < pMax.X; x += dataRange.tarGridX)
@@ -144,9 +151,7 @@ namespace LTE.WebAPI.Controllers
 
             return res;
         }
-
-
-
+        
         public void WriteDt(DataRange dataRange)
         {
             RedisMq.subscriber.Subscribe("cover2db_finish", (channel, message) => {
@@ -156,6 +161,7 @@ namespace LTE.WebAPI.Controllers
 
                 ht["eNodeB"] = message;
                 DataTable dt = DB.IbatisHelper.ExecuteQueryForDataTable("qureyMockDT", ht);
+                dtable.Columns.Add("ID", System.Type.GetType("System.Int32"));
                 dtable.Columns.Add("x", System.Type.GetType("System.Decimal"));
                 dtable.Columns.Add("y", System.Type.GetType("System.Decimal"));
                 dtable.Columns.Add("Lon", System.Type.GetType("System.Decimal"));
@@ -163,6 +169,53 @@ namespace LTE.WebAPI.Controllers
                 dtable.Columns.Add("RSRP", System.Type.GetType("System.Double"));
                 dtable.Columns.Add("InfName", System.Type.GetType("System.String"));
                 dtable.Columns.Add("DtType", System.Type.GetType("System.String"));
+
+                int initOff = 5000;
+                int uid = (int)UIDHelper.GenUIdByRedis("DT", dt.Rows.Count) + initOff;
+                string infName = dataRange.infAreaId + "_" + message;
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    var row = dt.Rows[i];
+                    int gxid = (int)row["GXID"];
+                    int gyid = (int)row["GYID"];
+                    double rsrp = (double)row["ReceivedPowerdbm"];
+                    Point geo = GridHelper.getInstance().GridToGeo(gxid, gyid);
+                    Point proj = GridHelper.getInstance().GridToXY(gxid, gyid);
+                    DataRow thisrow = dtable.NewRow();
+                    thisrow["ID"] = uid+i;
+                    thisrow["x"] = proj.X;
+                    thisrow["y"] = proj.Y;
+                    thisrow["Lon"] = geo.X;
+                    thisrow["Lat"] = geo.Y;
+                    thisrow["RSRP"] = rsrp;
+                    thisrow["InfName"] = infName;
+                    thisrow["DtType"] = "mock";
+                    dtable.Rows.Add(thisrow);
+                }
+                DataUtil.BCPDataTableImport(dtable, "tbUINTF");
+                SelectDT(infName);
+            });
+        }
+        [AllowAnonymous]
+        public void Wdt() {
+            Hashtable ht = new Hashtable();
+            DataTable dtable = new DataTable();
+            dtable.Columns.Add("ID", System.Type.GetType("System.Int32"));
+            dtable.Columns.Add("x", System.Type.GetType("System.Decimal"));
+            dtable.Columns.Add("y", System.Type.GetType("System.Decimal"));
+            dtable.Columns.Add("Lon", System.Type.GetType("System.Decimal"));
+            dtable.Columns.Add("Lat", System.Type.GetType("System.Decimal"));
+            dtable.Columns.Add("RSRP", System.Type.GetType("System.Double"));
+            dtable.Columns.Add("InfName", System.Type.GetType("System.String"));
+            dtable.Columns.Add("DtType", System.Type.GetType("System.String"));
+
+            for (int vir = 50369; vir <= 50458; vir++)
+            {
+                dtable.Clear();
+                ht["eNodeB"] = vir;
+                DataTable dt = DB.IbatisHelper.ExecuteQueryForDataTable("qureyMockDT", ht);
+                int initOff = 5000;
+                int uid = (int)UIDHelper.GenUIdByRedis("DT", dt.Rows.Count) + initOff;
 
                 for (int i = 0; i < dt.Rows.Count; i++)
                 {
@@ -173,18 +226,281 @@ namespace LTE.WebAPI.Controllers
                     Point geo = GridHelper.getInstance().GridToGeo(gxid, gyid);
                     Point proj = GridHelper.getInstance().GridToXY(gxid, gyid);
                     DataRow thisrow = dtable.NewRow();
+                    thisrow["ID"] = uid + i;
                     thisrow["x"] = proj.X;
                     thisrow["y"] = proj.Y;
                     thisrow["Lon"] = geo.X;
                     thisrow["Lat"] = geo.Y;
                     thisrow["RSRP"] = rsrp;
-                    thisrow["InfName"] = dataRange.infAreaId;
+                    thisrow["InfName"] = "v1" + "_" + vir;
                     thisrow["DtType"] = "mock";
                     dtable.Rows.Add(thisrow);
                 }
                 DataUtil.BCPDataTableImport(dtable, "tbUINTF");
+            }
+
+            
+        }
+
+
+        [AllowAnonymous]
+        public void RoadPointSelect()
+        {
+            string pre = "v1";
+            for (int i = 50369; i <= 50458; i++)
+            {
+                SelectDT(pre + "_" + i);
+            }
+        }
+
+
+        public void SelectDT(string InfName) {
+            //筛选信号值前k个的点
+            Hashtable ht = new Hashtable();
+            ht["InfName"] = InfName;
+            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("queryDTRange",ht);
+            double minX = Convert.ToDouble(dt.Rows[0]["minX"]);
+            double maxX = Convert.ToDouble(dt.Rows[0]["maxX"]);
+            double minY = Convert.ToDouble(dt.Rows[0]["minY"]);
+            double maxY = Convert.ToDouble(dt.Rows[0]["maxY"]);
+
+
+            int sRec = (int)((maxX - minX) * (maxY - minY));
+
+            //数据模拟阶段
+            sRec = 4000 * 4000;
+
+            int k = sRec / (canGridL * canGridW);
+            ht["k"] = k;
+            dt = IbatisHelper.ExecuteQueryForDataTable("queryTopKDT", ht);
+
+            //定义候选点数据结构
+            DataTable canGrid = new DataTable();
+            canGrid.Columns.Add("fromName");
+            canGrid.Columns.Add("CI");
+            canGrid.Columns.Add("x");
+            canGrid.Columns.Add("y");
+            canGrid.Columns.Add("ReceivePW");
+            canGrid.Columns.Add("Azimuth");
+            canGrid.Columns.Add("Distance");
+            //用于记录路测点已经覆盖过的栅格
+            HashSet<string> vis = new HashSet<string>();
+            double grade = 0.001;//选点等级，每隔0.1%减少一定候选栅格
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                int sigma = (int)Math.Floor((double)i/dt.Rows.Count/ grade) + 1;
+                sigma = 1;
+                Point p = new Point(Convert.ToDouble(dt.Rows[i]["x"]), Convert.ToDouble(dt.Rows[i]["y"]),0);
+                Grid3D grid3d = new Grid3D();
+                if (!GridHelper.getInstance().PointXYZGrid(p, ref grid3d, canGridL*sigma, canGridH*sigma))
+                {
+                    continue;
+                }
+                string key = grid3d.gxid + "_" + grid3d.gyid;
+                if (vis.Contains(key))
+                {
+                    //该栅格已经存在候选路测点，则跳过
+                    continue;
+                }
+                vis.Add(key);
+                DataRow thisrow = canGrid.NewRow();
+                thisrow["fromName"] = InfName;
+                thisrow["x"] = dt.Rows[i]["x"];
+                thisrow["y"] = dt.Rows[i]["y"];
+                thisrow["ReceivePW"] = Math.Pow(10, (Convert.ToDouble(dt.Rows[i]["RSRP"]) / 10 - 3));
+                thisrow["CI"] = dt.Rows[i]["ID"];
+                canGrid.Rows.Add(thisrow);
+                
+            }
+            //计算路测点起始参数
+            ComputeInitParams(canGrid);
+            //入库
+            Hashtable ht1 = new Hashtable();
+            ht1["fromName"] = InfName;
+            IbatisHelper.ExecuteDelete("deletetbRayLoc", ht1);
+            IbatisHelper.ExecuteDelete("deletbSelectedPoint", ht);
+            WriteDataToBase(canGrid,100);
+            Task.Run(() =>
+            {
+                TarjGen(InfName);
             });
         }
+        private void ComputeInitParams(DataTable dtinfo)
+        {
+            double avgx = 0, avgy = 0;
+            for (int i = 0; i < dtinfo.Rows.Count; i++)
+            {
+                double x = Convert.ToDouble(dtinfo.Rows[i]["x"]);
+                double y = Convert.ToDouble(dtinfo.Rows[i]["y"]);
+                avgx += x;
+                avgy += y;
+            }
+            avgx /= dtinfo.Rows.Count;
+            avgy /= dtinfo.Rows.Count;
+            Debug.WriteLine("路测中点:x" + avgx + "路测中点:x" + avgy);
+            Geometric.Point endavg = new Geometric.Point(avgx, avgy, 0);
+
+            double minx = double.MaxValue, miny = double.MaxValue, maxx = double.MinValue, maxy = double.MinValue;
+            for (int i = 0; i < dtinfo.Rows.Count; i++)
+            {
+                //Debug.WriteLine(i);
+                double x = Convert.ToDouble(dtinfo.Rows[i]["x"]);
+                double y = Convert.ToDouble(dtinfo.Rows[i]["y"]);
+                Geometric.Point start = new Geometric.Point(x, y, 0);
+
+                double aziavg = LTE.Geometric.GeometricUtilities.getPolarCoord(start, endavg).theta / Math.PI * 180;
+                aziavg = GeometricUtilities.ConvertGeometricArithmeticAngle(aziavg + 1);
+                //Debug.WriteLine("路测中点计算角度:" + aziavg);
+                dtinfo.Rows[i]["Azimuth"] = aziavg;
+                dtinfo.Rows[i]["Distance"] = distanceXY(start.X, start.Y, endavg.X, endavg.Y) + 300;
+            }
+        }
+        private double distanceXY(double x, double y, double ex, double ey)
+        {
+            double deteX = Math.Pow((x - ex), 2);
+            double deteY = Math.Pow((y - ey), 2);
+            double distance = Math.Sqrt(deteX + deteY);
+            return distance;
+        }
+        public void WriteDataToBase(DataTable tb,int batchSize)
+        {
+            using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
+            {
+                bcp.BatchSize = batchSize;
+                bcp.BulkCopyTimeout = 1000;
+                bcp.DestinationTableName = "tbSelectedPoints";
+                bcp.WriteToServer(tb);
+                bcp.Close();
+            }
+        }
+
+
+        [AllowAnonymous]
+        public void TarjBatchGen()
+        {
+            string pre = "v1";
+            for (int i = 50369; i <= 50458; i++)
+            {
+                TarjGen(pre + "_" + i);
+            }
+        }
+
+        public void TarjGen(string InfName)
+        {
+            RayLocRecordModel rayLoc = new RayLocRecordModel();
+            rayLoc.virsource = InfName;
+            rayLoc.incrementAngle = 50;
+            rayLoc.reflectionNum = 3;
+            rayLoc.diffractionNum = 2;
+            rayLoc.sideSplitUnit = 3;
+            rayLoc.RecordRayLoc();
+        }
+
+        public void Tarj2GridFeature(Dictionary<string, List<GridInfo>> togrid,string inf_name) {
+
+            System.Data.DataTable tb = new System.Data.DataTable();
+            tb.Columns.Add("gxid");   
+            tb.Columns.Add("gyid");  
+            tb.Columns.Add("gzid");  
+            tb.Columns.Add("inf_name");     //此版本数据对应的干扰源名称
+            tb.Columns.Add("direct_num");   //直射数
+            tb.Columns.Add("reflect_num");  //绕射数
+            tb.Columns.Add("difract_num");  //绕射数
+            tb.Columns.Add("recp");         //信号接收强度
+            tb.Columns.Add("recp_var");     //信号接收方差
+            tb.Columns.Add("rp_num");       //路测点覆盖数目
+
+            foreach (var item in togrid)
+            {
+                System.Data.DataRow thisrow = tb.NewRow();
+                thisrow["inf_name"] = inf_name;
+                string[] strs = item.Key.Split('_');
+                thisrow["gxid"] = int.Parse(strs[0]);
+                thisrow["gyid"] = int.Parse(strs[1]);
+                thisrow["gzid"] = int.Parse(strs[2]);
+                Dictionary<string, List<GridInfo>> dic = new Dictionary<string, List<GridInfo>>();
+                int directNum = 0;
+                int reflectNUm = 0;
+                int difractNum = 0;
+                double recp = int.MinValue;
+                double recpVar = 0;
+
+                List<double> recpLs = new List<double>();
+                List<double> directRecp = new List<double>();
+                List<double> reflectRecp = new List<double>();
+                List<double> diffractRecp = new List<double>();
+
+                foreach (GridInfo gr in item.Value)
+                {
+                    //只统计不同路测点的直射数目
+                    if (gr.rayType == 0 && !dic.ContainsKey(gr.cellid))
+                    {
+                        directNum++;
+                    }
+                    if (gr.rayType ==1 || gr.rayType == 2)
+                    {
+                        reflectNUm++;
+                    }
+                    if(gr.rayType == 3 || gr.rayType == 4)
+                    {
+                        difractNum++;
+                    }
+                    if (!dic.ContainsKey(gr.cellid))
+                    {
+                        dic[gr.cellid] = new List<GridInfo>();
+                    }
+                    dic[gr.cellid].Add(gr);
+                }
+                thisrow["direct_num"] = directNum;
+                thisrow["reflect_num"] = reflectNUm;
+                thisrow["difract_num"] = difractNum;
+                thisrow["rp_num"] = dic.Keys.Count;
+                
+                foreach (var grs in dic)
+                {
+                    grs.Value.Sort((x, y) =>
+                    {
+                        int p1 = x.rayType - y.rayType;
+                        int p2 = x.raylevel - y.raylevel;
+                        int p3 = (int)Math.Ceiling(x.recP - y.recP);
+                        return p1 != 0 ? p1 : (p2 != 0 ? p2 : p3);
+                    });
+                    
+                    double recpTemp = grs.Value[0].recP;
+                    recpLs.Add(recpTemp);
+                    recpVar += recpTemp;
+
+                    recp = Math.Max(recpTemp, recp);
+                    int type = grs.Value[0].rayType;
+                    if (type == 0)
+                    {
+                        directRecp.Add(recpTemp);
+                    }
+                    if (type == 1 || type == 2)
+                    {
+                        reflectRecp.Add(recpTemp);
+                    }
+                    if(type == 3 || type == 4)
+                    {
+                        diffractRecp.Add(recpTemp);
+                    }
+                }
+                double aveRecp = recpVar / dic.Keys.Count;
+                recpVar = 0;
+                foreach (var rtRecp in recpLs)
+                {
+                    recpVar += Math.Pow(rtRecp-aveRecp, 2);
+                }
+
+                thisrow["recp_var"] = recpVar;
+            }
+
+
+            Hashtable ht = new Hashtable();
+            
+            System.Data.DataTable tb1 = IbatisHelper.ExecuteQueryForDataTable("GetMaxRayLocID", ht);
+        }
+
         
 
     }
