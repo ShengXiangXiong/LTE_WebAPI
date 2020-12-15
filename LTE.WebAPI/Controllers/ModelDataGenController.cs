@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Data.SqlClient;
 using LTE.ExternalInterference.Struct;
 using LTE.InternalInterference;
+using LTE.ExternalInterference;
 
 namespace LTE.WebAPI.Controllers
 {
@@ -83,7 +84,7 @@ namespace LTE.WebAPI.Controllers
             pMax.Z = 0;
             LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(pMax);
 
-            double maxBh = 100;//最大建筑物高度
+            double maxBh = 60;//最大建筑物高度
             int radius = 2000;//干扰源覆盖半径
             String tarBaseName = "测试干扰源基站_";
             List<CELL> cells = new List<CELL>();
@@ -319,7 +320,7 @@ namespace LTE.WebAPI.Controllers
             ht1["fromName"] = InfName;
             IbatisHelper.ExecuteDelete("deletetbRayLoc", ht1);
             IbatisHelper.ExecuteDelete("deletbSelectedPoint", ht);
-            WriteDataToBase(canGrid,100);
+            WriteDataToBase(canGrid,100, "tbSelectedPoints");
             Task.Run(() =>
             {
                 TarjGen(InfName);
@@ -362,13 +363,13 @@ namespace LTE.WebAPI.Controllers
             double distance = Math.Sqrt(deteX + deteY);
             return distance;
         }
-        public void WriteDataToBase(DataTable tb,int batchSize)
+        public void WriteDataToBase(DataTable tb,int batchSize,string destinationTableName)
         {
             using (SqlBulkCopy bcp = new SqlBulkCopy(DataUtil.ConnectionString))
             {
                 bcp.BatchSize = batchSize;
                 bcp.BulkCopyTimeout = 1000;
-                bcp.DestinationTableName = "tbSelectedPoints";
+                bcp.DestinationTableName = destinationTableName;
                 bcp.WriteToServer(tb);
                 bcp.Close();
             }
@@ -396,6 +397,33 @@ namespace LTE.WebAPI.Controllers
             rayLoc.RecordRayLoc();
         }
 
+
+        [AllowAnonymous]
+        public void FeatureBatchGen()
+        {
+            string pre = "v1";
+            for (int i = 50369; i <= 50458; i++)
+            {
+                Tarj2Grid(pre + "_" + i);
+            }
+        }
+
+        /// <summary>
+        /// 反向跟踪生成统计栅格
+        /// </summary>
+        /// <param name="virName"></param>
+        public void Tarj2Grid(string virName)
+        {
+            PathAnalysis pa = new PathAnalysis(virName);
+            Dictionary<string, List<GridInfo>> togrid = pa.getTogrid();
+            Tarj2GridFeature(togrid, virName);
+        }
+
+        /// <summary>
+        /// 对统计栅格按照训练特征进行统计并入库
+        /// </summary>
+        /// <param name="togrid"></param>
+        /// <param name="inf_name"></param>
         public void Tarj2GridFeature(Dictionary<string, List<GridInfo>> togrid,string inf_name) {
 
             System.Data.DataTable tb = new System.Data.DataTable();
@@ -403,39 +431,68 @@ namespace LTE.WebAPI.Controllers
             tb.Columns.Add("gyid");  
             tb.Columns.Add("gzid");  
             tb.Columns.Add("inf_name");     //此版本数据对应的干扰源名称
-            tb.Columns.Add("direct_num");   //直射数
-            tb.Columns.Add("reflect_num");  //绕射数
-            tb.Columns.Add("difract_num");  //绕射数
+            tb.Columns.Add("direct_num");   //直射数（不同路测点发出的）
+            tb.Columns.Add("reflect_num");  //反射数（所有轨迹）
+            tb.Columns.Add("difract_num");  //绕射数（所有轨迹）
             tb.Columns.Add("recp");         //信号接收强度
-            tb.Columns.Add("recp_var");     //信号接收方差
+            tb.Columns.Add("recp_var");     //信号接收总方差
+            tb.Columns.Add("direct_var"); //信号接收直射方差
+            tb.Columns.Add("reflect_var"); //信号接收反射方差
+            tb.Columns.Add("diffract_var"); //信号接收绕射方差
             tb.Columns.Add("rp_num");       //路测点覆盖数目
+            tb.Columns.Add("dis");       //距离干扰源的距离的平方
+
+            //获取干扰源的位置
+            int id = int.Parse(inf_name.Split('_')[1]);
+            Hashtable ht = new Hashtable();
+            ht["id"] = id;
+            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("queryCellPosById", ht);
+            double x = double.Parse(dt.Rows[0]["x"].ToString());
+            double y = double.Parse(dt.Rows[0]["y"].ToString());
+            double h = double.Parse(dt.Rows[0]["h"].ToString());
+            Grid3D tarGrid = new Grid3D();
+            GridHelper.getInstance().PointXYZToAccGrid(new Point(x, y, h), ref tarGrid);
 
             foreach (var item in togrid)
             {
                 System.Data.DataRow thisrow = tb.NewRow();
                 thisrow["inf_name"] = inf_name;
-                string[] strs = item.Key.Split('_');
+                string[] strs = item.Key.Split(',');
                 thisrow["gxid"] = int.Parse(strs[0]);
                 thisrow["gyid"] = int.Parse(strs[1]);
                 thisrow["gzid"] = int.Parse(strs[2]);
+
+                int dx = int.Parse(strs[0]) - tarGrid.gxid;
+                int dy = int.Parse(strs[1]) - tarGrid.gyid;
+                int dz = int.Parse(strs[2]) - tarGrid.gzid;
+                thisrow["dis"] = Math.Pow(dx, 2)+ Math.Pow(dy, 2)+ Math.Pow(dz, 2);
+
+                //某一个栅格的统计信息
                 Dictionary<string, List<GridInfo>> dic = new Dictionary<string, List<GridInfo>>();
+
+                HashSet<string> directRay = new HashSet<string>();
+
                 int directNum = 0;
                 int reflectNUm = 0;
                 int difractNum = 0;
                 double recp = int.MinValue;
                 double recpVar = 0;
+                double directVar = 0;
+                double reflectVar = 0;
+                double diffractVar = 0;
 
                 List<double> recpLs = new List<double>();
                 List<double> directRecp = new List<double>();
                 List<double> reflectRecp = new List<double>();
                 List<double> diffractRecp = new List<double>();
-
+                
                 foreach (GridInfo gr in item.Value)
                 {
+                    
                     //只统计不同路测点的直射数目
-                    if (gr.rayType == 0 && !dic.ContainsKey(gr.cellid))
+                    if (gr.rayType == 0)
                     {
-                        directNum++;
+                        directRay.Add(gr.cellid);
                     }
                     if (gr.rayType ==1 || gr.rayType == 2)
                     {
@@ -451,18 +508,40 @@ namespace LTE.WebAPI.Controllers
                     }
                     dic[gr.cellid].Add(gr);
                 }
+
+                directNum = directRay.Count;
                 thisrow["direct_num"] = directNum;
                 thisrow["reflect_num"] = reflectNUm;
                 thisrow["difract_num"] = difractNum;
                 thisrow["rp_num"] = dic.Keys.Count;
-                
+
+                double distinctRefNum = 0;
+                double distinctDiffraNum = 0;
+
                 foreach (var grs in dic)
                 {
-                    grs.Value.Sort((x, y) =>
+                    grs.Value.Sort((ox, oy) =>
                     {
-                        int p1 = x.rayType - y.rayType;
-                        int p2 = x.raylevel - y.raylevel;
-                        int p3 = (int)Math.Ceiling(x.recP - y.recP);
+                        if (ox is null)
+                            throw new ArgumentNullException(nameof(ox));
+                        if (oy is null)
+                            throw new ArgumentNullException(nameof(oy));
+                        if(double.IsNaN(ox.recP)|| double.IsNaN(oy.recP))
+                        {
+                            throw new ArgumentException(nameof(ox) + " can't contain NaNs.");
+                        }
+                        int p1 = ox.rayType - oy.rayType;
+                        int p2 = ox.raylevel - oy.raylevel;
+                        double temp = oy.recP - ox.recP;
+                        int p3 = 0;
+                        if (temp < 0)
+                        {
+                            p3 = -1;
+                        }
+                        if (temp > 0)
+                        {
+                            p3 = 1;
+                        }
                         return p1 != 0 ? p1 : (p2 != 0 ? p2 : p3);
                     });
                     
@@ -474,31 +553,56 @@ namespace LTE.WebAPI.Controllers
                     int type = grs.Value[0].rayType;
                     if (type == 0)
                     {
+                        directVar += recpTemp;
                         directRecp.Add(recpTemp);
                     }
                     if (type == 1 || type == 2)
                     {
+                        distinctRefNum++;
+                        reflectVar += recpTemp;
                         reflectRecp.Add(recpTemp);
                     }
                     if(type == 3 || type == 4)
                     {
+                        distinctDiffraNum++;
+                        diffractVar += recpTemp;
                         diffractRecp.Add(recpTemp);
                     }
                 }
                 double aveRecp = recpVar / dic.Keys.Count;
+                double aveDirectRecp = directVar / directNum;
+                double aveReflectRecp = reflectVar / distinctRefNum;
+                double aveDiffractRecp = diffractVar / distinctDiffraNum;
+
                 recpVar = 0;
+                reflectVar = 0;
+                diffractVar = 0;
                 foreach (var rtRecp in recpLs)
                 {
                     recpVar += Math.Pow(rtRecp-aveRecp, 2);
                 }
-
+                foreach (var rtRecp in directRecp)
+                {
+                    directVar += Math.Pow(rtRecp - aveDirectRecp, 2);
+                }
+                foreach (var rtRecp in reflectRecp)
+                {
+                    reflectVar += Math.Pow(rtRecp - aveReflectRecp, 2);
+                }
+                foreach (var rtRecp in diffractRecp)
+                {
+                    diffractVar += Math.Pow(rtRecp - aveDiffractRecp, 2);
+                }
+                thisrow["recp"] = aveRecp;
                 thisrow["recp_var"] = recpVar;
+                thisrow["direct_var"] = directVar;
+                thisrow["reflect_var"] = reflectVar;
+                thisrow["diffract_var"] = diffractVar;
+                tb.Rows.Add(thisrow);
             }
-
-
-            Hashtable ht = new Hashtable();
-            
-            System.Data.DataTable tb1 = IbatisHelper.ExecuteQueryForDataTable("GetMaxRayLocID", ht);
+            string desTbName = "tbGridFeature";
+            //WriteDataToBase(tb, 100, desTbName);
+            DataUtil.BCPDataTableImport(tb, desTbName);
         }
 
         

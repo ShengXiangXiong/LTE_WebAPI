@@ -144,7 +144,8 @@ namespace LTE.WebAPI.Models
                 cellInfo.SourcePoint = new Geometric.Point();
                 cellInfo.SourcePoint.X = Convert.ToDouble(tb.Rows[i]["x"]);
                 cellInfo.SourcePoint.Y = Convert.ToDouble(tb.Rows[i]["y"]);
-                cellInfo.SourcePoint.Z = 1;
+                //海拔抹平为13
+                cellInfo.SourcePoint.Z = 13;
                 cellInfo.SourceName = Convert.ToString(tb.Rows[i]["CI"]);
                 cellInfo.CI = Convert.ToInt32(tb.Rows[i]["CI"]);
                 cellInfo.Inclination = 0;

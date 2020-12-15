@@ -806,22 +806,23 @@ namespace LTE.CalcProcess
             double interval = 10;
             List<Geometric.Point> pts = GroundGrid.getPointBySector(source, this.distance, this.fromAngle, this.toAngle, interval);//获取地面或者顶面点
 
-            // 向地面发射射线
-            if (source.Z > 1)
-            {
-                for (int i = 0; i < pts.Count; i++)
-                {
-                    List<InternalInterference.NodeInfo> rayList = new List<InternalInterference.NodeInfo>();
-                    this.rayLocate.rayTracingFirstLoc(source, pts[i], rayList, cellInfo, InternalInterference.RayType.Direction, 1);
-                }
-            }
+            //// 向地面发射射线
+            //if (source.Z > 1)
+            //{
+            //    for (int i = 0; i < pts.Count; i++)
+            //    {
+            //        List<InternalInterference.NodeInfo> rayList = new List<InternalInterference.NodeInfo>();
+            //        this.rayLocate.rayTracingFirstLoc(source, pts[i], rayList, cellInfo, InternalInterference.RayType.Direction, 1);
+            //    }
+            //}
 
             // 向天空发射射线
             if (source.Z < 90)
             {
                 for (int i = 0; i < pts.Count; i++)
                 {
-                    pts[i].Z = 90;
+                    //pts[i].Z = 90;
+                    pts[i].Z = 120;
                     List<InternalInterference.NodeInfo> rayList = new List<InternalInterference.NodeInfo>();
                     this.rayLocate.rayTracingFirstLoc(source, pts[i], rayList, cellInfo, InternalInterference.RayType.Direction, 1);
                 }

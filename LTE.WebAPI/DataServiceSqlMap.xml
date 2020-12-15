@@ -1576,5 +1576,11 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     where InfName = '$InfName$' order by RSRP desc
   </select>
 
+  <select id="queryCellPosById" parameterClass="HashTable">
+    select x,y,Altitude+AntHeight as h
+    from CELL
+    where ID='$id$'
+  </select>
+
 </statements>
 </sqlMap>

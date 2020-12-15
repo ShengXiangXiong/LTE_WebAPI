@@ -151,6 +151,15 @@ namespace LTE.ExternalInterference
             return showResult(aimGrid);
         }
 
+        public Dictionary<string, List<GridInfo>> getTogrid()
+        {
+            if (togrid.Count == 0)
+            {
+                DataHandler(3);
+            }
+            return togrid;
+        }
+
         private ResultRecord showResult(string ans)
         {
             String[] tmp = ans.Split(',');
