@@ -228,6 +228,8 @@ namespace LTE.WebAPI.Models
             int threadCnt = 0, batchNum = 0, flag = 0;
             bool ok = howCalc(fromAngle, toAngle, ref threadCnt, ref batchNum, ref flag);
 
+            this.threadNum = 2; threadCnt = 2;
+
             // 不需要分批计算
             if (ok)  
             {

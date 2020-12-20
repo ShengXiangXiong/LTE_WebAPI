@@ -122,7 +122,7 @@ namespace LTE.WebAPI.Models
         /// <returns></returns>
         public Result RecordRayLoc(bool load=false)
         {
-            threadNum = Environment.ProcessorCount/2;
+            threadNum = 2;
             Hashtable ht = new Hashtable();
             ht["fromName"] = virsource;
             //读取selectPoint 表信息
