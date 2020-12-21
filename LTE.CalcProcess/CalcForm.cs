@@ -828,9 +828,9 @@ namespace LTE.CalcProcess
                         pts[i].Z = z + 13;
                         Grid3D endP = new Grid3D();
                         GridHelper.getInstance().PointXYZToAccGrid(new Point(pts[i].X,pts[i].Y,pts[i].Z),ref endP);
-                        string grid = string.Format("{0},{1},{2}", endP.gxid, endP.gyid, endP.gzid);
+                        int key = Int32.Parse(string.Format("{0}{1}{2}", endP.gxid, endP.gyid, endP.gzid));
                         //如果已经经过该终点，则直接跳过
-                        if (this.rayLocate.visGrid.Contains(Int32.Parse(grid)))
+                        if (this.rayLocate.visGrid.Contains(key))
                         {
                             continue;
                         }
