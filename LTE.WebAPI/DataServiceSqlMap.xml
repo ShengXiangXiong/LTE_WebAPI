@@ -1092,7 +1092,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   </select>
   <delete id="deletbSelectedPoint" parameterClass="Hashtable">
     delete from tbSelectedPoints
-    where fromName = '$cellname$'
+    where fromName = '$fromName$'
   </delete>
   <select id ="GetSource" parameterClass="Hashtable">
     select TOP(1) Longitude,Latitude,x,y,Altitude,AntHeight,Tilt,EIRP,CI,EARFCN,eNodeB,NetType

@@ -84,8 +84,8 @@ namespace LTE.WebAPI.Controllers
             pMax.Z = 0;
             LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(pMax);
 
-            double maxBh = 60;//最大建筑物高度
-            int radius = 2000;//干扰源覆盖半径
+            double maxBh = 90;//最大建筑物高度
+            int radius = 1200;//干扰源覆盖半径
             String tarBaseName = "测试干扰源基站_";
             List<CELL> cells = new List<CELL>();
             int batch = 10;
@@ -104,7 +104,7 @@ namespace LTE.WebAPI.Controllers
             {
                 for (double y = pMin.Y; y < pMax.Y; y+=dataRange.tarGridY)
                 {
-                    for (double z = 30; z < maxBh; z+=30)
+                    for (double z = 30; z <= maxBh; z+=30)
                     {
                         cnt++;
                         Random r = new Random(uid);
@@ -248,13 +248,14 @@ namespace LTE.WebAPI.Controllers
         public void RoadPointSelect()
         {
             string pre = "v1";
-            for (int i = 50369; i <= 50458; i++)
-            {
-                SelectDT(pre + "_" + i);
-            }
+            //for (int i = 50369; i <= 50458; i++)
+            //{
+            //    SelectDT(pre + "_" + i);
+            //}
+            SelectDT(pre + "_" + 1505669);
         }
 
-
+        [AllowAnonymous]
         public void SelectDT(string InfName) {
             //筛选信号值前k个的点
             Hashtable ht = new Hashtable();
@@ -286,6 +287,8 @@ namespace LTE.WebAPI.Controllers
             canGrid.Columns.Add("Distance");
             //用于记录路测点已经覆盖过的栅格
             HashSet<string> vis = new HashSet<string>();
+            List<Point> ps = new List<Point>();
+
             double grade = 0.001;//选点等级，每隔0.1%减少一定候选栅格
             for (int i = 0; i < dt.Rows.Count; i++)
             {
@@ -303,7 +306,26 @@ namespace LTE.WebAPI.Controllers
                     //该栅格已经存在候选路测点，则跳过
                     continue;
                 }
+
+                //选点距离约束，至少间隔30m,防止边界邻点出现
+                double thDis = 30;
+                bool near = false;
+                foreach (var gs in ps)
+                {
+                    double ddis = distanceXY(p.X, p.Y, gs.X,gs.Y);
+                    if (ddis < thDis)
+                    {
+                        near = true;
+                        break;
+                    }
+                }
+
+                if (near)
+                {
+                    continue;
+                }
                 vis.Add(key);
+                ps.Add(p);
                 DataRow thisrow = canGrid.NewRow();
                 thisrow["fromName"] = InfName;
                 thisrow["x"] = dt.Rows[i]["x"];
@@ -319,7 +341,7 @@ namespace LTE.WebAPI.Controllers
             Hashtable ht1 = new Hashtable();
             ht1["fromName"] = InfName;
             IbatisHelper.ExecuteDelete("deletetbRayLoc", ht1);
-            IbatisHelper.ExecuteDelete("deletbSelectedPoint", ht);
+            IbatisHelper.ExecuteDelete("deletbSelectedPoint", ht1);
             WriteDataToBase(canGrid,100, "tbSelectedPoints");
             Task.Run(() =>
             {
