@@ -45,6 +45,8 @@ namespace LTE.InternalInterference
         public List<RaysNode> rayLoc;  // 2018.12.18 用于定位
         public Dictionary<string, List<RayNode>> rayAdj;  // 用于系数校正
 
+        public HashSet<Int32> visGrid; //记录射线已经经过的栅格
+
         public double distance;
         bool isRayLoc, isRayAdj;
 
@@ -632,6 +634,8 @@ namespace LTE.InternalInterference
             do
             {
                 curAccGrid = lineCrossGrid.getNextCrossAccGrid();  // 得到射线当前走到了哪个均匀栅格
+                string grid = string.Format("{0},{1},{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid);
+                visGrid.Add(Int32.Parse(grid));
 
                 if (curAccGrid == null)//执行结束
                 {
@@ -640,8 +644,7 @@ namespace LTE.InternalInterference
 
                 if (this.scenNum > 0)
                 {
-                    // 2019.4.25 场景记录，记录经过的栅格的场景
-                    string grid = string.Format("{0},{1},{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid);
+                    // 2019.3.25 场景记录
                     scene[AccelerateStruct.gridScene[grid]]++;
                 }
                 ray = this.getInfoOfLineCrossAccGrid(originPoint, dir, curAccGrid, ref polygonPoints, ref trayType);  // 射线与当前均匀栅格内的建筑进行碰撞检测

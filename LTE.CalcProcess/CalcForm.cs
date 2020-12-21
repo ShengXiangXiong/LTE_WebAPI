@@ -821,10 +821,22 @@ namespace LTE.CalcProcess
             {
                 for (int i = 0; i < pts.Count; i++)
                 {
-                    //pts[i].Z = 90;
-                    pts[i].Z = 120;
-                    List<InternalInterference.NodeInfo> rayList = new List<InternalInterference.NodeInfo>();
-                    this.rayLocate.rayTracingFirstLoc(source, pts[i], rayList, cellInfo, InternalInterference.RayType.Direction, 1);
+                    //多高度等级进行直射
+                    for(int z = 30; z <= 90; z += 30)
+                    {
+                        //pts[i].Z = 90;
+                        pts[i].Z = z + 13;
+                        Grid3D endP = new Grid3D();
+                        GridHelper.getInstance().PointXYZToAccGrid(new Point(pts[i].X,pts[i].Y,pts[i].Z),ref endP);
+                        string grid = string.Format("{0},{1},{2}", endP.gxid, endP.gyid, endP.gzid);
+                        //如果已经经过该终点，则直接跳过
+                        if (this.rayLocate.visGrid.Contains(Int32.Parse(grid)))
+                        {
+                            continue;
+                        }
+                        List<InternalInterference.NodeInfo> rayList = new List<InternalInterference.NodeInfo>();
+                        this.rayLocate.rayTracingFirstLoc(source, pts[i], rayList, cellInfo, InternalInterference.RayType.Direction, 1);
+                    }
                 }
             }
             #endregion

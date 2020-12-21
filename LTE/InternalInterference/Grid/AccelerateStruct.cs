@@ -95,15 +95,15 @@ namespace LTE.InternalInterference.Grid
             }
             dt.Clear();
 
-            // 2019.3.25  场景记录
-            //ht["minGXID"] = minGXID - 300;
-            //ht["maxGXID"] = maxGXID + 300;
-            //ht["minGYID"] = minGYID - 300;
-            //ht["maxGYID"] = maxGYID + 300;
-            //DataTable dt1 = IbatisHelper.ExecuteQueryForDataTable("GetAgridScene", ht);
+            // 2019.3.25  场景记录   
+            ht["minGXID"] = minGXID - 100;
+            ht["maxGXID"] = maxGXID + 100;
+            ht["minGYID"] = minGYID - 100;
+            ht["maxGYID"] = maxGYID + 100;
+            DataTable dt1 = IbatisHelper.ExecuteQueryForDataTable("GetAgridScene", ht);
 
             //加载数据库中全部栅格场景到内存，jhj。修复射线跟踪时可能经过设定范围（min/maxGXID+-300）外的均匀栅格，导致记录场景时根据gridScene获得场景找不到key的问题。
-            DataTable dt1 = IbatisHelper.ExecuteQueryForDataTable("GetAllGridScene", ht);
+            //DataTable dt1 = IbatisHelper.ExecuteQueryForDataTable("GetAllGridScene", ht);
             for (int i = 0; i < dt1.Rows.Count; i++)//按行遍历DataTable
             {
                 string key = dt1.Rows[i][0].ToString() + "," + dt1.Rows[i][1].ToString() + "," + dt1.Rows[i][2].ToString();
