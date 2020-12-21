@@ -45,7 +45,7 @@ namespace LTE.InternalInterference
         public List<RaysNode> rayLoc;  // 2018.12.18 用于定位
         public Dictionary<string, List<RayNode>> rayAdj;  // 用于系数校正
 
-        public HashSet<Int32> visGrid; //记录射线已经经过的栅格
+        public HashSet<Int32> visGrid = new HashSet<int>(); //记录射线已经经过的栅格
 
         public double distance;
         bool isRayLoc, isRayAdj;
