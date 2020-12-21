@@ -182,10 +182,28 @@ namespace LTE.InternalInterference
             int gxid = 0, gyid = 0, gzid = 0;
             // 射线起点场景
             GridHelper.getInstance().XYZToAccGrid(ray.PointOfIncidence.X, ray.PointOfIncidence.Y, ray.PointOfIncidence.Z, ref gxid, ref gyid, ref gzid);
-            ray.startPointScen = AccelerateStruct.gridScene[string.Format("{0},{1},{2}", gxid, gyid, gzid)];
+            int skey = int.Parse(string.Format("{0}{1}{2}", gxid, gyid, gzid));
+            if (AccelerateStruct.gridScene.ContainsKey(skey)){
+                ray.startPointScen = AccelerateStruct.gridScene[skey];
+            }
+            else
+            {
+                ray.startPointScen = 0;
+            }
+            
             // 射线终点场景
             GridHelper.getInstance().XYZToAccGrid(ray.CrossPoint.X, ray.CrossPoint.Y, ray.CrossPoint.Z, ref gxid, ref gyid, ref gzid);
-            ray.endPointScen = AccelerateStruct.gridScene[string.Format("{0},{1},{2}", gxid, gyid, gzid)];
+            int ekey = int.Parse(string.Format("{0}{1}{2}", gxid, gyid, gzid));
+
+            if (AccelerateStruct.gridScene.ContainsKey(ekey))
+            {
+                ray.endPointScen = AccelerateStruct.gridScene[ekey];
+            }
+            else
+            {
+                ray.endPointScen = 0;
+            }
+
             // 射线经过的场景比例
             double sum = 0;
             for (int i = 0; i < scenNum; i++)

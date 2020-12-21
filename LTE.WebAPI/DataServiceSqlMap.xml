@@ -837,7 +837,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   </select>
 
 	<select id="GetAllGridScene">
-		select GXID,GYID,GZID,Scene from tbAccelerateGridScene order by GXID, GYID, GZID
+		select GXID,GYID,GZID,Scene from tbAccelerateGridScene where scene!=0 order by GXID, GYID, GZID
 	</select>
 
   <delete id="DeleteAdjCoefficient">

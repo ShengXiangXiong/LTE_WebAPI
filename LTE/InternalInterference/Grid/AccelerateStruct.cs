@@ -23,7 +23,7 @@ namespace LTE.InternalInterference.Grid
         public static Dictionary<string, List<int>> accgrids = new Dictionary<string, List<int>>();
 
         // 2019.3.25 立体栅格的所属场景
-        public static Dictionary<string, int> gridScene = new Dictionary<string, int>();
+        public static Dictionary<int, int> gridScene = new Dictionary<int, int>();
 
         // 2019.5.28 地形
         public static Dictionary<string, List<int>> gridTIN = new Dictionary<string, List<int>>();
@@ -96,18 +96,18 @@ namespace LTE.InternalInterference.Grid
             dt.Clear();
 
             // 2019.3.25  场景记录   
-            ht["minGXID"] = minGXID - 100;
-            ht["maxGXID"] = maxGXID + 100;
-            ht["minGYID"] = minGYID - 100;
-            ht["maxGYID"] = maxGYID + 100;
-            DataTable dt1 = IbatisHelper.ExecuteQueryForDataTable("GetAgridScene", ht);
+            //ht["minGXID"] = minGXID - 100;
+            //ht["maxGXID"] = maxGXID + 100;
+            //ht["minGYID"] = minGYID - 100;
+            //ht["maxGYID"] = maxGYID + 100;
+            //DataTable dt1 = IbatisHelper.ExecuteQueryForDataTable("GetAgridScene", ht);
 
             //加载数据库中全部栅格场景到内存，jhj。修复射线跟踪时可能经过设定范围（min/maxGXID+-300）外的均匀栅格，导致记录场景时根据gridScene获得场景找不到key的问题。
-            //DataTable dt1 = IbatisHelper.ExecuteQueryForDataTable("GetAllGridScene", ht);
+            DataTable dt1 = IbatisHelper.ExecuteQueryForDataTable("GetAllGridScene", ht);
             for (int i = 0; i < dt1.Rows.Count; i++)//按行遍历DataTable
             {
-                string key = dt1.Rows[i][0].ToString() + "," + dt1.Rows[i][1].ToString() + "," + dt1.Rows[i][2].ToString();
-                gridScene[key] = Convert.ToInt32(dt1.Rows[i]["Scene"]);
+                string key = dt1.Rows[i][0].ToString()+ dt1.Rows[i][1].ToString()+ dt1.Rows[i][2].ToString();
+                gridScene[int.Parse(key)] = Convert.ToInt32(dt1.Rows[i]["Scene"]);
             }
             
             dt1.Clear();
