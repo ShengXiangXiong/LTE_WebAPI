@@ -27,8 +27,8 @@ namespace LTE.WebAPI.Controllers
 {
     public class ModelDataGenController : ApiController
     {
-        private int canGridL = 120;
-        private int canGridW = 120;
+        private int canGridL = 60;
+        private int canGridW = 60;
         private int canGridH = 30;
 
         [AllowAnonymous]
@@ -269,7 +269,7 @@ namespace LTE.WebAPI.Controllers
             int sRec = (int)((maxX - minX) * (maxY - minY));
 
             //数据模拟阶段
-            sRec = 4000 * 4000;
+            sRec = 2000 * 2000;
 
             int k = sRec / (canGridL * canGridW);
             ht["k"] = k;

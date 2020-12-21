@@ -270,8 +270,16 @@ namespace LTE.InternalInterference
                 }
 
                 // 2019.3.25 场景记录
-                string grid = string.Format("{0},{1},{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid);
-                scene[AccelerateStruct.gridScene[grid]]++;
+                int key = int.Parse(string.Format("{0}{1}{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid));
+
+                if (AccelerateStruct.gridScene.ContainsKey(key))
+                {
+                    scene[AccelerateStruct.gridScene[key]]++;
+                }
+                else
+                {
+                    scene[0]++;
+                }
 
                 ray = this.getInfoOfLineCrossAccGrid(originPoint, dir, curAccGrid, ref polygonPoints, ref trayType);  // 射线与当前均匀栅格内的建筑进行碰撞检测
 
@@ -495,8 +503,16 @@ namespace LTE.InternalInterference
                 }
 
                 // 2019.3.25 场景记录
-                string grid = string.Format("{0},{1},{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid);
-                scene[AccelerateStruct.gridScene[grid]]++;
+                int key = int.Parse(string.Format("{0}{1}{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid));
+
+                if (AccelerateStruct.gridScene.ContainsKey(key))
+                {
+                    scene[AccelerateStruct.gridScene[key]]++;
+                }
+                else
+                {
+                    scene[0]++;
+                }
 
                 ray = (NodeInfo)this.getInfoOfLineCrossAccGrid(originPoint, dir, curAccGrid, ref polygonPoints, ref trayType);
 
@@ -646,25 +662,26 @@ namespace LTE.InternalInterference
             this.rayCount++;
             this.rayCountDir++;
 
-            int[] scene = null;//记录每个场景的数目
-            if (this.scenNum > 0)
-                scene = new int[scenNum];
+            //记录每个场景的数目
+            int[] scene = new int[scenNum];
             do
             {
                 curAccGrid = lineCrossGrid.getNextCrossAccGrid();  // 得到射线当前走到了哪个均匀栅格
-                string grid = string.Format("{0},{1},{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid);
-                visGrid.Add(Int32.Parse(grid));
-
                 if (curAccGrid == null)//执行结束
                 {
                     break;
                 }
-
-                if (this.scenNum > 0)
+                int key = int.Parse(string.Format("{0}{1}{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid));
+                if (AccelerateStruct.gridScene.ContainsKey(key))
                 {
-                    // 2019.3.25 场景记录
-                    scene[AccelerateStruct.gridScene[grid]]++;
+                    scene[AccelerateStruct.gridScene[key]]++;
                 }
+                else
+                {
+                    scene[0]++;
+                }
+                visGrid.Add(key);
+
                 ray = this.getInfoOfLineCrossAccGrid(originPoint, dir, curAccGrid, ref polygonPoints, ref trayType);  // 射线与当前均匀栅格内的建筑进行碰撞检测
 
                 if (ray != null)//若发生碰撞，跳出循环
@@ -842,8 +859,15 @@ namespace LTE.InternalInterference
                 if (this.scenNum > 0)
                 {
                     // 2019.4.25 场景记录
-                    string grid = string.Format("{0},{1},{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid);
-                    scene[AccelerateStruct.gridScene[grid]]++;
+                    int key = int.Parse(string.Format("{0}{1}{2}", curAccGrid.gxid, curAccGrid.gyid, curAccGrid.gzid));
+                    if (AccelerateStruct.gridScene.ContainsKey(key))
+                    {
+                        scene[AccelerateStruct.gridScene[key]]++;
+                    }
+                    else
+                    {
+                        scene[0]++;
+                    }
                 }
 
                 // 地形
