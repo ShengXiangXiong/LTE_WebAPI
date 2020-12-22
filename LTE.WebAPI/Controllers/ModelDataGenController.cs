@@ -27,8 +27,8 @@ namespace LTE.WebAPI.Controllers
 {
     public class ModelDataGenController : ApiController
     {
-        private int canGridL = 60;
-        private int canGridW = 60;
+        private int canGridL = 90;
+        private int canGridW = 90;
         private int canGridH = 30;
 
         [AllowAnonymous]
