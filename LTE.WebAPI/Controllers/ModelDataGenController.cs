@@ -94,7 +94,7 @@ namespace LTE.WebAPI.Controllers
             //计算测试数据总数
             int lx = (int)Math.Ceiling((pMax.X - pMin.X) / dataRange.tarGridX);
             int ly = (int)Math.Ceiling((pMax.Y - pMin.Y) / dataRange.tarGridY);
-            int lz = (int)Math.Ceiling(maxBh/ dataRange.tarGridH)-1;
+            int lz = (int)Math.Ceiling(maxBh/ dataRange.tarGridH);
             long uidBatch = long.Parse((lx*ly*lz).ToString());
             String dbName = "CELL";
             int initOff = 1500000; 
@@ -159,17 +159,22 @@ namespace LTE.WebAPI.Controllers
 
                 Hashtable ht = new Hashtable();
                 DataTable dtable = new DataTable();
+                
+                //数据模拟阶段,选取top k
+                int sRec = 2000 * 2000;
+                int k = sRec / (canGridL * canGridW);
 
                 ht["eNodeB"] = message;
+                ht["k"] = k;
                 DataTable dt = DB.IbatisHelper.ExecuteQueryForDataTable("qureyMockDT", ht);
                 dtable.Columns.Add("ID", System.Type.GetType("System.Int32"));
                 dtable.Columns.Add("x", System.Type.GetType("System.Decimal"));
                 dtable.Columns.Add("y", System.Type.GetType("System.Decimal"));
-                dtable.Columns.Add("Lon", System.Type.GetType("System.Decimal"));
-                dtable.Columns.Add("Lat", System.Type.GetType("System.Decimal"));
+                //dtable.Columns.Add("Lon", System.Type.GetType("System.Decimal"));
+                //dtable.Columns.Add("Lat", System.Type.GetType("System.Decimal"));
                 dtable.Columns.Add("RSRP", System.Type.GetType("System.Double"));
                 dtable.Columns.Add("InfName", System.Type.GetType("System.String"));
-                dtable.Columns.Add("DtType", System.Type.GetType("System.String"));
+                //dtable.Columns.Add("DtType", System.Type.GetType("System.String"));
 
                 int initOff = 5000;
                 int uid = (int)UIDHelper.GenUIdByRedis("DT", dt.Rows.Count) + initOff;
@@ -186,15 +191,15 @@ namespace LTE.WebAPI.Controllers
                     thisrow["ID"] = uid+i;
                     thisrow["x"] = proj.X;
                     thisrow["y"] = proj.Y;
-                    thisrow["Lon"] = geo.X;
-                    thisrow["Lat"] = geo.Y;
+                    //thisrow["Lon"] = geo.X;
+                    //thisrow["Lat"] = geo.Y;
                     thisrow["RSRP"] = rsrp;
                     thisrow["InfName"] = infName;
-                    thisrow["DtType"] = "mock";
+                    //thisrow["DtType"] = "mock";
                     dtable.Rows.Add(thisrow);
                 }
-                DataUtil.BCPDataTableImport(dtable, "tbUINTF");
-                SelectDT(infName);
+                //DataUtil.BCPDataTableImport(dtable, "tbUINTF");
+                SelectDT(infName, dtable);
             });
         }
         [AllowAnonymous]
@@ -252,29 +257,23 @@ namespace LTE.WebAPI.Controllers
             //{
             //    SelectDT(pre + "_" + i);
             //}
-            SelectDT(pre + "_" + 1505669);
+            //SelectDT(pre + "_" + 1505669);
         }
 
         [AllowAnonymous]
-        public void SelectDT(string InfName) {
+        public void SelectDT(string InfName,DataTable dt) {
             //筛选信号值前k个的点
-            Hashtable ht = new Hashtable();
-            ht["InfName"] = InfName;
-            DataTable dt = IbatisHelper.ExecuteQueryForDataTable("queryDTRange",ht);
-            double minX = Convert.ToDouble(dt.Rows[0]["minX"]);
-            double maxX = Convert.ToDouble(dt.Rows[0]["maxX"]);
-            double minY = Convert.ToDouble(dt.Rows[0]["minY"]);
-            double maxY = Convert.ToDouble(dt.Rows[0]["maxY"]);
+            //Hashtable ht = new Hashtable();
+            //ht["InfName"] = InfName;
+            //DataTable dt = IbatisHelper.ExecuteQueryForDataTable("queryDTRange",ht);
+            //double minX = Convert.ToDouble(dt.Rows[0]["minX"]);
+            //double maxX = Convert.ToDouble(dt.Rows[0]["maxX"]);
+            //double minY = Convert.ToDouble(dt.Rows[0]["minY"]);
+            //double maxY = Convert.ToDouble(dt.Rows[0]["maxY"]);
+            //int sRec = (int)((maxX - minX) * (maxY - minY));
 
-
-            int sRec = (int)((maxX - minX) * (maxY - minY));
-
-            //数据模拟阶段
-            sRec = 2000 * 2000;
-
-            int k = sRec / (canGridL * canGridW);
-            ht["k"] = k;
-            dt = IbatisHelper.ExecuteQueryForDataTable("queryTopKDT", ht);
+            //ht["k"] = k;
+            //dt = IbatisHelper.ExecuteQueryForDataTable("queryTopKDT", ht);
 
             //定义候选点数据结构
             DataTable canGrid = new DataTable();

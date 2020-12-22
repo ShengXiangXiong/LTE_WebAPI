@@ -1559,9 +1559,9 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 
   <!--查询数据仿真生成的模拟路测点信号-->
   <select id="qureyMockDT" parameterClass="HashTable">
-    select GXID,GYID,ReceivedPowerdbm
+    select top $k$ GXID,GYID,ReceivedPowerdbm
     from tbGridPathloss
-    where eNodeB=$eNodeB$
+    where eNodeB=$eNodeB$ order by RSRP desc
   </select>
 
   <select id="queryDTRange" parameterClass="HashTable">
