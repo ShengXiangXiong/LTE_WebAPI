@@ -161,7 +161,7 @@ namespace LTE.WebAPI.Controllers
                 DataTable dtable = new DataTable();
                 
                 //数据模拟阶段,选取top k
-                int sRec = 2000 * 2000;
+                int sRec = 2400 * 2400;
                 int k = sRec / (canGridL * canGridW);
 
                 ht["eNodeB"] = message;
