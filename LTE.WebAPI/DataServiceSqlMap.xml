@@ -1561,7 +1561,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
   <select id="qureyMockDT" parameterClass="HashTable">
     select top $k$ GXID,GYID,ReceivedPowerdbm
     from tbGridPathloss
-    where eNodeB=$eNodeB$ order by RSRP desc
+    where eNodeB=$eNodeB$ order by ReceivedPowerdbm desc
   </select>
 
   <select id="queryDTRange" parameterClass="HashTable">
