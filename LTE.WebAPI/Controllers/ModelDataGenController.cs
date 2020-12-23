@@ -35,35 +35,47 @@ namespace LTE.WebAPI.Controllers
         [TaskLoadInfo(taskName = "干扰区域数据仿真——模拟路测点生成", type = TaskType.DataMock)]
         public Result RoadPointMockGen([FromBody]DataRange dataRange)
         {
-            List<CellRayTracingModel> cellRays = interfeCellGen(dataRange);
+            //List<CellRayTracingModel> cellRays = interfeCellGen(dataRange);
             WriteDt(dataRange);
-            int cnt = 0;
-            LoadInfo loadInfo = new LoadInfo();
-            loadInfo.count = cellRays.Count;
-            loadInfo.loadCreate();
+            //int cnt = 0;
+            //LoadInfo loadInfo = new LoadInfo();
+            //loadInfo.count = cellRays.Count;
+            //loadInfo.loadCreate();
 
-            RedisMq.subscriber.Subscribe("rayTrace_finish", (channel, message) => 
-            {
-                if (++cnt < cellRays.Count)
-                {
-                    loadInfo.cnt = cnt;
-                    loadInfo.loadUpdate();
-                    Task.Run(() =>
-                    {
-                        cellRays[cnt].calc();
-                    });
-                }
-                else
-                {
-                    loadInfo.finish = true;
-                    loadInfo.loadUpdate();
-                }
-            });
-            cellRays[0].calc();
-            //foreach (var ray in cellRays)
+            //RedisMq.subscriber.Subscribe("rayTrace_finish", (channel, message) => 
             //{
-            //    ray.calc();
-            //}
+            //    if (++cnt < cellRays.Count)
+            //    {
+            //        loadInfo.cnt = cnt;
+            //        loadInfo.loadUpdate();
+            //        Task.Run(() =>
+            //        {
+            //            cellRays[cnt].calc();
+            //        });
+            //    }
+            //    else
+            //    {
+            //        loadInfo.finish = true;
+            //        loadInfo.loadUpdate();
+            //    }
+            //});
+            //cellRays[0].calc();
+
+            //手动从数据库中加载干扰源并计算
+            for(int i = 1509924; i < 1510348; i++)
+            {
+                CellRayTracingModel rayCell = new CellRayTracingModel();
+                rayCell.cellName = "测试干扰源基站_" + i;
+                rayCell.reflectionNum = 3;
+                rayCell.diffPointsMargin = 5;
+                rayCell.diffractionNum = 2;
+                rayCell.threadNum = 3;
+                rayCell.incrementAngle = 180;
+                rayCell.computeIndoor = false;
+                rayCell.computeDiffrac = true;
+                rayCell.distance = 1200;
+                rayCell.calc();
+            }
 
             Result res = new Result(true,"区域数据仿真已提交");
             return res;
@@ -161,8 +173,11 @@ namespace LTE.WebAPI.Controllers
                 DataTable dtable = new DataTable();
                 
                 //数据模拟阶段,选取top k
-                int sRec = 2400 * 2400;
+                int sRec = 2000 * 2000;
                 int k = sRec / (canGridL * canGridW);
+
+                //目前模拟阶段，范围较小，最多选30个路测点就可以了
+                k = Math.Min(k, 30);
 
                 ht["eNodeB"] = message;
                 ht["k"] = k;
