@@ -1582,5 +1582,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     where ID='$id$'
   </select>
 
+  <delete id="delSelectDt" parameterClass="HashTable">
+    delete from tbSelectedPoints
+    where fromName='$fromName$'
+  </delete>
+
 </statements>
 </sqlMap>

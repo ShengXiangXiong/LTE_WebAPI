@@ -62,7 +62,7 @@ namespace LTE.WebAPI.Controllers
             //cellRays[0].calc();
 
             //手动从数据库中加载干扰源并计算
-            for(int i = 1509924; i < 1510348; i++)
+            for(int i = 1509925; i < 1510348; i++)
             {
                 CellRayTracingModel rayCell = new CellRayTracingModel();
                 rayCell.cellName = "测试干扰源基站_" + i;
@@ -176,12 +176,15 @@ namespace LTE.WebAPI.Controllers
                 int sRec = 2000 * 2000;
                 int k = sRec / (canGridL * canGridW);
 
-                //目前模拟阶段，范围较小，最多选30个路测点就可以了
-                k = Math.Min(k, 30);
-
                 ht["eNodeB"] = message;
                 ht["k"] = k;
+
+                //删除已有的路测点
+                ht["fromName"] = dataRange.infAreaId + "_" + message;
+                IbatisHelper.ExecuteDelete("delSelectDt", ht);
+
                 DataTable dt = DB.IbatisHelper.ExecuteQueryForDataTable("qureyMockDT", ht);
+
                 dtable.Columns.Add("ID", System.Type.GetType("System.Int32"));
                 dtable.Columns.Add("x", System.Type.GetType("System.Decimal"));
                 dtable.Columns.Add("y", System.Type.GetType("System.Decimal"));
@@ -321,8 +324,8 @@ namespace LTE.WebAPI.Controllers
                     continue;
                 }
 
-                //选点距离约束，至少间隔30m,防止边界邻点出现
-                double thDis = 30;
+                //选点距离约束，至少间隔75m,防止边界邻点出现
+                double thDis = 75;
                 bool near = false;
                 foreach (var gs in ps)
                 {
