@@ -37,32 +37,14 @@ namespace LTE.WebAPI.Controllers
         {
             //List<CellRayTracingModel> cellRays = interfeCellGen(dataRange);
             WriteDt(dataRange);
-            //int cnt = 0;
+            int cnt = 0;
             //LoadInfo loadInfo = new LoadInfo();
             //loadInfo.count = cellRays.Count;
             //loadInfo.loadCreate();
 
-            //RedisMq.subscriber.Subscribe("rayTrace_finish", (channel, message) => 
-            //{
-            //    if (++cnt < cellRays.Count)
-            //    {
-            //        loadInfo.cnt = cnt;
-            //        loadInfo.loadUpdate();
-            //        Task.Run(() =>
-            //        {
-            //            cellRays[cnt].calc();
-            //        });
-            //    }
-            //    else
-            //    {
-            //        loadInfo.finish = true;
-            //        loadInfo.loadUpdate();
-            //    }
-            //});
-            //cellRays[0].calc();
-
             //手动从数据库中加载干扰源并计算
-            for(int i = 1509925; i < 1510348; i++)
+            List<CellRayTracingModel> cellRays = new List<CellRayTracingModel>();
+            for (int i = 1509925; i < 1510348; i++)
             {
                 CellRayTracingModel rayCell = new CellRayTracingModel();
                 rayCell.cellName = "测试干扰源基站_" + i;
@@ -74,8 +56,30 @@ namespace LTE.WebAPI.Controllers
                 rayCell.computeIndoor = false;
                 rayCell.computeDiffrac = true;
                 rayCell.distance = 1200;
-                rayCell.calc();
+                cellRays.Add(rayCell);
             }
+
+            RedisMq.subscriber.Subscribe("rayTrace_finish", (channel, message) =>
+            {
+                if (++cnt < cellRays.Count)
+                {
+                    //loadInfo.cnt = cnt;
+                    //loadInfo.loadUpdate();
+                    Task.Run(() =>
+                    {
+                        cellRays[cnt].calc();
+                    });
+                }
+                //else
+                //{
+                //    loadInfo.finish = true;
+                //    loadInfo.loadUpdate();
+                //}
+
+            });
+            cellRays[0].calc();
+
+            
 
             Result res = new Result(true,"区域数据仿真已提交");
             return res;
