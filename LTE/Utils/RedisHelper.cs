@@ -36,5 +36,15 @@ namespace LTE.Utils
             }
             return redis;
         }
+
+        public static bool putDouble(String prefix, String key, double value)
+        {
+            return getInstance().db.StringSet(prefix + key, value);
+        }
+        public static Object get(String prefix, String key)
+        {
+            return getInstance().db.StringGet(prefix + key);
+        }
+
     }
 }
