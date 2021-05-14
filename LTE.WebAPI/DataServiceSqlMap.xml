@@ -1586,6 +1586,29 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     delete from tbSelectedPoints
     where fromName='$fromName$'
   </delete>
+  
+  <select id = "countDt" parameterClass="string">
+    select count(1)
+    from tbSelectedPoints
+    where fromName = '$inf_name$'
+  </select>
+
+  <select id="queryBuildingVertex" parameterClass="HashTable">
+    select BuildingID,VertexX, VertexY from [NJCover3D].[dbo].[tbBuildingVertex] where BuildingID in
+    (
+    SELECT [BuildingID] FROM [NJCover3D].[dbo].[tbBuilding] where
+    BCenterX between $minX$ and $maxX$ and BCenterY between $minY$ and $maxY$
+    )
+    order by BuildingID,VIndex
+  </select>
+
+  <select id = "getScene" parameterClass="HashTable">
+    select Scene
+    from tbAccelerateGridScene
+    where GXID=$gxid$ and GYID = $gyid$
+  </select>
+
+
 
 </statements>
 </sqlMap>

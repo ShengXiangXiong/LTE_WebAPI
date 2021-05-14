@@ -695,6 +695,14 @@ namespace LTE.InternalInterference.Grid
             return ret;
         }
 
+        /// <summary>
+        /// 在指定步长下空间点（大地坐标）所对应的栅格坐标
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="grid"></param>
+        /// <param name="gridxy"></param>
+        /// <param name="gridz"></param>
+        /// <returns></returns>
         public bool PointXYZGrid(Point p, ref Grid3D grid, int gridxy, int gridz)
         {
 
@@ -711,6 +719,22 @@ namespace LTE.InternalInterference.Grid
                 
             }
             return ret;
+        }
+        /// <summary>
+        /// 指定步长下栅格的中心地理坐标
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="grid"></param>
+        /// <param name="gridxy"></param>
+        /// <param name="gridz"></param>
+        /// <returns></returns>
+        public Point Grid2CenterXY(Grid3D grid, int gridxy)
+        {
+            Point p = new Point();
+            double half = 0.5 * gridxy;
+            p.X = oX + grid.gxid * gridxy + half;
+            p.Y = oY + grid.gyid * gridxy + half;
+            return p;
         }
 
         /// <summary>

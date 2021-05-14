@@ -38,6 +38,7 @@ namespace GisClient
       Result cluster();
       Result refreshSPLayer(string version);
       Result refreshFixTerminalLayer();
+      Result refreshMockGridLayer(int minXid, int minYid, int maxXid, int maxYid);
     }
 
     public interface Iface : ISync {
@@ -116,6 +117,10 @@ namespace GisClient
       #if SILVERLIGHT
       IAsyncResult Begin_refreshFixTerminalLayer(AsyncCallback callback, object state);
       Result End_refreshFixTerminalLayer(IAsyncResult asyncResult);
+      #endif
+      #if SILVERLIGHT
+      IAsyncResult Begin_refreshMockGridLayer(AsyncCallback callback, object state, int minXid, int minYid, int maxXid, int maxYid);
+      Result End_refreshMockGridLayer(IAsyncResult asyncResult);
       #endif
     }
 
@@ -1496,6 +1501,81 @@ namespace GisClient
         throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "refreshFixTerminalLayer failed: unknown result");
       }
 
+      
+      #if SILVERLIGHT
+      
+      public IAsyncResult Begin_refreshMockGridLayer(AsyncCallback callback, object state, int minXid, int minYid, int maxXid, int maxYid)
+      {
+        return send_refreshMockGridLayer(callback, state, minXid, minYid, maxXid, maxYid);
+      }
+
+      public Result End_refreshMockGridLayer(IAsyncResult asyncResult)
+      {
+        oprot_.Transport.EndFlush(asyncResult);
+        return recv_refreshMockGridLayer();
+      }
+
+      #endif
+
+      public Result refreshMockGridLayer(int minXid, int minYid, int maxXid, int maxYid)
+      {
+        #if SILVERLIGHT
+        var asyncResult = Begin_refreshMockGridLayer(null, null, minXid, minYid, maxXid, maxYid);
+        return End_refreshMockGridLayer(asyncResult);
+
+        #else
+        send_refreshMockGridLayer(minXid, minYid, maxXid, maxYid);
+        return recv_refreshMockGridLayer();
+
+        #endif
+      }
+      #if SILVERLIGHT
+      public IAsyncResult send_refreshMockGridLayer(AsyncCallback callback, object state, int minXid, int minYid, int maxXid, int maxYid)
+      {
+        oprot_.WriteMessageBegin(new TMessage("refreshMockGridLayer", TMessageType.Call, seqid_));
+        refreshMockGridLayer_args args = new refreshMockGridLayer_args();
+        args.MinXid = minXid;
+        args.MinYid = minYid;
+        args.MaxXid = maxXid;
+        args.MaxYid = maxYid;
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        return oprot_.Transport.BeginFlush(callback, state);
+      }
+
+      #else
+
+      public void send_refreshMockGridLayer(int minXid, int minYid, int maxXid, int maxYid)
+      {
+        oprot_.WriteMessageBegin(new TMessage("refreshMockGridLayer", TMessageType.Call, seqid_));
+        refreshMockGridLayer_args args = new refreshMockGridLayer_args();
+        args.MinXid = minXid;
+        args.MinYid = minYid;
+        args.MaxXid = maxXid;
+        args.MaxYid = maxYid;
+        args.Write(oprot_);
+        oprot_.WriteMessageEnd();
+        oprot_.Transport.Flush();
+      }
+      #endif
+
+      public Result recv_refreshMockGridLayer()
+      {
+        TMessage msg = iprot_.ReadMessageBegin();
+        if (msg.Type == TMessageType.Exception) {
+          TApplicationException x = TApplicationException.Read(iprot_);
+          iprot_.ReadMessageEnd();
+          throw x;
+        }
+        refreshMockGridLayer_result result = new refreshMockGridLayer_result();
+        result.Read(iprot_);
+        iprot_.ReadMessageEnd();
+        if (result.__isset.success) {
+          return result.Success;
+        }
+        throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "refreshMockGridLayer failed: unknown result");
+      }
+
     }
     public class Processor : TProcessor {
       public Processor(ISync iface)
@@ -1520,6 +1600,7 @@ namespace GisClient
         processMap_["cluster"] = cluster_Process;
         processMap_["refreshSPLayer"] = refreshSPLayer_Process;
         processMap_["refreshFixTerminalLayer"] = refreshFixTerminalLayer_Process;
+        processMap_["refreshMockGridLayer"] = refreshMockGridLayer_Process;
       }
 
       protected delegate void ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot);
@@ -2078,6 +2159,34 @@ namespace GisClient
           Console.Error.WriteLine(ex.ToString());
           TApplicationException x = new TApplicationException        (TApplicationException.ExceptionType.InternalError," Internal error.");
           oprot.WriteMessageBegin(new TMessage("refreshFixTerminalLayer", TMessageType.Exception, seqid));
+          x.Write(oprot);
+        }
+        oprot.WriteMessageEnd();
+        oprot.Transport.Flush();
+      }
+
+      public void refreshMockGridLayer_Process(int seqid, TProtocol iprot, TProtocol oprot)
+      {
+        refreshMockGridLayer_args args = new refreshMockGridLayer_args();
+        args.Read(iprot);
+        iprot.ReadMessageEnd();
+        refreshMockGridLayer_result result = new refreshMockGridLayer_result();
+        try
+        {
+          result.Success = iface_.refreshMockGridLayer(args.MinXid, args.MinYid, args.MaxXid, args.MaxYid);
+          oprot.WriteMessageBegin(new TMessage("refreshMockGridLayer", TMessageType.Reply, seqid)); 
+          result.Write(oprot);
+        }
+        catch (TTransportException)
+        {
+          throw;
+        }
+        catch (Exception ex)
+        {
+          Console.Error.WriteLine("Error occurred in processor:");
+          Console.Error.WriteLine(ex.ToString());
+          TApplicationException x = new TApplicationException        (TApplicationException.ExceptionType.InternalError," Internal error.");
+          oprot.WriteMessageBegin(new TMessage("refreshMockGridLayer", TMessageType.Exception, seqid));
           x.Write(oprot);
         }
         oprot.WriteMessageEnd();
@@ -6327,6 +6436,334 @@ namespace GisClient
 
       public override string ToString() {
         StringBuilder __sb = new StringBuilder("refreshFixTerminalLayer_result(");
+        bool __first = true;
+        if (Success != null && __isset.success) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("Success: ");
+          __sb.Append(Success== null ? "<null>" : Success.ToString());
+        }
+        __sb.Append(")");
+        return __sb.ToString();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class refreshMockGridLayer_args : TBase
+    {
+      private int _minXid;
+      private int _minYid;
+      private int _maxXid;
+      private int _maxYid;
+
+      public int MinXid
+      {
+        get
+        {
+          return _minXid;
+        }
+        set
+        {
+          __isset.minXid = true;
+          this._minXid = value;
+        }
+      }
+
+      public int MinYid
+      {
+        get
+        {
+          return _minYid;
+        }
+        set
+        {
+          __isset.minYid = true;
+          this._minYid = value;
+        }
+      }
+
+      public int MaxXid
+      {
+        get
+        {
+          return _maxXid;
+        }
+        set
+        {
+          __isset.maxXid = true;
+          this._maxXid = value;
+        }
+      }
+
+      public int MaxYid
+      {
+        get
+        {
+          return _maxYid;
+        }
+        set
+        {
+          __isset.maxYid = true;
+          this._maxYid = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool minXid;
+        public bool minYid;
+        public bool maxXid;
+        public bool maxYid;
+      }
+
+      public refreshMockGridLayer_args() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 1:
+                if (field.Type == TType.I32) {
+                  MinXid = iprot.ReadI32();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 2:
+                if (field.Type == TType.I32) {
+                  MinYid = iprot.ReadI32();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 3:
+                if (field.Type == TType.I32) {
+                  MaxXid = iprot.ReadI32();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              case 4:
+                if (field.Type == TType.I32) {
+                  MaxYid = iprot.ReadI32();
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("refreshMockGridLayer_args");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+          if (__isset.minXid) {
+            field.Name = "minXid";
+            field.Type = TType.I32;
+            field.ID = 1;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI32(MinXid);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.minYid) {
+            field.Name = "minYid";
+            field.Type = TType.I32;
+            field.ID = 2;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI32(MinYid);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.maxXid) {
+            field.Name = "maxXid";
+            field.Type = TType.I32;
+            field.ID = 3;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI32(MaxXid);
+            oprot.WriteFieldEnd();
+          }
+          if (__isset.maxYid) {
+            field.Name = "maxYid";
+            field.Type = TType.I32;
+            field.ID = 4;
+            oprot.WriteFieldBegin(field);
+            oprot.WriteI32(MaxYid);
+            oprot.WriteFieldEnd();
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("refreshMockGridLayer_args(");
+        bool __first = true;
+        if (__isset.minXid) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("MinXid: ");
+          __sb.Append(MinXid);
+        }
+        if (__isset.minYid) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("MinYid: ");
+          __sb.Append(MinYid);
+        }
+        if (__isset.maxXid) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("MaxXid: ");
+          __sb.Append(MaxXid);
+        }
+        if (__isset.maxYid) {
+          if(!__first) { __sb.Append(", "); }
+          __first = false;
+          __sb.Append("MaxYid: ");
+          __sb.Append(MaxYid);
+        }
+        __sb.Append(")");
+        return __sb.ToString();
+      }
+
+    }
+
+
+    #if !SILVERLIGHT
+    [Serializable]
+    #endif
+    public partial class refreshMockGridLayer_result : TBase
+    {
+      private Result _success;
+
+      public Result Success
+      {
+        get
+        {
+          return _success;
+        }
+        set
+        {
+          __isset.success = true;
+          this._success = value;
+        }
+      }
+
+
+      public Isset __isset;
+      #if !SILVERLIGHT
+      [Serializable]
+      #endif
+      public struct Isset {
+        public bool success;
+      }
+
+      public refreshMockGridLayer_result() {
+      }
+
+      public void Read (TProtocol iprot)
+      {
+        iprot.IncrementRecursionDepth();
+        try
+        {
+          TField field;
+          iprot.ReadStructBegin();
+          while (true)
+          {
+            field = iprot.ReadFieldBegin();
+            if (field.Type == TType.Stop) { 
+              break;
+            }
+            switch (field.ID)
+            {
+              case 0:
+                if (field.Type == TType.Struct) {
+                  Success = new Result();
+                  Success.Read(iprot);
+                } else { 
+                  TProtocolUtil.Skip(iprot, field.Type);
+                }
+                break;
+              default: 
+                TProtocolUtil.Skip(iprot, field.Type);
+                break;
+            }
+            iprot.ReadFieldEnd();
+          }
+          iprot.ReadStructEnd();
+        }
+        finally
+        {
+          iprot.DecrementRecursionDepth();
+        }
+      }
+
+      public void Write(TProtocol oprot) {
+        oprot.IncrementRecursionDepth();
+        try
+        {
+          TStruct struc = new TStruct("refreshMockGridLayer_result");
+          oprot.WriteStructBegin(struc);
+          TField field = new TField();
+
+          if (this.__isset.success) {
+            if (Success != null) {
+              field.Name = "Success";
+              field.Type = TType.Struct;
+              field.ID = 0;
+              oprot.WriteFieldBegin(field);
+              Success.Write(oprot);
+              oprot.WriteFieldEnd();
+            }
+          }
+          oprot.WriteFieldStop();
+          oprot.WriteStructEnd();
+        }
+        finally
+        {
+          oprot.DecrementRecursionDepth();
+        }
+      }
+
+      public override string ToString() {
+        StringBuilder __sb = new StringBuilder("refreshMockGridLayer_result(");
         bool __first = true;
         if (Success != null && __isset.success) {
           if(!__first) { __sb.Append(", "); }

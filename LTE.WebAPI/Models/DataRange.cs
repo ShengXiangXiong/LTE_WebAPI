@@ -19,4 +19,14 @@ namespace LTE.WebAPI.Models
         public double tarGridY;
         public double tarGridH;
     }
+    public class AreaSplitRange
+    {
+        //经纬度范围
+        public double minLongitude;
+        public double maxLongitude;
+        public double minLatitude;
+        public double maxLatitude;
+        //区域划分栅格边长
+        public double tarGridL;
+    }
 }

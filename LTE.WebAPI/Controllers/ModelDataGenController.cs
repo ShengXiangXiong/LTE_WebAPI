@@ -22,6 +22,7 @@ using System.Data.SqlClient;
 using LTE.ExternalInterference.Struct;
 using LTE.InternalInterference;
 using LTE.ExternalInterference;
+using System.Xml.Linq;
 
 namespace LTE.WebAPI.Controllers
 {
@@ -30,6 +31,8 @@ namespace LTE.WebAPI.Controllers
         private int canGridL = 90;
         private int canGridW = 90;
         private int canGridH = 30;
+        private int brGridGap = 600;
+        private string prefix = "buildRatio_";
 
         [AllowAnonymous]
         [TaskLoadInfo(taskName = "干扰区域数据仿真——模拟路测点生成", type = TaskType.DataMock)]
@@ -59,6 +62,7 @@ namespace LTE.WebAPI.Controllers
             //    cellRays.Add(rayCell);
             //}
 
+
             RedisMq.subscriber.Subscribe("rayTrace_finish", (channel, message) =>
             {
                 if (++cnt < cellRays.Count)
@@ -77,9 +81,13 @@ namespace LTE.WebAPI.Controllers
                 //}
 
             });
-            cellRays[0].calc();
 
-            
+            while (cnt < cellRays.Count)
+            {
+                cellRays[cnt].calc();
+                cnt++;
+            }
+
 
             Result res = new Result(true,"区域数据仿真已提交");
             return res;
@@ -126,7 +134,7 @@ namespace LTE.WebAPI.Controllers
                         Random r = new Random(uid);
                         CELL cELL = new CELL();
                         cELL.ID = uid;
-                        cELL.CellName = tarBaseName + uid;
+                        cELL.CellName = dataRange.infAreaId + "_" + uid;
                         cELL.Altitude = 13;
                         cELL.AntHeight = (decimal)z;
                         cELL.x = (decimal)x;
@@ -168,7 +176,110 @@ namespace LTE.WebAPI.Controllers
 
             return res;
         }
-        
+
+        [AllowAnonymous]
+        public Result BuildAreaRadio([FromBody]AreaSplitRange dataRange)
+        {
+            brGridGap = (int)dataRange.tarGridL;
+            Point pMin = new Point();
+            pMin.X = dataRange.minLongitude;
+            pMin.Y = dataRange.minLatitude;
+            pMin.Z = 0;
+            LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(pMin);
+
+            Point pMax = new Point();
+            pMax.X = dataRange.maxLongitude;
+            pMax.Y = dataRange.maxLatitude;
+            pMax.Z = 0;
+            LTE.Utils.PointConvertByProj.Instance.GetProjectPoint(pMax);
+
+            Grid3D minGrid = new Grid3D();
+            Grid3D maxGrid = new Grid3D();
+            GridHelper.getInstance().PointXYZGrid(pMin, ref minGrid, (int)dataRange.tarGridL, 0);
+            GridHelper.getInstance().PointXYZGrid(pMax, ref maxGrid, (int)dataRange.tarGridL, 0);
+
+            DataTable dtable = new DataTable();
+            dtable.Columns.Add("gmxId", System.Type.GetType("System.Int32"));
+            dtable.Columns.Add("gmyId", System.Type.GetType("System.Decimal"));
+            dtable.Columns.Add("buildRatio", System.Type.GetType("System.Decimal"));
+
+            for (int xId = minGrid.gxid; xId < maxGrid.gxid; xId++)
+            {
+                for (int yId = minGrid.gyid; yId < maxGrid.gyid; yId++)
+                {
+                    Point cen = GridHelper.getInstance().Grid2CenterXY(new Grid3D(xId, yId, 0), (int)dataRange.tarGridL);
+                    Hashtable ht = new Hashtable();
+                    ht["minX"] = cen.X - dataRange.tarGridL / 2;
+                    ht["maxX"] = cen.X + dataRange.tarGridL / 2;
+                    ht["minY"] = cen.Y - dataRange.tarGridL / 2;
+                    ht["maxY"] = cen.Y + dataRange.tarGridL / 2;
+                    DataTable dt = IbatisHelper.ExecuteQueryForDataTable("queryBuildingVertex", ht);
+
+                    Dictionary<int, List<Point>> dics = new Dictionary<int, List<Point>>();
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        var row = dt.Rows[i];
+                        int id = (int)row["BuildingID"];
+                        double vx = double.Parse(row["VertexX"].ToString());
+                        double vy = double.Parse(row["VertexY"].ToString());
+                        if (!dics.ContainsKey(id))
+                        {
+                            List<Point> points = new List<Point>();
+                            points.Add(new Point(vx, vy, 0));
+                            dics.Add(id, points);
+                        }
+                        dics[id].Add(new Point(vx, vy, 0));
+                    }
+                    double area = 0;
+                    foreach (var key in dics.Keys)
+                    {
+                        area += CalculateArea(dics[key]);
+                    }
+
+                    string keyPos = String.Format("{0}_{1}", xId, yId);
+                    
+                    double buildRatio = area / (dataRange.tarGridL * dataRange.tarGridL);
+                    RedisHelper.putDouble(prefix, keyPos, buildRatio);
+
+                    DataRow thisrow = dtable.NewRow();
+                    thisrow["gmxId"] = xId;
+                    thisrow["gmyId"] = yId;
+                    thisrow["buildRatio"] = buildRatio;
+                    dtable.Rows.Add(thisrow);
+                }
+            }
+
+            DataUtil.BCPDataTableImport(dtable, "tbMockGrid");
+            GisClient.ServiceApi.gisApi.Value = new GisClient.ServiceApi();
+            GisClient.Result res = GisClient.ServiceApi.getGisLayerService().
+                refreshMockGridLayer(minGrid.gxid, minGrid.gyid, maxGrid.gxid, maxGrid.gyid);
+
+            return new Result(true, "仿真区域建筑物面积占比计算成功");
+        }
+
+        /// <summary>
+        /// 计算任意多边形面积
+        /// </summary>
+        /// <param name="points"></param>
+        /// <returns></returns>
+        public double CalculateArea(List<Point> points)
+        {
+            var count = points.Count;
+            double area0 = 0;
+            double area1 = 0;
+            for (int i = 0; i < count; i++)
+            {
+                var x = points[i].X;
+                var y = i + 1 < count ? points[i + 1].Y : points[0].Y;
+                area0 += x * y;
+
+                x = points[i].Y;
+                y = i + 1 < count ? points[i + 1].X : points[0].X;
+                area1 += x * y;
+            }
+            return Math.Round(Math.Abs(0.5 * (area0 - area1)), 2);
+        }
+
         public void WriteDt(DataRange dataRange)
         {
             RedisMq.subscriber.Subscribe("cover2db_finish", (channel, message) => {
@@ -224,6 +335,7 @@ namespace LTE.WebAPI.Controllers
                 SelectDT(infName, dtable);
             });
         }
+
         [AllowAnonymous]
         public void Wdt() {
             Hashtable ht = new Hashtable();
@@ -438,6 +550,11 @@ namespace LTE.WebAPI.Controllers
             rayLoc.diffractionNum = 2;
             rayLoc.sideSplitUnit = 3;
             rayLoc.RecordRayLoc();
+            //Task.Run(() =>
+            //{
+            //    Tarj2Grid(InfName);
+            //});
+            //Tarj2Grid(InfName);
         }
 
 
@@ -462,6 +579,7 @@ namespace LTE.WebAPI.Controllers
             Tarj2GridFeature(togrid, virName);
         }
 
+        [AllowAnonymous]
         /// <summary>
         /// 对统计栅格按照训练特征进行统计并入库
         /// </summary>
@@ -470,25 +588,28 @@ namespace LTE.WebAPI.Controllers
         public void Tarj2GridFeature(Dictionary<string, List<GridInfo>> togrid,string inf_name) {
 
             System.Data.DataTable tb = new System.Data.DataTable();
-            tb.Columns.Add("gxid");   
-            tb.Columns.Add("gyid");  
-            tb.Columns.Add("gzid");  
-            tb.Columns.Add("inf_name");     //此版本数据对应的干扰源名称
-            tb.Columns.Add("direct_num");   //直射数（不同路测点发出的）
-            tb.Columns.Add("reflect_num");  //反射数（所有轨迹）
-            tb.Columns.Add("difract_num");  //绕射数（所有轨迹）
-            tb.Columns.Add("recp");         //信号接收强度
-            tb.Columns.Add("recp_var");     //信号接收总方差
-            tb.Columns.Add("direct_var"); //信号接收直射方差
-            tb.Columns.Add("reflect_var"); //信号接收反射方差
-            tb.Columns.Add("diffract_var"); //信号接收绕射方差
-            tb.Columns.Add("rp_num");       //路测点覆盖数目
-            tb.Columns.Add("dis");       //距离干扰源的距离的平方
+            tb.Columns.Add("GXID");   
+            tb.Columns.Add("GYID");  
+            tb.Columns.Add("GZID");  
+            tb.Columns.Add("InfName");     //此版本数据对应的干扰源名称
+            tb.Columns.Add("DireRatio");   //直射占比（不同路测点发出的）
+            tb.Columns.Add("NotDireRatio");   //非直射占比（不同路测点发出的）
+            tb.Columns.Add("DtRatio");       //路测点占比
+            tb.Columns.Add("Recp");         //信号接收强度
+            tb.Columns.Add("RecVar");     //信号接收总方差
+            tb.Columns.Add("Dis");       //距离干扰源的距离的平方
+            tb.Columns.Add("DireVar"); //信号接收直射方差
+            tb.Columns.Add("RefVar"); //信号接收反射方差
+            tb.Columns.Add("DifVar"); //信号接收绕射方差
+            tb.Columns.Add("BuildRatio");  //建筑物面积占比
+            tb.Columns.Add("Scene");  //场景
+
 
             //获取干扰源的位置
             int id = int.Parse(inf_name.Split('_')[1]);
             Hashtable ht = new Hashtable();
             ht["id"] = id;
+            int dtSum = (int)IbatisHelper.ExecuteQueryForObject("countDt", inf_name);
             DataTable dt = IbatisHelper.ExecuteQueryForDataTable("queryCellPosById", ht);
             double x = double.Parse(dt.Rows[0]["x"].ToString());
             double y = double.Parse(dt.Rows[0]["y"].ToString());
@@ -499,21 +620,42 @@ namespace LTE.WebAPI.Controllers
             foreach (var item in togrid)
             {
                 System.Data.DataRow thisrow = tb.NewRow();
-                thisrow["inf_name"] = inf_name;
+                thisrow["InfName"] = inf_name;
                 string[] strs = item.Key.Split(',');
-                thisrow["gxid"] = int.Parse(strs[0]);
-                thisrow["gyid"] = int.Parse(strs[1]);
-                thisrow["gzid"] = int.Parse(strs[2]);
+
+                int gxId = int.Parse(strs[0]);
+                int gyId = int.Parse(strs[1]);
+                int gzId = int.Parse(strs[2]);
+
+                thisrow["GXID"] = gxId;
+                thisrow["GYID"] = gyId;
+                thisrow["GZID"] = gzId;
+
+                //获取建筑物面积占比
+                Point cen = GridHelper.getInstance().Grid2CenterXY(new Grid3D(gxId, gyId, 0), 30);
+                Grid3D brGrid = new Grid3D();
+                GridHelper.getInstance().PointXYZGrid(cen, ref brGrid, brGridGap, 0);
+                string keyPos = String.Format("{0}_{1}", brGrid.gxid, brGrid.gyid);
+                var tmp = RedisHelper.get(prefix, keyPos);
+                double buildRatio = Convert.ToDouble(tmp);
+                thisrow["BuildRatio"] = buildRatio;
+
+                //获取场景
+                ht["gxid"] = gxId;
+                ht["gyid"] = gyId;
+                int scene = Convert.ToInt16(IbatisHelper.ExecuteQueryForObject("getScene", ht));
+                thisrow["Scene"] = scene;
 
                 int dx = int.Parse(strs[0]) - tarGrid.gxid;
                 int dy = int.Parse(strs[1]) - tarGrid.gyid;
                 int dz = int.Parse(strs[2]) - tarGrid.gzid;
-                thisrow["dis"] = Math.Pow(dx, 2)+ Math.Pow(dy, 2)+ Math.Pow(dz, 2);
+                thisrow["Dis"] = Math.Pow(dx, 2)+ Math.Pow(dy, 2)+ Math.Pow(dz, 2);
 
                 //某一个栅格的统计信息
                 Dictionary<string, List<GridInfo>> dic = new Dictionary<string, List<GridInfo>>();
 
                 HashSet<string> directRay = new HashSet<string>();
+                HashSet<string> notDirectRay = new HashSet<string>();
 
                 int directNum = 0;
                 int reflectNUm = 0;
@@ -540,10 +682,12 @@ namespace LTE.WebAPI.Controllers
                     if (gr.rayType ==1 || gr.rayType == 2)
                     {
                         reflectNUm++;
+                        notDirectRay.Add(gr.cellid);
                     }
                     if(gr.rayType == 3 || gr.rayType == 4)
                     {
                         difractNum++;
+                        notDirectRay.Add(gr.cellid);
                     }
                     if (!dic.ContainsKey(gr.cellid))
                     {
@@ -553,10 +697,17 @@ namespace LTE.WebAPI.Controllers
                 }
 
                 directNum = directRay.Count;
-                thisrow["direct_num"] = directNum;
-                thisrow["reflect_num"] = reflectNUm;
-                thisrow["difract_num"] = difractNum;
-                thisrow["rp_num"] = dic.Keys.Count;
+                //thisrow["direct_num"] = directNum;
+                //thisrow["undirect_num"] = notDirectRay.Count;
+
+                thisrow["DireRatio"] = directNum / (directNum + notDirectRay.Count);
+                thisrow["NotDireRatio"] = notDirectRay.Count / (directNum + notDirectRay.Count);
+
+                //thisrow["reflect_num"] = reflectNUm;
+                //thisrow["difract_num"] = difractNum;
+                //thisrow["rp_num"] = dic.Keys.Count;
+
+                thisrow["DtRatio"] = dic.Keys.Count/ dtSum;
 
                 double distinctRefNum = 0;
                 double distinctDiffraNum = 0;
@@ -636,11 +787,12 @@ namespace LTE.WebAPI.Controllers
                 {
                     diffractVar += Math.Pow(rtRecp - aveDiffractRecp, 2);
                 }
-                thisrow["recp"] = aveRecp;
-                thisrow["recp_var"] = recpVar;
-                thisrow["direct_var"] = directVar;
-                thisrow["reflect_var"] = reflectVar;
-                thisrow["diffract_var"] = diffractVar;
+                //优先使用直射线的平均信号强度，若没有则使用所以射线的平均信号强度
+                thisrow["Recp"] = aveDirectRecp == 0? aveRecp: aveDirectRecp;
+                thisrow["RecVar"] = recpVar;
+                thisrow["DireVar"] = directVar;
+                thisrow["RefVar"] = reflectVar;
+                thisrow["DifVar"] = diffractVar;
                 tb.Rows.Add(thisrow);
             }
             string desTbName = "tbGridFeature";
