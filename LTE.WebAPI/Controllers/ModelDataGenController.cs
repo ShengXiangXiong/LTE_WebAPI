@@ -35,7 +35,7 @@ namespace LTE.WebAPI.Controllers
         [TaskLoadInfo(taskName = "干扰区域数据仿真——模拟路测点生成", type = TaskType.DataMock)]
         public Result RoadPointMockGen([FromBody]DataRange dataRange)
         {
-            //List<CellRayTracingModel> cellRays = interfeCellGen(dataRange);
+            List<CellRayTracingModel> cellRays = interfeCellGen(dataRange);
             WriteDt(dataRange);
             int cnt = 0;
             //LoadInfo loadInfo = new LoadInfo();
@@ -43,21 +43,21 @@ namespace LTE.WebAPI.Controllers
             //loadInfo.loadCreate();
 
             //手动从数据库中加载干扰源并计算
-            List<CellRayTracingModel> cellRays = new List<CellRayTracingModel>();
-            for (int i = 1509925; i < 1510348; i++)
-            {
-                CellRayTracingModel rayCell = new CellRayTracingModel();
-                rayCell.cellName = "测试干扰源基站_" + i;
-                rayCell.reflectionNum = 3;
-                rayCell.diffPointsMargin = 5;
-                rayCell.diffractionNum = 2;
-                rayCell.threadNum = 3;
-                rayCell.incrementAngle = 180;
-                rayCell.computeIndoor = false;
-                rayCell.computeDiffrac = true;
-                rayCell.distance = 1200;
-                cellRays.Add(rayCell);
-            }
+            //List<CellRayTracingModel> cellRays = new List<CellRayTracingModel>();
+            //for (int i = 1510942; i <= 1511248; i++)
+            //{
+            //    CellRayTracingModel rayCell = new CellRayTracingModel();
+            //    rayCell.cellName = dataRange.infAreaId + "_" + i;
+            //    rayCell.reflectionNum = 3;
+            //    rayCell.diffPointsMargin = 5;
+            //    rayCell.diffractionNum = 2;
+            //    rayCell.threadNum = 3;
+            //    rayCell.incrementAngle = 180;
+            //    rayCell.computeIndoor = false;
+            //    rayCell.computeDiffrac = true;
+            //    rayCell.distance = 1200;
+            //    cellRays.Add(rayCell);
+            //}
 
             RedisMq.subscriber.Subscribe("rayTrace_finish", (channel, message) =>
             {
@@ -102,7 +102,7 @@ namespace LTE.WebAPI.Controllers
 
             double maxBh = 90;//最大建筑物高度
             int radius = 1200;//干扰源覆盖半径
-            String tarBaseName = "测试干扰源基站_";
+            String tarBaseName = dataRange.infAreaId+"_";
             List<CELL> cells = new List<CELL>();
             int batch = 10;
             int cnt = 0;
@@ -328,8 +328,8 @@ namespace LTE.WebAPI.Controllers
                     continue;
                 }
 
-                //选点距离约束，至少间隔75m,防止边界邻点出现
-                double thDis = 75;
+                //选点距离约束，至少间隔50m,防止边界邻点出现
+                double thDis = 50;
                 bool near = false;
                 foreach (var gs in ps)
                 {
