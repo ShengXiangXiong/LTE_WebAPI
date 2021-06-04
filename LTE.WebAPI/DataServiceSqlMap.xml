@@ -832,6 +832,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
 	  select * from tbBestAdjCoefficient
   </select>
 
+  <select id="getAdjDirectCoeff" parameterClass="">
+    select DirectCoefficient from tbBestAdjCoefficient
+  </select>
+
   <select id="GetAgridScene" parameterClass="HashTable">
     select GXID,GYID,GZID,Scene from tbAccelerateGridScene where GXID between '$minGXID$' and '$maxGXID$' and GYID between '$minGYID$' and '$maxGYID$' order by GXID, GYID, GZID
   </select>
@@ -1145,6 +1149,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     ,rayEndPointZ
     ,rayType
     ,attenuation
+    ,proportion
     from tbRayLoc
     where cellid = $CI$
   </select>
@@ -1606,6 +1611,10 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocat
     select Scene
     from tbAccelerateGridScene
     where GXID=$gxid$ and GYID = $gyid$
+  </select>
+
+  <select id="queryLocResult" parameterClass="Hashtable">
+    select top $k$ * from tbLocResults where Version = '$Version$' order by ansID
   </select>
 
 

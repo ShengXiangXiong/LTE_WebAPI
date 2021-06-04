@@ -20,6 +20,7 @@ namespace LTE.WebAPI.Controllers
         /// <param name="ray">界面输入参数</param>
         /// <returns></returns>
         [HttpPost]
+        [AllowAnonymous]
         [TaskLoadInfo(taskName = "射线记录Loc", type = TaskType.RayRecordLoc)]
         public Result PostRayRecordLoc([FromBody]RayLocRecordModel ray)
         {

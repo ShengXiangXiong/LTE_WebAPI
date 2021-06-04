@@ -207,6 +207,7 @@ namespace LTE.WebAPI.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         [TaskLoadInfo(taskName = "反向跟踪起点刷新", type = TaskType.SelectedPointsLayer)]
         public Result PostRefreshSPLayer([FromBody]RefreshSPLayerModel layer)
         {

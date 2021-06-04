@@ -510,7 +510,7 @@ namespace LTE.ExternalInterference
             t2 = DateTime.Now;
 
             Debug.WriteLine(pathTemp.Rows.Count);
-           
+            
 
             double reflectedR = 1;//反射系数
             double diffrctedR = 1;//绕射系数
@@ -542,6 +542,25 @@ namespace LTE.ExternalInterference
                 rayEndPointY = Convert.ToDouble(pathTemp.Rows[i]["rayEndPointY"].ToString());//路径终点y地理位置
                 rayEndPointZ = Convert.ToDouble(pathTemp.Rows[i]["rayEndPointZ"].ToString());//路径终点y地理位置
                 rayType = Convert.ToInt16(pathTemp.Rows[i]["rayType"].ToString());//路径类型
+
+                //获得场景校正系数
+                string scen = pathTemp.Rows[i]["proportion"].ToString();
+                string[] scenArr = scen.Split(';');
+                DataTable tb = IbatisHelper.ExecuteQueryForDataTable("getAdjDirectCoeff", null);
+                var scenNum = tb.Rows.Count;
+                double[] coeff = new double[scenNum];
+                for (int t = 0; t < scenNum; t++)
+                {
+                    coeff[t] = Convert.ToDouble(tb.Rows[t][0].ToString());
+                }
+
+                double directCoeff = 0;
+                for (int t = 0; t < scenNum; t++)
+                {
+                    double scenArrDouble = Convert.ToDouble(scenArr[t]);
+                    directCoeff += scenArrDouble * coeff[t];
+                }
+
 
                 PathInfo path = new PathInfo(cellid, trajID, rayLevel, rayStartPointX, rayStartPointY, rayStartPointZ, rayEndPointX, rayEndPointY, rayEndPointZ, rayType);
 
@@ -577,7 +596,16 @@ namespace LTE.ExternalInterference
                         diffrctedR *= Attenuation;
                     }
 
-                    receivePwr = emit / (Math.Pow(nata / (4 * Math.PI), 2) * Math.Pow(reflectedR, 2) * Math.Pow(diffrctedR, 2)) * Math.Pow(distance, 2);
+                    receivePwr = emit / (Math.Pow(nata / (4 * Math.PI), 2) * Math.Pow(reflectedR, 2) * Math.Pow(diffrctedR, 2)) * Math.Pow(distance, 2+ directCoeff);
+
+                    //var receivePwr1 = emit / (Math.Pow(nata / (4 * Math.PI), 2) * Math.Pow(reflectedR, 2) * Math.Pow(diffrctedR, 2)) * Math.Pow(distance, 2);
+                    //var e1 = 10 * (Math.Log10(receivePwr1) + 3);
+
+
+                    var s = 10 * (Math.Log10(emit) + 3);
+                    var e = 10 * (Math.Log10(receivePwr) + 3);
+
+                    
 
                     //计算当前路段的发射功率，并更新distance，amendCoeDis，reflectedR，diffrctedR
                     path.emit = receivePwr;

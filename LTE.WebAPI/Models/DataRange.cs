@@ -26,7 +26,7 @@ namespace LTE.WebAPI.Models
         public double maxLongitude;
         public double minLatitude;
         public double maxLatitude;
-        //区域划分栅格边长
+        //计算建筑物占比时区域划分的栅格边长
         public double tarGridL;
     }
 }

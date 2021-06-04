@@ -1545,6 +1545,7 @@ namespace LTE.CalcProcess
             tb.Columns.Add("angle");
             tb.Columns.Add("attenuation");  // 损耗系数
             tb.Columns.Add("recePwrDbm");
+            tb.Columns.Add("proportion");
             Hashtable ht = new Hashtable();
             ht["cellid"] = this.cellInfo.CI;
             System.Data.DataTable tb1 = IbatisHelper.ExecuteQueryForDataTable("GetMaxRayLocID", ht);
@@ -1672,6 +1673,7 @@ namespace LTE.CalcProcess
                     thisrow["buildingID"] = rayLocate.rayLoc[i].rayList[j].buildingID; //MessageBox.Show("15");
                     thisrow["angle"] = rayLocate.rayLoc[i].rayList[j].Angle; //MessageBox.Show("16");
                     thisrow["attenuation"] = rayLocate.rayLoc[i].rayList[j].attenuation; //MessageBox.Show("21");
+                    thisrow["proportion"] = rayLocate.rayLoc[i].rayList[j].proportion; //MessageBox.Show(kvp.Value[i].rayList[j].proportion);
                     if (j == rayLocate.rayLoc[i].rayList.Count - 1)
                         thisrow["recePwrDbm"] = rayLocate.rayLoc[i].recvPwrDbm;
                     else

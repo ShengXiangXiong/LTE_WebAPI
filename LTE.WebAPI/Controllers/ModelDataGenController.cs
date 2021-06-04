@@ -35,7 +35,6 @@ namespace LTE.WebAPI.Controllers
         private string prefix = "buildRatio_";
 
         [AllowAnonymous]
-        [TaskLoadInfo(taskName = "干扰区域数据仿真——模拟路测点生成", type = TaskType.DataMock)]
         public Result RoadPointMockGen([FromBody]DataRange dataRange)
         {
             //List<CellRayTracingModel> cellRays = interfeCellGen(dataRange);
@@ -80,12 +79,12 @@ namespace LTE.WebAPI.Controllers
                 //}
 
             });
-
-            while (cnt < cellRays.Count)
-            {
-                cellRays[cnt].calc();
-                cnt++;
-            }
+            cellRays[0].calc();
+            //while (cnt < cellRays.Count)
+            //{
+            //    cellRays[cnt].calc();
+            //    cnt++;
+            //}
 
 
             Result res = new Result(true,"区域数据仿真已提交");
@@ -197,15 +196,17 @@ namespace LTE.WebAPI.Controllers
             GridHelper.getInstance().PointXYZGrid(pMax, ref maxGrid, (int)dataRange.tarGridL, 0);
 
             DataTable dtable = new DataTable();
-            dtable.Columns.Add("gmxId", System.Type.GetType("System.Int32"));
-            dtable.Columns.Add("gmyId", System.Type.GetType("System.Decimal"));
-            dtable.Columns.Add("buildRatio", System.Type.GetType("System.Decimal"));
+            dtable.Columns.Add("gmxId");
+            dtable.Columns.Add("gmyId");
+            dtable.Columns.Add("buildRatio");
+            dtable.Columns.Add("gridSize");
 
             for (int xId = minGrid.gxid; xId < maxGrid.gxid; xId++)
             {
                 for (int yId = minGrid.gyid; yId < maxGrid.gyid; yId++)
                 {
-                    Point cen = GridHelper.getInstance().Grid2CenterXY(new Grid3D(xId, yId, 0), (int)dataRange.tarGridL);
+                    var len = (int)dataRange.tarGridL;
+                    Point cen = GridHelper.getInstance().Grid2CenterXY(new Grid3D(xId, yId, 0), len);
                     Hashtable ht = new Hashtable();
                     ht["minX"] = cen.X - dataRange.tarGridL / 2;
                     ht["maxX"] = cen.X + dataRange.tarGridL / 2;
@@ -237,12 +238,13 @@ namespace LTE.WebAPI.Controllers
                     string keyPos = String.Format("{0}_{1}", xId, yId);
                     
                     double buildRatio = area / (dataRange.tarGridL * dataRange.tarGridL);
-                    RedisHelper.putDouble(prefix, keyPos, buildRatio);
+                    RedisHelper.putDouble(prefix+"_"+len, keyPos, buildRatio);
 
                     DataRow thisrow = dtable.NewRow();
                     thisrow["gmxId"] = xId;
                     thisrow["gmyId"] = yId;
                     thisrow["buildRatio"] = buildRatio;
+                    thisrow["gridSize"] = len;
                     dtable.Rows.Add(thisrow);
                 }
             }
@@ -533,7 +535,7 @@ namespace LTE.WebAPI.Controllers
         public void TarjBatchGen()
         {
             string pre = "v1";
-            for (int i = 50369; i <= 50458; i++)
+            for (int i = 1509533; i <= 1509533; i++)
             {
                 TarjGen(pre + "_" + i);
             }
@@ -559,10 +561,15 @@ namespace LTE.WebAPI.Controllers
         [AllowAnonymous]
         public void FeatureBatchGen()
         {
-            string pre = "v1";
-            for (int i = 50369; i <= 50458; i++)
+            Point p = new Point(667279.071, 3544899.950,0);
+            LTE.Utils.PointConvertByProj.Instance.GetGeoPoint(p);
+
+
+
+            string pre = "v1_";
+            for (int i = 1509533; i <= 1509533; i++)
             {
-                Tarj2Grid(pre + "_" + i);
+                Tarj2Grid(pre + i);
             }
         }
 
@@ -590,8 +597,7 @@ namespace LTE.WebAPI.Controllers
             tb.Columns.Add("GYID");  
             tb.Columns.Add("GZID");  
             tb.Columns.Add("InfName");     //此版本数据对应的干扰源名称
-            tb.Columns.Add("DireRatio");   //直射占比（不同路测点发出的）
-            tb.Columns.Add("NotDireRatio");   //非直射占比（不同路测点发出的）
+            
             tb.Columns.Add("DtRatio");       //路测点占比
             tb.Columns.Add("Recp");         //信号接收强度
             tb.Columns.Add("RecVar");     //信号接收总方差
@@ -599,12 +605,21 @@ namespace LTE.WebAPI.Controllers
             tb.Columns.Add("DireVar"); //信号接收直射方差
             tb.Columns.Add("RefVar"); //信号接收反射方差
             tb.Columns.Add("DifVar"); //信号接收绕射方差
-            tb.Columns.Add("BuildRatio");  //建筑物面积占比
+            tb.Columns.Add("BuildRatio600");  //600m栅格建筑物面积占比
+            tb.Columns.Add("BuildRatio300");  //300m栅格建筑物面积占比
             tb.Columns.Add("Scene");  //场景
 
+            tb.Columns.Add("UniDireRatio");   //直射占比（不同路测点发出的）
+            tb.Columns.Add("UniNotDireRatio");   //非直射占比（不同路测点发出的）
 
+            tb.Columns.Add("DireRatio");  //直射占比（不区分路测点）
+            tb.Columns.Add("RefRatio");  //反射占比（不区分路测点）
+            tb.Columns.Add("DifRatio");  //绕射占比（不区分路测点）
+
+
+            string[] tmp1 = inf_name.Split('_');
             //获取干扰源的位置
-            int id = int.Parse(inf_name.Split('_')[1]);
+            int id = int.Parse(tmp1[tmp1.Length-1]);
             Hashtable ht = new Hashtable();
             ht["id"] = id;
             int dtSum = (int)IbatisHelper.ExecuteQueryForObject("countDt", inf_name);
@@ -629,14 +644,23 @@ namespace LTE.WebAPI.Controllers
                 thisrow["GYID"] = gyId;
                 thisrow["GZID"] = gzId;
 
-                //获取建筑物面积占比
+                //获取建筑物面积占比  len==600
                 Point cen = GridHelper.getInstance().Grid2CenterXY(new Grid3D(gxId, gyId, 0), 30);
                 Grid3D brGrid = new Grid3D();
-                GridHelper.getInstance().PointXYZGrid(cen, ref brGrid, brGridGap, 0);
+                GridHelper.getInstance().PointXYZGrid(cen, ref brGrid, 600, 0);
                 string keyPos = String.Format("{0}_{1}", brGrid.gxid, brGrid.gyid);
                 var tmp = RedisHelper.get(prefix, keyPos);
                 double buildRatio = Convert.ToDouble(tmp);
-                thisrow["BuildRatio"] = buildRatio;
+                thisrow["BuildRatio600"] = buildRatio;
+
+                //获取建筑物面积占比  len==300
+                cen = GridHelper.getInstance().Grid2CenterXY(new Grid3D(gxId, gyId, 0), 30);
+                GridHelper.getInstance().PointXYZGrid(cen, ref brGrid, 300, 0);
+                keyPos = String.Format("{0}_{1}", brGrid.gxid, brGrid.gyid);
+                tmp = RedisHelper.get(prefix + "_" + 300, keyPos);
+                buildRatio = Convert.ToDouble(tmp);
+                thisrow["BuildRatio300"] = buildRatio;
+
 
                 //获取场景
                 ht["gxid"] = gxId;
@@ -652,12 +676,12 @@ namespace LTE.WebAPI.Controllers
                 //某一个栅格的统计信息
                 Dictionary<string, List<GridInfo>> dic = new Dictionary<string, List<GridInfo>>();
 
-                HashSet<string> directRay = new HashSet<string>();
-                HashSet<string> notDirectRay = new HashSet<string>();
+                HashSet<string> uniDirectRay = new HashSet<string>();
+                HashSet<string> uniNotDirectRay = new HashSet<string>();
 
-                int directNum = 0;
-                int reflectNUm = 0;
-                int difractNum = 0;
+                double directNum = 0;
+                double reflectNUm = 0;
+                double difractNum = 0;
                 double recp = int.MinValue;
                 double recpVar = 0;
                 double directVar = 0;
@@ -675,17 +699,18 @@ namespace LTE.WebAPI.Controllers
                     //只统计不同路测点的直射数目
                     if (gr.rayType == 0)
                     {
-                        directRay.Add(gr.cellid);
+                        directNum++;
+                        uniDirectRay.Add(gr.cellid);
                     }
                     if (gr.rayType ==1 || gr.rayType == 2)
                     {
                         reflectNUm++;
-                        notDirectRay.Add(gr.cellid);
+                        uniNotDirectRay.Add(gr.cellid);
                     }
                     if(gr.rayType == 3 || gr.rayType == 4)
                     {
                         difractNum++;
-                        notDirectRay.Add(gr.cellid);
+                        uniNotDirectRay.Add(gr.cellid);
                     }
                     if (!dic.ContainsKey(gr.cellid))
                     {
@@ -694,19 +719,20 @@ namespace LTE.WebAPI.Controllers
                     dic[gr.cellid].Add(gr);
                 }
 
-                directNum = directRay.Count;
-                //thisrow["direct_num"] = directNum;
-                //thisrow["undirect_num"] = notDirectRay.Count;
+                thisrow["DireRatio"] = directNum / item.Value.Count;
+                thisrow["RefRatio"] = reflectNUm / item.Value.Count;
+                thisrow["DifRatio"] = difractNum / item.Value.Count;
 
-                thisrow["DireRatio"] = directNum / (directNum + notDirectRay.Count);
-                thisrow["NotDireRatio"] = notDirectRay.Count / (directNum + notDirectRay.Count);
+                thisrow["UniDireRatio"] = (double)uniDirectRay.Count / (double)(uniDirectRay.Count + uniNotDirectRay.Count);
+                thisrow["UniNotDireRatio"] = (double)uniNotDirectRay.Count / (double)(uniDirectRay.Count + uniNotDirectRay.Count);
 
                 //thisrow["reflect_num"] = reflectNUm;
                 //thisrow["difract_num"] = difractNum;
                 //thisrow["rp_num"] = dic.Keys.Count;
 
-                thisrow["DtRatio"] = dic.Keys.Count/ dtSum;
+                thisrow["DtRatio"] = (double)dic.Keys.Count/ (double)dtSum;
 
+                double distinctdirectNum = 0;
                 double distinctRefNum = 0;
                 double distinctDiffraNum = 0;
 
@@ -745,6 +771,7 @@ namespace LTE.WebAPI.Controllers
                     int type = grs.Value[0].rayType;
                     if (type == 0)
                     {
+                        distinctdirectNum++;
                         directVar += recpTemp;
                         directRecp.Add(recpTemp);
                     }
@@ -762,9 +789,9 @@ namespace LTE.WebAPI.Controllers
                     }
                 }
                 double aveRecp = recpVar / dic.Keys.Count;
-                double aveDirectRecp = directVar / directNum;
-                double aveReflectRecp = reflectVar / distinctRefNum;
-                double aveDiffractRecp = diffractVar / distinctDiffraNum;
+                double aveDirectRecp = distinctdirectNum == 0 ? 0 : directVar / distinctdirectNum;
+                double aveReflectRecp = distinctRefNum == 0 ? 0 : reflectVar / distinctRefNum;
+                double aveDiffractRecp = distinctDiffraNum == 0 ? 0 : diffractVar / distinctDiffraNum;
 
                 recpVar = 0;
                 reflectVar = 0;

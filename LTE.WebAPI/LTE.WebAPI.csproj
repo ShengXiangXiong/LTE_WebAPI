@@ -232,6 +232,7 @@
     <Compile Include="Controllers\ModelDataGenController.cs" />
     <Compile Include="Controllers\OverlayController.cs" />
     <Compile Include="Controllers\PointsSelectController.cs" />
+    <Compile Include="Controllers\RankLocController.cs" />
     <Compile Include="Controllers\RayRecordController.cs" />
     <Compile Include="Controllers\RefreshLayerController.cs" />
     <Compile Include="Controllers\ScenePartController.cs" />
@@ -258,6 +259,7 @@
     <Compile Include="Models\Grid3DStrengthQueryModel.cs" />
     <Compile Include="Models\LayerNames.cs" />
     <Compile Include="Models\PointsSelectModel.cs" />
+    <Compile Include="Models\RankModel.cs" />
     <Compile Include="Models\RayRecordAdjBatchModeModel.cs" />
     <Compile Include="Models\RayRecordModel.cs" />
     <Compile Include="Models\CellRayTracingModel.cs" />

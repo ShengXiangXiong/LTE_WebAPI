@@ -122,7 +122,7 @@ namespace LTE.WebAPI.Models
         /// <returns></returns>
         public Result RecordRayLoc(bool load=false)
         {
-            threadNum = 2;
+            threadNum = 1;
             Hashtable ht = new Hashtable();
             ht["fromName"] = virsource;
             //读取selectPoint 表信息
@@ -130,7 +130,7 @@ namespace LTE.WebAPI.Models
 
             if (tb.Rows.Count < 2)
             {
-                return new Result(false, "该干扰源未完成选点操作，请重新选取干扰源"); ;
+                return new Result(false, "该干扰源未完成选点操作，请重新选取干扰源");
             }
             //清除表中tbRayLoc当前cellname对应的selectpoint对应的CI的数据
             

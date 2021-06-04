@@ -12,7 +12,7 @@ namespace LTE.WebAPI.Models
         public double ratioAP { get; set; }
         public double ratioP { get; set; }
         public double ratioAPW { get; set; }
-
+        
         public Result LocateByPath()
         {
             PathAnalysis pa = new PathAnalysis(virname);
